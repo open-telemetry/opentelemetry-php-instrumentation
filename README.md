@@ -45,7 +45,7 @@ $ php -dextension=otel_instrumentation -m
 
 Or via .ini:
 ```shell
-echo 'extension=otel_instrumentation' > /usr/local/etc/php/conf.d/otel_instrumentation.ini
+$ echo 'extension=otel_instrumentation' > $(php-config --ini-dir)/otel_instrumentation.ini
 ```
 
 If the extension is successfully installed, you will see it listed in the output of `php -m`.
