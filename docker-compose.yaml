@@ -1,14 +1,8 @@
 version: '3.7'
 services:
-  php:
+  debian:
     build:
       context: docker
       dockerfile: Dockerfile
     volumes:
       - ./:/usr/src/myapp
-  php-alpine:
-    build:
-      context: docker
-      dockerfile: Dockerfile.alpine
-    volumes:
-    - ./:/usr/src/myapp

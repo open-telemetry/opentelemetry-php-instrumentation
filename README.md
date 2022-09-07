@@ -3,27 +3,43 @@
 This is an _experimental_ extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
+## Building the build environment
+
+By default, a debian-based docker image with debug enabled is built.
+
+```shell
+$ docker-compose build debian
+```
+
+You can add extra configure flags, but some may require extra dependencies to be installed.
+
+You can also change the PHP version:
+
+```shell
+$ docker-compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --with-zts" --build-arg PHP_VERSION=8.0.23 debian
+```
+
 ## Building the extension
 
-Using docker and docker-compose:
+First, shell into the container:
 ```shell
-$ docker-compose run php
-# or
-$ docker-compose run php-alpine
+$ docker-compose run debian
 ```
 
 ### With PECL
 ```shell
 $ phpize
-$ ./configure --with-php-config=/usr/local/bin/php-config
+$ ./configure --with-php-config=$(which php-config)
 $ make
 $ make test
 $ make install
 ```
 
-This will build `otel_instrumentation.so` (and install it into php modules dir).
+This will build `otel_instrumentation.so` and install it into php modules dir (but not enable it).
 
 ### With install-php-extensions
+
+_n.b that this will strip debug symbols_
 
 See https://github.com/mlocati/docker-php-extension-installer#installing-from-source-code
 
