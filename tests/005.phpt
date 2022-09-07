@@ -24,7 +24,7 @@ array(6) {
   [3]=>
   string(10) "helloWorld"
   [4]=>
-  string(24) "%s/tests/005.php"
+  string(%d) "%s/tests/005.php"
   [5]=>
   int(4)
 }
@@ -44,7 +44,7 @@ array(8) {
   [5]=>
   string(10) "helloWorld"
   [6]=>
-  string(24) "%s/tests/005.php"
+  string(%d) "%s/tests/005.php"
   [7]=>
   int(4)
 }
