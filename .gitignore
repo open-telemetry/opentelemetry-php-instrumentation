@@ -1,6 +1,7 @@
 *.lo
 *.la
 .libs
+.idea/
 acinclude.m4
 aclocal.m4
 autom4te.cache
@@ -40,3 +41,6 @@ tests/**/*.sh
 tests/**/*.db
 tests/**/*.mem
 tmp-php.ini
+config.h.in~
+otel_instrumentation.dep
+otel_observer.dep

@@ -29,13 +29,23 @@ $ docker-compose run debian
 ### With PECL
 ```shell
 $ phpize
-$ ./configure --with-php-config=$(which php-config)
+$ ./configure
 $ make
 $ make test
 $ make install
 ```
 
 This will build `otel_instrumentation.so` and install it into php modules dir (but not enable it).
+
+To clean up, especially between builds with different PHP versions and/or build options:
+
+```shell
+$ git clean -Xn
+# looks ok? then
+$ git clean -Xf
+```
+
+or `make clean` from in the container.
 
 ### With install-php-extensions
 
