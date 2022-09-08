@@ -8,6 +8,7 @@ extern zend_module_entry otel_instrumentation_module_entry;
 ZEND_BEGIN_MODULE_GLOBALS(otel_instrumentation)
     HashTable *observer_class_lookup;
     HashTable *observer_function_lookup;
+    HashTable *observer_aggregates;
 ZEND_END_MODULE_GLOBALS(otel_instrumentation)
 
 ZEND_EXTERN_MODULE_GLOBALS(otel_instrumentation)
