@@ -1,0 +1,43 @@
+FROM alpine:3.16 as builder
+WORKDIR /usr/src
+
+RUN apk add --no-cache \
+    autoconf \
+    dpkg-dev \
+    dpkg \
+    file \
+    g++ \
+    gcc \
+    libc-dev \
+    make \
+    pkgconf \
+    re2c \
+    bash \
+    ca-certificates \
+    curl \
+    less \
+    tar \
+    xz
+
+RUN apk add --no-cache \
+    coreutils \
+    curl-dev \
+    libxml2-dev \
+    linux-headers \
+    readline-dev \
+    sqlite-dev
+
+ARG PHP_VERSION=8.1.10
+ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
+
+RUN echo "$PHP_URL" && curl -fsSL -o php.tar.xz "$PHP_URL"
+RUN cd /usr/src \
+  && tar -xf php.tar.xz
+
+ARG PHP_CONFIG_OPTS="--enable-debug"
+RUN cd php-${PHP_VERSION} \
+  && ./buildconf \
+  && ./configure ${PHP_CONFIG_OPTS} \
+  && make -j $(nproc) \
+  && make install
+WORKDIR /usr/src/myapp

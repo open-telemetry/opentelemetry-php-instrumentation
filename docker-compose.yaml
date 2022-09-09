@@ -6,3 +6,10 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./:/usr/src/myapp
+
+  alpine:
+    build:
+      context: docker
+      dockerfile: Dockerfile.alpine
+    volumes:
+      - ./:/usr/src/myapp

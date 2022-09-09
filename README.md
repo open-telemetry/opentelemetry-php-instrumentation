@@ -5,10 +5,12 @@ It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-
 
 ## Building the build environment
 
-By default, a debian-based docker image with debug enabled is built.
+By default, an alpine and debian-based docker image with debug enabled is built.
 
 ```shell
 $ docker-compose build debian
+# or
+$ docker-compose build alpine
 ```
 
 You can add extra configure flags, but some may require extra dependencies to be installed.
@@ -16,7 +18,7 @@ You can add extra configure flags, but some may require extra dependencies to be
 You can also change the PHP version:
 
 ```shell
-$ docker-compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --with-zts" --build-arg PHP_VERSION=8.0.23 debian
+$ docker-compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" --build-arg PHP_VERSION=8.0.23 [debian|alpine]
 ```
 
 ## Building the extension
@@ -33,6 +35,7 @@ $ ./configure
 $ make
 $ make test
 $ make install
+$ make clean
 ```
 
 This will build `otel_instrumentation.so` and install it into php modules dir (but not enable it).
