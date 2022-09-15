@@ -1,0 +1,8 @@
+version: '3.7'
+services:
+  debian:
+    build:
+      context: docker
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/usr/src/myapp
