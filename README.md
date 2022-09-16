@@ -3,88 +3,50 @@
 This is an _experimental_ extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
-## Building the build environment
+The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry. 
 
-By default, an alpine and debian-based docker image with debug enabled is built.
+## Requirements
+- PHP 8+
+- [OpenTelemetry PHP library](https://github.com/open-telemetry/opentelemetry-php)
 
-```shell
-$ docker-compose build debian
-# or
-$ docker-compose build alpine
+## Installation
+
+https://github.com/mlocati/docker-php-extension-installer :
+```bash
+$ install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
 ```
 
-You can add extra configure flags, but some may require extra dependencies to be installed.
+## Usage
 
-You can also change the PHP version:
+The following example adds an observer to the `DemoClass::run` method, and provides two functions which will be run before and after the method call.
 
-```shell
-$ docker-compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" --build-arg PHP_VERSION=8.0.23 [debian|alpine]
+The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
+
+```php
+<?php
+
+$tracer = new Tracer(...);
+
+OpenTelemetry\Instrumentation\hook(
+    DemoClass::class,
+    'run',
+    static function (DemoClass $demo, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($tracer) {
+        $tracer->spanBuilder($class)
+            ->startSpan()
+            ->activate();
+    },
+    static function (DemoClass $demo, array $params, $returnValue, ?Throwable $exception) use ($tracer) {
+        $scope = Context::storage()->scope();
+        $scope?->detach();
+        $span = Span::fromContext($scope->context());
+        $exception && $span->recordException($exception);
+        $span->setStatus($exception ? StatusCode::STATUS_ERROR : StatusCode::STATUS_OK);
+        $span->end();
+    }
+);
 ```
 
-## Building the extension
+There are more examples in the [tests directory](./tests/)
 
-First, shell into the container:
-```shell
-$ docker-compose run debian
-```
-
-### With PECL
-```shell
-$ phpize
-$ ./configure
-$ make
-$ make test
-$ make install
-$ make clean
-```
-
-This will build `otel_instrumentation.so` and install it into php modules dir (but not enable it).
-
-To clean up, especially between builds with different PHP versions and/or build options:
-
-```shell
-$ git clean -Xn
-# looks ok? then
-$ git clean -Xf
-```
-
-or `make clean` from in the container.
-
-### With install-php-extensions
-
-_n.b that this will strip debug symbols_
-
-See https://github.com/mlocati/docker-php-extension-installer#installing-from-source-code
-
-```shell
-$ install-php-extensions $(pwd)
-```
-
-You can also install straight from github:
-
-```shell
-$ install-php-extensions Nevay/opentelemetry-extension@master
-```
-
-## Enabling the extension
-
-```shell
-$ php -dextension=otel_instrumentation -m
-```
-
-Or via .ini:
-```shell
-$ echo 'extension=otel_instrumentation' > $(php-config --ini-dir)/otel_instrumentation.ini
-```
-
-If the extension is successfully installed, you will see it listed in the output of `php -m`.
-
-# Usage
-
-Basic usage is in the `tests/` directory.
-
-A more advanced example: https://github.com/open-telemetry/opentelemetry-php-contrib/pull/78/files
-
-# Further reading
-
-* https://www.phpinternalsbook.com/php7/build_system/building_extensions.html
+## Contributing
+See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
