@@ -336,7 +336,7 @@ static void find_method_observers(HashTable *ht, zend_class_entry *ce, zend_stri
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     zend_function *fbc = execute_data->func;
-    if ((fbc->common.fn_flags & ZEND_ACC_CLOSURE) || !fbc->common.function_name) {
+    if (!fbc->common.function_name) {
         return NULL;
     }
 
