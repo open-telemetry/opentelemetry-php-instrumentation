@@ -22,9 +22,11 @@ jobs:
             php-version: "${{ matrix.php }}"
             tools: pecl
 
-      -   name: Build and test
+      -   name: Build
           run: |
             phpize
             ./configure
             make
-            make test
+
+      -   name: Test
+          run: make test
