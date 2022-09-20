@@ -2,16 +2,18 @@ name: Build and test
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
-  ubuntu:
-    runs-on: ubuntu-latest
+  php:
+    runs-on: "${{ matrix.os }}"
     name: "Build and test"
     strategy:
       matrix:
         php: ['8.0', '8.1', '8.2']
+        os: ['ubuntu-latest']
 
     steps:
       -   uses: actions/checkout@v2
