@@ -1,0 +1,31 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    name: "Build and test"
+    strategy:
+      matrix:
+        php: [8.0, 8.1, 8.2]
+        use-zts: [true, false]
+
+    steps:
+      -   uses: actions/checkout@v2
+
+      -   name: Setup PHP
+          uses: shivammathur/setup-php@v2
+          with:
+            php-version: "${{ matrix.php }}"
+            tools: pecl
+
+      -   name: Build and test
+          run: |
+            phpize
+            ./configure
+            make
+            make test
