@@ -309,9 +309,11 @@ static void find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
     otel_observer *observer = zend_hash_find_ptr_lc(ht, n);
     if (observer) {
         for (zend_llist_element *element = observer->pre_hooks.head; element; element = element->next) {
+            zval_add_ref((zval*)&element->data);
             zend_llist_add_element(pre_hooks, &element->data);
         }
         for (zend_llist_element *element = observer->post_hooks.head; element; element = element->next) {
+            zval_add_ref((zval*)&element->data);
             zend_llist_add_element(post_hooks, &element->data);
         }
     }
