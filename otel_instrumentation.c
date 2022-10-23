@@ -41,6 +41,8 @@ PHP_RINIT_FUNCTION(otel_instrumentation) {
 
 PHP_RSHUTDOWN_FUNCTION(otel_instrumentation) {
     observer_globals_cleanup();
+
+    return SUCCESS;
 }
 
 PHP_MINIT_FUNCTION(otel_instrumentation) {
