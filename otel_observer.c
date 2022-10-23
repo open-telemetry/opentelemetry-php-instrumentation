@@ -426,7 +426,7 @@ static void add_method_observer(HashTable *ht, zend_string *cn, zend_string *fn,
 
 bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook, zval *post_hook) {
     if (op_array_extension == -1) {
-        return 0;
+        return false;
     }
 
     if (cn) {
@@ -435,7 +435,7 @@ bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook, zval *post_h
         add_function_observer(OTEL_G(observer_function_lookup), fn, pre_hook, post_hook);
     }
 
-    return 1;
+    return true;
 }
 
 void observer_globals_init(void) {
