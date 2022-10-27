@@ -13,5 +13,7 @@ function helloWorld() {
 
 var_dump(helloWorld());
 ?>
+--XFAIL--
+Return value modifications are not propagated between callbacks.
 --EXPECT--
 string(1) "c"

@@ -17,5 +17,7 @@ try {
     var_dump($e->getPrevious()?->getPrevious()?->getMessage());
 }
 ?>
+--XFAIL--
+Exception modifications are not propagated between callbacks.
 --EXPECT--
 string(8) "original"

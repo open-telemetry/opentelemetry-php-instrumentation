@@ -13,5 +13,7 @@ function helloWorld($a) {
 
 helloWorld('a');
 ?>
+--XFAIL--
+Parameter modifications are not propagated between callbacks.
 --EXPECT--
 string(1) "c"
