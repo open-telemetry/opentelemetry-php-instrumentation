@@ -178,9 +178,13 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         target = ZEND_CALL_ARG(execute_data, idx + 1);
                         zval_dtor(target);
                         ZVAL_COPY(target, val);
+                        if (Z_TYPE(params[1]) == IS_ARRAY) {
+                            if (Z_REFCOUNTED_P(val)) {
+                                Z_ADDREF_P(val);
+                            }
+                            zend_hash_index_update(Z_ARR(params[1]), idx, val);
+                        }
                     }
-
-                    // TODO Update params[1]
                 } ZEND_HASH_FOREACH_END();
             }
         }
