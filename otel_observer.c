@@ -263,8 +263,11 @@ static void observer_end(zend_execute_data *execute_data, zval *retval, zend_lli
                 }
             }
         }
-
-        // TODO Update params[3]
+        
+        if (UNEXPECTED(EG(exception))) {
+            ZVAL_OBJ_COPY(&params[3], EG(exception));
+        }
+        
         zend_exception_restore();
         EG(prev_exception) = exception;
         zend_exception_restore();
