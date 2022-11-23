@@ -24,6 +24,12 @@ The following example adds an observer to the `DemoClass::run` method, and provi
 
 The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
 
+#### Warning
+Be aware of that, trivial functions are candidates for optimizations.
+Optimizer can optimize them out and replace user function call with more optimal set of instructions (inlining).
+In this case hooks will not be invoked as there will be no function.
+
+
 ```php
 <?php
 
