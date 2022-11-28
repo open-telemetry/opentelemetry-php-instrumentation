@@ -17,8 +17,6 @@ class C implements A, B {
 
 (new C)->m();
 ?>
---XFAIL--
-Repeated interfaces are not deduplicated, A::m() hook is added for C->A and C->B->A.
 --EXPECT--
 string(3) "PRE"
 string(4) "POST"
