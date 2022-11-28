@@ -317,7 +317,7 @@ static otel_observer* create_observer(void) {
     return observer;
 }
 
-static void find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks, zend_llist *post_hooks) {
     otel_observer *observer = zend_hash_find_ptr_lc(ht, n);
     if (observer) {
         for (zend_llist_element *element = observer->pre_hooks.head; element; element = element->next) {
@@ -328,23 +328,34 @@ static void find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
             zval_add_ref((zval*)&element->data);
             zend_llist_add_element(post_hooks, &element->data);
         }
+        return true;
     }
+    return false;
 }
 
-static void find_class_observers(HashTable *ht, zend_class_entry *ce, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static void find_class_observers(HashTable *ht,
+                                HashTable* type_visited_lookup,
+                                zend_class_entry *ce, zend_llist *pre_hooks, zend_llist *post_hooks) {
     for (; ce; ce = ce->parent) {
-        find_observers(ht, ce->name, pre_hooks, post_hooks);
-        // TODO Prevent traversing interfaces multiple times
+        // Omit type if it was already visited
+        if (zend_hash_exists(type_visited_lookup, ce->name)) {
+            continue;
+        }
+        if (find_observers(ht, ce->name, pre_hooks, post_hooks)) {
+            zend_hash_add_empty_element(type_visited_lookup, ce->name);
+        }
         for (uint32_t i = 0; i < ce->num_interfaces; i++) {
-            find_class_observers(ht, ce->interfaces[i], pre_hooks, post_hooks);
+            find_class_observers(ht, type_visited_lookup, ce->interfaces[i], pre_hooks, post_hooks);
         }
     }
 }
 
-static void find_method_observers(HashTable *ht, zend_class_entry *ce, zend_string *fn, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static void find_method_observers(HashTable *ht,
+                                  HashTable* type_visited_lookup,
+                                  zend_class_entry *ce, zend_string *fn, zend_llist *pre_hooks, zend_llist *post_hooks) {
     HashTable *lookup = zend_hash_find_ptr_lc(ht, fn);
     if (lookup) {
-        find_class_observers(lookup, ce, pre_hooks, post_hooks);
+        find_class_observers(lookup, type_visited_lookup, ce, pre_hooks, post_hooks);
     }
 }
 
@@ -353,12 +364,20 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     if (!fbc->common.function_name) {
         return NULL;
     }
-
     // TODO Allocate on stack
     otel_observer *observer = create_observer();
 
     if (fbc->op_array.scope) {
-        find_method_observers(OTEL_G(observer_class_lookup), fbc->op_array.scope, fbc->common.function_name, &observer->pre_hooks, &observer->post_hooks);
+        // Below hashtable stores information
+        // whether type was already visited
+        // This information is used to prevent
+        // adding hooks more than once in the case
+        // of extensive class hierarchy
+        HashTable type_visited_lookup;
+        zend_hash_init(&type_visited_lookup, 8, NULL, NULL, 0);
+        find_method_observers(OTEL_G(observer_class_lookup), &type_visited_lookup,
+                              fbc->op_array.scope, fbc->common.function_name, &observer->pre_hooks, &observer->post_hooks);
+        zend_hash_destroy(&type_visited_lookup);
     } else {
         find_observers(OTEL_G(observer_function_lookup), fbc->common.function_name, &observer->pre_hooks, &observer->post_hooks);
     }
