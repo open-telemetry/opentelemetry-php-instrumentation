@@ -29,7 +29,7 @@ RUN apk add --no-cache \
     readline-dev \
     sqlite-dev
 
-ARG PHP_VERSION=8.1.10
+ARG PHP_VERSION
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
 
 RUN echo "$PHP_URL" && curl -fsSL -o php.tar.xz "$PHP_URL"
