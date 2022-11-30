@@ -1,10 +1,25 @@
 FROM debian:buster-slim as builder
 WORKDIR /usr/src
 
-RUN apt-get update -y \
-  && apt-get install -y build-essential autoconf libtool bison re2c curl less pkg-config libxml2-dev libsqlite3-dev
+ENV PHPIZE_DEPS \
+		autoconf \
+		dpkg-dev \
+		file \
+		g++ \
+		gcc \
+		libc-dev \
+		make \
+		pkg-config \
+		re2c
 
-ARG PHP_VERSION=8.1.10
+RUN apt-get update -y \
+  && apt-get install -y \
+    ${PHPIZE_DEPS} \
+    curl \
+    libxml2-dev \
+    libsqlite3-dev
+
+ARG PHP_VERSION
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
 
 RUN echo "$PHP_URL" && curl -fsSL -o php.tar.xz "$PHP_URL"
