@@ -2,7 +2,7 @@ name: Build and test
 
 on:
   push:
-    branches: [ main, build-debug-image ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -12,9 +12,10 @@ jobs:
     name: "Build and test"
     strategy:
       matrix:
-        php: ['8.0', '8.1'] #, '8.2']
+        php: ['8.0', '8.1']
+        os: ['debian', 'alpine']
     container:
-      image: ghcr.io/brettmc/opentelemetry-php-instrumentation/php:${{ matrix.php }}-debug
+      image: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php }}-${{ matrix.os }}-debug
 
     steps:
       -   uses: actions/checkout@v2

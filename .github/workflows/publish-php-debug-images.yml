@@ -5,12 +5,12 @@ on:
   workflow_dispatch:
 jobs:
   push_to_registry:
-    if: github.repository_owner == 'brettmc' #todo
+    if: github.repository_owner == 'open-telemetry' #do not run in forks
     name: Build image
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.0', '8.1'] #'8.2' pushed back to december 8th
+        php-version: ['8.0', '8.1'] #'8.2' pushed back to december 8th 2022
         os: ['debian', 'alpine']
     runs-on: ubuntu-latest
     permissions:
@@ -45,4 +45,4 @@ jobs:
           build-args: |
             PHP_VERSION=${{ env.PHP_VERSION }}
             PHP_CONFIG_OPTS=--enable-debug
-          tags: ghcr.io/brettmc/opentelemetry-php-instrumentation/php:${{ matrix.php-version }}-debug #todo
+          tags: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php-version }}-${{ matrix.os }}-debug
