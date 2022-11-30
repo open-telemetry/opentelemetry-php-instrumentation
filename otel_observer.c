@@ -309,12 +309,20 @@ static void free_observer(otel_observer *observer) {
     efree(observer);
 }
 
-static otel_observer* create_observer(void) {
-    otel_observer *observer = emalloc(sizeof(otel_observer));
+static void init_observer(otel_observer* observer) {
     zend_llist_init(&observer->pre_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
     zend_llist_init(&observer->post_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
+}
 
+static otel_observer* create_observer() {
+    otel_observer *observer = emalloc(sizeof(otel_observer));
+    init_observer(observer);
     return observer;
+}
+
+static void copy_observer(otel_observer* source, otel_observer* destination) {
+     destination->pre_hooks = source->pre_hooks;
+     destination->post_hooks = source->post_hooks;
 }
 
 static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks, zend_llist *post_hooks) {
@@ -364,8 +372,9 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     if (!fbc->common.function_name) {
         return NULL;
     }
-    // TODO Allocate on stack
-    otel_observer *observer = create_observer();
+
+    otel_observer observer_instance;
+    init_observer(&observer_instance);
 
     if (fbc->op_array.scope) {
         // Below hashtable stores information
@@ -376,17 +385,19 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
         HashTable type_visited_lookup;
         zend_hash_init(&type_visited_lookup, 8, NULL, NULL, 0);
         find_method_observers(OTEL_G(observer_class_lookup), &type_visited_lookup,
-                              fbc->op_array.scope, fbc->common.function_name, &observer->pre_hooks, &observer->post_hooks);
+                              fbc->op_array.scope, fbc->common.function_name,
+                              &observer_instance.pre_hooks, &observer_instance.post_hooks);
         zend_hash_destroy(&type_visited_lookup);
     } else {
-        find_observers(OTEL_G(observer_function_lookup), fbc->common.function_name, &observer->pre_hooks, &observer->post_hooks);
+        find_observers(OTEL_G(observer_function_lookup), fbc->common.function_name,
+                       &observer_instance.pre_hooks, &observer_instance.post_hooks);
     }
 
-    if (!zend_llist_count(&observer->pre_hooks) && !zend_llist_count(&observer->post_hooks)) {
-        free_observer(observer);
+    if (!zend_llist_count(&observer_instance.pre_hooks) && !zend_llist_count(&observer_instance.post_hooks)) {
         return NULL;
     }
-
+    otel_observer *observer = create_observer();
+    copy_observer(&observer_instance, observer);
     zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
 
     return observer;
