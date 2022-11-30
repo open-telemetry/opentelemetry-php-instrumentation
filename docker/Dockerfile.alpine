@@ -1,7 +1,7 @@
 FROM alpine:3.16 as builder
 WORKDIR /usr/src
 
-RUN apk add --no-cache \
+ENV PHPIZE_DEPS \
     autoconf \
     dpkg-dev \
     dpkg \
@@ -11,11 +11,13 @@ RUN apk add --no-cache \
     libc-dev \
     make \
     pkgconf \
-    re2c \
+    re2c
+
+RUN apk add --no-cache \
+    ${PHPIZE_DEPS} \
     bash \
     ca-certificates \
     curl \
-    less \
     tar \
     xz
 

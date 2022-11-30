@@ -26,4 +26,4 @@ jobs:
             make
 
       -   name: Test
-          run: make test
+          run: TEST_PHP_ARGS="-q" make test

@@ -6,3 +6,13 @@ services:
       dockerfile: Dockerfile.debian
     volumes:
       - ./:/usr/src/myapp
+    environment:
+      TEST_PHP_ARGS: "-q"
+  alpine:
+    build:
+      context: docker
+      dockerfile: Dockerfile.alpine
+    volumes:
+      - ./:/usr/src/myapp
+    environment:
+      TEST_PHP_ARGS: "-q"
