@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.0', '8.1'] #'8.2' pushed back to december 8th 2022
+        php-version: ['8.0', '8.1', '8.2']
         os: ['debian', 'alpine']
     runs-on: ubuntu-latest
     permissions:

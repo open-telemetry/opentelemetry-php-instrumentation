@@ -12,7 +12,7 @@ jobs:
     name: "Build and test"
     strategy:
       matrix:
-        php: ['8.0', '8.1']
+        php: ['8.0', '8.1', '8.2']
         os: ['debian', 'alpine']
     container:
       image: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php }}-${{ matrix.os }}-debug
@@ -27,4 +27,6 @@ jobs:
             make
 
       -   name: Test
-          run: TEST_PHP_ARGS="-q" make test
+          env:
+            TEST_PHP_ARGS: "-q" #do not try to submit failures
+          run: make test
