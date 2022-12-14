@@ -404,7 +404,7 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
 }
 
 static zend_observer_fcall_handlers observer_fcall_init(zend_execute_data *execute_data) {
-    if (op_array_extension == -1 || execute_data->func->common.type != ZEND_USER_FUNCTION) {
+    if (op_array_extension == -1) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
 
