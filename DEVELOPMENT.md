@@ -25,7 +25,7 @@ First, shell into the container:
 $ docker-compose run debian
 ```
 
-## With PECL
+## From source code
 ```shell
 $ phpize
 $ ./configure
@@ -75,6 +75,44 @@ $ echo 'extension=otel_instrumentation' > $(php-config --ini-dir)/otel_instrumen
 ```
 
 If the extension is successfully installed, you will see it listed in the output of `php -m`.
+
+# Debugging
+
+In order to debug extension, php engine has to be compiled in debug mode. All needed steps
+are described on the following page: https://www.zend.com/resources/php-extensions/setting-up-your-php-build-environment
+Above page describes building environment for linux. On other systems (like MacOS), some additional steps might be
+needed related to installing and configuring some dependencies.
+
+Next is to add extension to ini file as described above.
+
+After finising all above steps, you can start debugging session. There are few debuggers that
+can be used for debugging process, lldb, gdb or visual studio debugger on windows.
+To trigger auto instrumentation code you need to invoke observer api functionality.
+Following, very simple script can be used as reference example, created and saved as test.php
+(this name will be referenced later during debugger invocation):
+
+```shell
+<?php
+$ret = \OpenTelemetry\Instrumentation\hook(null, 'some_function');
+var_dump($ret);
+?>
+```
+
+Now, you can invoke lldb with following arguments:
+```shell
+lldb -- $HOME/php-bin/DEBUG/bin/php test.php
+```
+
+For gdb, arguments look very similar:
+```shell
+gdb --args $HOME/php-bin/DEBUG/bin/php test.php
+```
+
+and set breakpoint in function like `otel_instrumentation_observer_init` just to test if debugger will
+stop there by:
+```shell
+b otel_instrumentation_observer_init
+```
 
 # Usage
 
