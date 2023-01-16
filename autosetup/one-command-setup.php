@@ -77,7 +77,12 @@ function check_preconditions() {
 }
 
 function set_env() {
-  // putenv('OTEL_PHP_AUTOLOAD_ENABLED=true');
+  $OTEL_PHP_AUTOLOAD_ENABLED = true;
+  do {
+    $OTEL_PHP_AUTOLOAD_ENABLED = boolval(readline("set OTEL_PHP_AUTOLOAD_ENABLED=true|false: "));
+  } while ($OTEL_PHP_AUTOLOAD_ENABLED == 0);
+
+  putenv('OTEL_PHP_AUTOLOAD_ENABLED=' . $OTEL_PHP_AUTOLOAD_ENABLED);
   // putenv('OTEL_TRACES_EXPORTER=zipkin');
   // putenv('OTEL_EXPORTER_OTLP_PROTOCOL=grpc');
   // putenv('OTEL_METRICS_EXPORTER=otlp');
@@ -220,6 +225,7 @@ function make_advanced_setup($packages) {
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", ""), " 2>&1");
 
+  set_env();
 }
 
 $mode = check_args($argc, $argv);
