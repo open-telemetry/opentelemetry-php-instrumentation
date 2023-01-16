@@ -82,9 +82,23 @@ function colorLog($str, $type = 'i'){
   }
 }
 
-function dump_output($output) {
+function get_versions($output, $type = 'e'):array {
+  $versions_array = array();
+  foreach ($output as $line) {
+    if (str_contains($line, "versions : ")) {
+      $versions = substr($line, 0 + strlen("versions : "));
+      $versions_array = explode(",", $versions);
+      for($i = 0; $i < count($versions_array); ++$i) {
+        $versions_array[$i] = trim($versions_array[$i], "* \n\r\t\v\x00");
+      }
+    }
+  }
+  return $versions_array;
+}
+
+function dump_output($output, $type = 'e') {
   foreach ($output as $v) {
-    colorLog($v, 'e');
+    colorLog($v, $type);
   }
 }
 
@@ -141,7 +155,7 @@ function make_default_setup($dependencies, $packages) {
 function choose_http_async_impl_provider($providers):int {
   $counter = 1;
   foreach ($providers as $provider) {
-    echo($counter . "." . $provider->name . "\n");
+    echo($counter . ") " . $provider->name . "\n");
     ++$counter;
   }
   echo "\n";
@@ -150,6 +164,22 @@ function choose_http_async_impl_provider($providers):int {
     $provider_index = intval(readline("Choose provider (1-" . count($providers) . "): "));
   } while ($provider_index == 0 && $provider_index < 1 || $provider_index > count($providers)) ;
   return $provider_index;
+}
+
+function choose_version($versions):int {
+  $counter = 1;
+  foreach ($versions as $v) {
+    echo($counter . ") " . $v . "\n");
+    ++$counter;
+  } 
+
+  echo "\n";
+  $version_index = 0;
+  do {
+    $version_index = intval(readline("Choose version (1-" . count($versions) . "): "));
+  } while ($version_index == 0 && $version_index < 1 || $version_index > count($versions)) ;
+  return $version_index;
+
 }
 
 function make_advanced_setup($packages) {
@@ -163,15 +193,19 @@ function make_advanced_setup($packages) {
     $providers[$provider_index]->name,
     "",
     "--with-all-dependencies"), " 2>&1");
-    // TODO handle versions
     foreach ($packages as $package) {
-      execute_command(make_composer_show_command($package), "");
+      $output = array();
+      $result_code = null;
+      $cmd = make_composer_show_command($package);
+      colorLog($cmd);
+      exec($cmd, $output, $result_code);
+      $versions = get_versions($output, 'i');
+      $version_index = choose_version($versions); 
       execute_command(make_composer_require_command(
         $package,
-        "",
+        ":" . $versions[$version_index - 1],
         "--with-all-dependencies"), " 2>&1");
   }
-  // TODO handle versionsśś
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", ""), " 2>&1");
