@@ -16,8 +16,34 @@ $opentelemetry_packages = array(
   "open-telemetry/opentelemetry-auto-psr18",
 );
 
+function colorLog($str, $type = 'i'){
+  switch ($type) {
+      case 'e': //error
+          echo "\033[31m$str \033[0m\n";
+      break;
+      case 's': //success
+          echo "\033[32m$str \033[0m\n";
+      break;
+      case 'w': //warning
+          echo "\033[33m$str \033[0m\n";
+      break;
+      case 'i': //info
+          echo "\033[36m$str \033[0m\n";
+      break;
+      default:
+      # code...
+      break;
+  }
+}
+
 function usage() {
-  echo ("usage : php auto-instr-installer.php [default | advanced]\n");
+  colorLog ("one-command-setup.php is a script that will help you", 'e');
+  colorLog ("install and setup auto-instrumentation for your project.", 'e');
+  colorLog ("It works in two modes default and advanced.", 'e');
+  colorLog ("In default mode it will install everything using some defaults and latest", 'e');
+  colorLog ("development versions. Advanced will ask you to choose needed packages and versions.\n", 'e');
+
+  colorLog ("usage : php one-command-setup.php [default | advanced]\n", 'e');
 }
 
 function check_args($argc, $argv):string {
@@ -60,26 +86,6 @@ function set_env() {
   // putenv('OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://localhost:9411/api/v2/spans');
   // putenv('OTEL_PHP_TRACES_PROCESSOR=simple');
   // putenv('OTEL_SERVICE_NAME=autoloading');
-}
-
-function colorLog($str, $type = 'i'){
-  switch ($type) {
-      case 'e': //error
-          echo "\033[31m$str \033[0m\n";
-      break;
-      case 's': //success
-          echo "\033[32m$str \033[0m\n";
-      break;
-      case 'w': //warning
-          echo "\033[33m$str \033[0m\n";
-      break;  
-      case 'i': //info
-          echo "\033[36m$str \033[0m\n";
-      break;      
-      default:
-      # code...
-      break;
-  }
 }
 
 function get_versions($output, $type = 'e'):array {
@@ -184,7 +190,7 @@ function choose_version($versions):int {
 
 function make_advanced_setup($packages) {
   $providers = get_php_async_client_impl();
-  echo "\nBelow is a list of http client async providers, you need to choose one:\n\n";
+  colorLog("\nChoose http client async provider:\n", 'e');
   $provider_index = choose_http_async_impl_provider($providers);
   execute_command(make_composer_config_command(
     "minimum-stability dev",
@@ -197,7 +203,7 @@ function make_advanced_setup($packages) {
       $output = array();
       $result_code = null;
       $cmd = make_composer_show_command($package);
-      colorLog($cmd);
+      colorLog("\nChoose version for " . $package . ":\n", 'e');
       exec($cmd, $output, $result_code);
       $versions = get_versions($output, 'i');
       $version_index = choose_version($versions); 
@@ -206,6 +212,10 @@ function make_advanced_setup($packages) {
         ":" . $versions[$version_index - 1],
         "--with-all-dependencies"), " 2>&1");
   }
+  // C extension is taken and installed from source code
+  // this is intermediate step and kind of workaround
+  // until extension will be available at PECL
+  // For this reason, version from main is installed
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", ""), " 2>&1");
