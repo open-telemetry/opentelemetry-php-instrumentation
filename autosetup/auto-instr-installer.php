@@ -43,10 +43,9 @@ function get_php_async_client_impl(): array {
   return $json->{"providers"};
 }
 
-// There are 3 preconditions 
+// There are 2 preconditions
 // - installed php engine
 // - installed composer
-// - installed picke
 function check_preconditions() {
 
 }
@@ -89,11 +88,11 @@ function dump_output($output) {
   }
 }
 
-function execute_command(string $cmd) {
+function execute_command(string $cmd, string $options) {
   $output = array();
   $result_code = null;
   colorLog($cmd);
-  exec($cmd . " 2>&1", $output, $result_code);
+  exec($cmd . $options, $output, $result_code);
   if ($result_code > 0) {
     dump_output($output);
     exit($result_code);
@@ -112,35 +111,77 @@ function make_composer_config_command($param, $options) {
   return "composer config " . $param . " " . $options;
 }
 
+function make_composer_show_command($package_name) {
+  return "composer show -a " . $package_name . " -n";
+}
+
 function make_default_setup($dependencies, $packages) {
   execute_command(make_composer_config_command(
     "minimum-stability dev",
-    ""));
+    ""), " 2>&1");
 
     foreach ($dependencies as $dep) {
       execute_command(make_composer_require_command(
         $dep, 
         "", 
-        "--with-all-dependencies"));
+        "--with-all-dependencies"), " 2>&1");
     }
 
     foreach ($packages as $package) {
       execute_command(make_composer_require_command(
         $package, 
         "", 
-        "--with-all-dependencies"));
+        "--with-all-dependencies"), " 2>&1");
     }
     execute_command(make_pickle_install(
       "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
-      "#main", ""));
+      "#main", ""), " 2>&1");
+}
+
+function choose_http_async_impl_provider($providers):int {
+  $counter = 1;
+  foreach ($providers as $provider) {
+    echo($counter . "." . $provider->name . "\n");
+    ++$counter;
+  }
+  echo "\n";
+  $provider_index = 0;
+  do {
+    $provider_index = intval(readline("Choose provider (1-" . count($providers) . "): "));
+  } while ($provider_index == 0 && $provider_index < 1 || $provider_index > count($providers)) ;
+  return $provider_index;
+}
+
+function make_advanced_setup($packages) {
+  $providers = get_php_async_client_impl();
+  echo "\nBelow is a list of http client async providers, you need to choose one:\n\n";
+  $provider_index = choose_http_async_impl_provider($providers);
+  execute_command(make_composer_config_command(
+    "minimum-stability dev",
+    ""), " 2>&1");
+  execute_command(make_composer_require_command(
+    $providers[$provider_index]->name,
+    "",
+    "--with-all-dependencies"), " 2>&1");
+    // TODO handle versions
+    foreach ($packages as $package) {
+      execute_command(make_composer_show_command($package), "");
+      execute_command(make_composer_require_command(
+        $package,
+        "",
+        "--with-all-dependencies"), " 2>&1");
+  }
+  // TODO handle versionsśś
+  execute_command(make_pickle_install(
+    "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
+    "#main", ""), " 2>&1");
+
 }
 
 $mode = check_args($argc, $argv);
+
 if ($mode == "default") {
   make_default_setup($dependencies, $opentelemetry_packages);
 } else {
-  $providers = get_php_async_client_impl();
-  foreach ($providers as $provider) {
-    var_dump($provider->name);
-  }  
+  make_advanced_setup($opentelemetry_packages);
 }
