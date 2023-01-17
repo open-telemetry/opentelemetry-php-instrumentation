@@ -174,7 +174,7 @@ function choose_http_async_impl_provider($providers):int {
   do {
     $provider_index = intval(readline("Choose provider (1-" . count($providers) . "): "));
   } while ($provider_index == 0 && $provider_index < 1 || $provider_index > count($providers)) ;
-  return $provider_index;
+  return $provider_index - 1;
 }
 
 function choose_version($versions):int {
@@ -189,7 +189,7 @@ function choose_version($versions):int {
   do {
     $version_index = intval(readline("Choose version (1-" . count($versions) . "): "));
   } while ($version_index == 0 && $version_index < 1 || $version_index > count($versions)) ;
-  return $version_index;
+  return $version_index - 1;
 
 }
 
@@ -214,7 +214,7 @@ function make_advanced_setup($packages) {
       $version_index = choose_version($versions); 
       execute_command(make_composer_require_command(
         $package,
-        ":" . $versions[$version_index - 1],
+        ":" . $versions[$version_index],
         "--with-all-dependencies"), " 2>&1");
   }
   // C extension is taken and installed from source code
