@@ -98,6 +98,13 @@ function get_php_async_client_impl(): array {
   return $json->{"providers"};
 }
 
+function get_pickle() {
+  $content = file_get_contents("https://github.com/FriendsOfPHP/pickle/releases/latest/download/pickle.phar");
+  $fp = fopen('pickle.phar', 'w');
+  fwrite($fp, $content);
+  fclose($fp);
+}
+
 // There are 2 preconditions
 // - installed php engine
 // - installed composer
@@ -111,10 +118,7 @@ function check_preconditions() {
     colorLog("composer is not installed", 'e');
     exit(-1);
   }
-  if (!command_exists("pickle")) {
-    colorLog("pickle is not installed", 'e');
-    exit(-1);
-  }
+  get_pickle();
 }
 
 function choose_element($elements, $default_index, $command_line):int {
@@ -250,7 +254,7 @@ function make_composer_require_command($package_name, $version, $options) {
 }
 
 function make_pickle_install($repo, $version, $options) {
-  return "pickle install --source " . $repo . $version . " " . $options;
+  return "php pickle.phar install --source " . $repo . $version . " " . $options;
 }
 
 function make_composer_config_command($param, $options) {
@@ -342,8 +346,9 @@ if ($mode == "default") {
   make_default_setup($dependencies, $opentelemetry_packages);
 } else {
   make_advanced_setup($opentelemetry_packages);
-  set_env($otel_traces_exporters,
-          $otel_exporter_otlp_protocols,
-          $otel_metrics_exporters,
-          $otel_php_traces_procesors);
 }
+set_env($otel_traces_exporters,
+        $otel_exporter_otlp_protocols,
+        $otel_metrics_exporters,
+        $otel_php_traces_procesors);
+unlink("pickle.phar");
