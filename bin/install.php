@@ -101,34 +101,38 @@ function check_preconditions() {
 
 }
 
-function choose_element($elements):int {
+function choose_element($elements, $default_index, $command_line):int {
   $counter = 1;
   foreach ($elements as $element) {
     echo($counter . ") " . $element . "\n");
     ++$counter;
   }
   echo "\n";
-  $element_index = 0;
+  $element_index = count($elements) - 1;
   do {
-    $element_index = intval(readline("Choose index (1-" . count($elements) . "): "));
-  } while ($element_index == 0 && $element_index < 1 || $element_index > count($elements)) ;
+    $element_index = intval(readline("Choose " . $command_line . " (1-" . count($elements) . ") [" . $default_index . "] : "));
+    if ($element_index == 0) {
+      $element_index = $default_index;
+      break;
+    }
+  } while ($element_index < 1 || $element_index > count($elements)) ;
   return $element_index - 1;
 }
 
 function choose_otel_traces_exporter($exporters):int {
-  return choose_element($exporters);
+  return choose_element($exporters, 1, "trace exporter");
 }
 
 function choose_otel_exporter_protocol($protocols):int {
-  return choose_element($protocols);
+  return choose_element($protocols, 1, "protocol");
 }
 
 function choose_otel_metrics_exporter($exporters):int {
-  return choose_element($exporters);
+  return choose_element($exporters, 1, "metrics exporter");
 }
 
 function choose_otel_php_traces_processor($traces_processors):int {
-  return choose_element($traces_processors);
+  return choose_element($traces_processors, 1, "traces processor");
 }
 
 function set_env($otel_traces_exporters,
@@ -136,9 +140,15 @@ function set_env($otel_traces_exporters,
                  $otel_metrics_exporters,
                  $otel_php_traces_procesors) {
   $OTEL_PHP_AUTOLOAD_ENABLED = true;
+  $val = "";
   do {
-    $OTEL_PHP_AUTOLOAD_ENABLED = boolval(readline("set OTEL_PHP_AUTOLOAD_ENABLED=[true]: "));
-  } while ($OTEL_PHP_AUTOLOAD_ENABLED == 0);
+    $val = readline("set OTEL_PHP_AUTOLOAD_ENABLED=[true]: ");
+    if ($val == "") {
+      $val = "true";
+      break;
+    }
+  } while ($val != "true" && $val != "false");
+  $OTEL_PHP_AUTOLOAD_ENABLED = boolval($val);
 
   putenv('OTEL_PHP_AUTOLOAD_ENABLED=' . $OTEL_PHP_AUTOLOAD_ENABLED);
   echo "\n";
@@ -159,8 +169,23 @@ function set_env($otel_traces_exporters,
   putenv('OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=' . $otel_exporter_otlp_protocols[$metrics_protocol_index]);
   echo "\n";
 
-  // putenv('OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318');
-  // putenv('OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://localhost:9411/api/v2/spans');
+  $OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+  $val = readline("set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:4318]: ");
+  if ($val == "") {
+    $val = "http://localhost:4318";
+  }
+  $OTEL_EXPORTER_OTLP_ENDPOINT = $val;
+  putenv('OTEL_EXPORTER_OTLP_ENDPOINT=' . $OTEL_EXPORTER_OTLP_ENDPOINT);
+  echo "\n";
+
+  $OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:9411/api/v2/spans";
+  $val = readline("set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:9411/api/v2/spans]: ");
+  if ($val == "") {
+    $val = "http://localhost:9411/api/v2/spans";
+  }
+  $OTEL_EXPORTER_ZIPKIN_ENDPOINT = $val;
+  putenv('OTEL_EXPORTER_ZIPKIN_ENDPOINT=' . $OTEL_EXPORTER_ZIPKIN_ENDPOINT);
+  echo "\n";
 
   $php_traces_procesor_index = choose_otel_php_traces_processor($otel_php_traces_procesors);
   putenv('OTEL_PHP_TRACES_PROCESSOR=' . $otel_php_traces_procesors[$php_traces_procesor_index]);
@@ -258,7 +283,7 @@ function choose_http_async_impl_provider($providers):int {
 }
 
 function choose_version($versions):int {
-  return choose_element($versions);
+  return choose_element($versions, count($versions), "version");
 }
 
 function make_advanced_setup($packages) {
