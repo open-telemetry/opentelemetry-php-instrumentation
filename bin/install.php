@@ -41,6 +41,10 @@ $otel_php_traces_procesors = array(
   "none"
 );
 
+function command_exists($command_name) {
+  return (null === shell_exec("command -v $command_name")) ? false : true;
+}
+
 function colorLog($str, $type = 'i'){
   switch ($type) {
       case 'e': //error
@@ -97,8 +101,20 @@ function get_php_async_client_impl(): array {
 // There are 2 preconditions
 // - installed php engine
 // - installed composer
+// pickle will be installed automatically
 function check_preconditions() {
-
+  if (!command_exists("php")) {
+    colorLog("PHP is not installed", 'e');
+    exit(-1);
+  }
+  if (!command_exists("composer")) {
+    colorLog("composer is not installed", 'e');
+    exit(-1);
+  }
+  if (!command_exists("pickle")) {
+    colorLog("pickle is not installed", 'e');
+    exit(-1);
+  }
 }
 
 function choose_element($elements, $default_index, $command_line):int {
@@ -319,6 +335,7 @@ function make_advanced_setup($packages) {
     "#main", ""), " 2>&1");
 }
 
+check_preconditions();
 $mode = check_args($argc, $argv);
 
 if ($mode == "default") {
