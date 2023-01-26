@@ -97,6 +97,8 @@ function check_preconditions() {
 }
 
 function choose_element($elements, $default_index, $command_line):int {
+  $message = "Choose " . $command_line . " (1-" . count($elements) . ") [" . $default_index . "] : ";
+  $colorMessage = "\033[31m$message \033[0m";
   $counter = 1;
   foreach ($elements as $element) {
     echo($counter . ") " . $element . "\n");
@@ -105,7 +107,7 @@ function choose_element($elements, $default_index, $command_line):int {
   echo "\n";
   $element_index = count($elements) - 1;
   do {
-    $element_index = intval(readline("Choose " . $command_line . " (1-" . count($elements) . ") [" . $default_index . "] : "));
+    $element_index = intval(readline($colorMessage));
     if ($element_index == 0) {
       $element_index = $default_index;
       break;
@@ -185,6 +187,8 @@ function make_default_setup($dependencies, $packages) {
 }
 
 function choose_http_async_impl_provider($providers):int {
+  $message = "Choose provider (1-" . count($providers) . "): ";
+  $colorMessage = "\033[31m$message \033[0m";
   $counter = 1;
   foreach ($providers as $provider) {
     echo($counter . ") " . $provider->name . "\n");
@@ -193,19 +197,21 @@ function choose_http_async_impl_provider($providers):int {
   echo "\n";
   $provider_index = 0;
   do {
-    $provider_index = intval(readline("Choose provider (1-" . count($providers) . "): "));
+    $provider_index = intval(readline($colorMessage));
   } while ($provider_index == 0 && $provider_index < 1 || $provider_index > count($providers)) ;
   return $provider_index - 1;
 }
 
-function choose_version($versions):int {
-  return choose_element($versions, count($versions), "version");
+function choose_version($versions, $package):int {
+  return choose_element($versions, count($versions), "version for " . $package);
 }
 
 function install_package($package):bool {
   $val = "";
+  $message = "Do you want install " . $package . " [Y]es/No: ";
+  $colorMessage = "\033[31m$message \033[0m";
   do {
-    $val = readline("Do you want install " . $package . " [Y]es/No: ");
+    $val = readline($colorMessage);
     if ($val == "") {
       $val = "Yes";
       break;
@@ -238,7 +244,7 @@ function make_advanced_setup($packages) {
       colorLog("\nChoose version for " . $package . ":\n", 'e');
       exec($cmd, $output, $result_code);
       $versions = get_versions($output, 'i');
-      $version_index = choose_version($versions); 
+      $version_index = choose_version($versions, $package);
       execute_command(make_composer_require_command(
         $package,
         ":" . $versions[$version_index],
