@@ -16,31 +16,6 @@ $opentelemetry_packages = array(
   "open-telemetry/opentelemetry-auto-psr18",
 );
 
-$otel_traces_exporters = array(
-  "otlp",
-  "zipkin",
-  "newrelic",
-  "none"
-);
-
-$otel_exporter_otlp_protocols = array(
-  "grpc",
-  "http/protobuf",
-  "http/json"
-);
-
-$otel_metrics_exporters = array(
-  "otlp",
-  "prometheus"
-);
-
-$otel_php_traces_procesors = array(
-  "batch",
-  "simple",
-  "noop",
-  "none"
-);
-
 function command_exists($command_name) {
   return (null === shell_exec("command -v $command_name")) ? false : true;
 }
@@ -137,85 +112,6 @@ function choose_element($elements, $default_index, $command_line):int {
     }
   } while ($element_index < 1 || $element_index > count($elements)) ;
   return $element_index - 1;
-}
-
-function choose_otel_traces_exporter($exporters):int {
-  return choose_element($exporters, 1, "trace exporter");
-}
-
-function choose_otel_exporter_protocol($protocols):int {
-  return choose_element($protocols, 1, "protocol");
-}
-
-function choose_otel_metrics_exporter($exporters):int {
-  return choose_element($exporters, 1, "metrics exporter");
-}
-
-function choose_otel_php_traces_processor($traces_processors):int {
-  return choose_element($traces_processors, 1, "traces processor");
-}
-
-function set_env($otel_traces_exporters,
-                 $otel_exporter_otlp_protocols,
-                 $otel_metrics_exporters,
-                 $otel_php_traces_procesors) {
-  $OTEL_PHP_AUTOLOAD_ENABLED = true;
-  $val = "";
-  do {
-    $val = readline("set OTEL_PHP_AUTOLOAD_ENABLED=[true]: ");
-    if ($val == "") {
-      $val = "true";
-      break;
-    }
-  } while ($val != "true" && $val != "false");
-  $OTEL_PHP_AUTOLOAD_ENABLED = boolval($val);
-
-  putenv('OTEL_PHP_AUTOLOAD_ENABLED=' . $OTEL_PHP_AUTOLOAD_ENABLED);
-  echo "\n";
-
-  $exporter_index = choose_otel_traces_exporter($otel_traces_exporters);
-  putenv('OTEL_TRACES_EXPORTER=' . $otel_traces_exporters[$exporter_index]);
-  echo "\n";
-
-  $protocol_index = choose_otel_exporter_protocol($otel_exporter_otlp_protocols);
-  putenv('OTEL_EXPORTER_OTLP_PROTOCOL=' . $otel_exporter_otlp_protocols[$protocol_index]);
-  echo "\n";
-
-  $metrics_exporter_index = choose_otel_metrics_exporter($otel_metrics_exporters);
-  putenv('OTEL_METRICS_EXPORTER=' . $otel_metrics_exporters[$metrics_exporter_index]);
-  echo "\n";
-
-  $metrics_protocol_index = choose_otel_exporter_protocol($otel_exporter_otlp_protocols);
-  putenv('OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=' . $otel_exporter_otlp_protocols[$metrics_protocol_index]);
-  echo "\n";
-
-  $OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
-  $val = readline("set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:4318]: ");
-  if ($val == "") {
-    $val = "http://localhost:4318";
-  }
-  $OTEL_EXPORTER_OTLP_ENDPOINT = $val;
-  putenv('OTEL_EXPORTER_OTLP_ENDPOINT=' . $OTEL_EXPORTER_OTLP_ENDPOINT);
-  echo "\n";
-
-  $OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:9411/api/v2/spans";
-  $val = readline("set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:9411/api/v2/spans]: ");
-  if ($val == "") {
-    $val = "http://localhost:9411/api/v2/spans";
-  }
-  $OTEL_EXPORTER_ZIPKIN_ENDPOINT = $val;
-  putenv('OTEL_EXPORTER_ZIPKIN_ENDPOINT=' . $OTEL_EXPORTER_ZIPKIN_ENDPOINT);
-  echo "\n";
-
-  $php_traces_procesor_index = choose_otel_php_traces_processor($otel_php_traces_procesors);
-  putenv('OTEL_PHP_TRACES_PROCESSOR=' . $otel_php_traces_procesors[$php_traces_procesor_index]);
-  echo "\n";
-
-  $OTEL_SERVICE_NAME = 'auto';
-  do {
-    $OTEL_SERVICE_NAME = readline("set OTEL_SERVICE_NAME: ");
-  } while ($OTEL_SERVICE_NAME == 0);
-  putenv('OTEL_SERVICE_NAME=' . $OTEL_SERVICE_NAME);
 }
 
 function get_versions($output, $type = 'e'):array {
@@ -347,8 +243,4 @@ if ($mode == "default") {
 } else {
   make_advanced_setup($opentelemetry_packages);
 }
-set_env($otel_traces_exporters,
-        $otel_exporter_otlp_protocols,
-        $otel_metrics_exporters,
-        $otel_php_traces_procesors);
 unlink("pickle.phar");
