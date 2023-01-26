@@ -202,6 +202,21 @@ function choose_version($versions):int {
   return choose_element($versions, count($versions), "version");
 }
 
+function install_package($package):bool {
+  $val = "";
+  do {
+    $val = readline("Do you want install " . $package . " [Y]es/No: ");
+    if ($val == "") {
+      $val = "Yes";
+      break;
+    }
+  } while ($val != "Yes" && $val != "No" && $val != "Y" && $val != "N");
+  if ($val == "Yes" || $val == "Y") {
+    return true;
+  }
+  return false;
+}
+
 function make_advanced_setup($packages) {
   $providers = get_php_async_client_impl();
   colorLog("\nChoose http client async provider:\n", 'e');
@@ -214,6 +229,9 @@ function make_advanced_setup($packages) {
     "",
     "--with-all-dependencies"), " 2>&1");
     foreach ($packages as $package) {
+      if(!install_package($package)) {
+        continue;
+      }
       $output = array();
       $result_code = null;
       $cmd = make_composer_show_command($package);
