@@ -100,6 +100,10 @@ function check_php_version() {
   }
 }
 
+function check_composer_json():bool {
+  return file_exists("composer.json");
+}
+
 // There are 2 preconditions
 // - installed php engine 8 or above
 // - installed composer
@@ -108,6 +112,10 @@ function check_preconditions() {
   check_php_version();
   if (!command_exists("composer")) {
     colorLog("composer is not installed", 'e');
+    exit(-1);
+  }
+  if (!check_composer_json()) {
+    colorLog("project does not contain composer.json", 'e');
     exit(-1);
   }
   get_pickle();

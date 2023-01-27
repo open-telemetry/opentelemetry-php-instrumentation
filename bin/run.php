@@ -1,5 +1,9 @@
 <?php
 
+// This simple CLI script runs sets needed env
+// variables before running php application
+// everything what's needed for auto-instrumentation.
+
 $otel_traces_exporters = array(
   "otlp",
   "zipkin",
@@ -125,5 +129,3 @@ function choose_otel_traces_exporter($exporters):int {
     echo $command . "\n";
     exec($command);
   }
-
-
