@@ -41,13 +41,13 @@ function colorLog($str, $type = 'i'){
 }
 
 function usage() {
-  colorLog ("one-command-setup.php is a script that will help you", 'e');
+  colorLog ("install.php is a script that will help you", 'e');
   colorLog ("install and setup auto-instrumentation for your project.", 'e');
-  colorLog ("It works in two modes default and advanced.", 'e');
-  colorLog ("In default mode it will install everything using some defaults and latest", 'e');
+  colorLog ("It works in two modes basic and advanced.", 'e');
+  colorLog ("In basic mode it will install everything using some defaults and latest", 'e');
   colorLog ("development versions. Advanced will ask you to choose needed packages and versions.\n", 'e');
 
-  colorLog ("usage : php one-command-setup.php [default | advanced]\n", 'e');
+  colorLog ("usage : php install.php [basic | advanced]\n", 'e');
 }
 
 function check_args($argc, $argv):string {
@@ -55,7 +55,7 @@ function check_args($argc, $argv):string {
     usage();
     exit(1);
   }
-  if ($argv[1] != "default" && $argv[1] != "advanced") {
+  if ($argv[1] != "basic" && $argv[1] != "advanced") {
     usage();
     exit(1);
   }
@@ -80,20 +80,109 @@ function get_pickle() {
   fclose($fp);
 }
 
+function check_php_version() {
+  $output = array();
+  $result_code = null;
+  $cmd = "php -i";
+  $ini_file_path = "";
+  exec($cmd, $output, $result_code);
+  $php_version = "";
+  foreach($output as $entry) {
+    if (!str_starts_with($entry, "PHP Version => ")) {
+      continue;
+    }
+    $php_version = substr($entry, strlen("PHP Version => "));
+    break;
+  }
+  if (!str_starts_with($php_version, "8.")) {
+    colorLog("PHP 8 or higher is required", 'e');
+    exit(-1);
+  }
+}
+
 // There are 2 preconditions
-// - installed php engine
+// - installed php engine 8 or above
 // - installed composer
 // pickle will be installed automatically
 function check_preconditions() {
-  if (!command_exists("php")) {
-    colorLog("PHP is not installed", 'e');
-    exit(-1);
-  }
+  check_php_version();
   if (!command_exists("composer")) {
     colorLog("composer is not installed", 'e');
     exit(-1);
   }
   get_pickle();
+}
+
+function is_otel_module_exists():bool {
+  $output = array();
+  $result_code = null;
+  $cmd = "php -m";
+  exec($cmd, $output, $result_code);
+  if(!in_array("otel_instrumentation", $output)) {
+    return false;
+  }
+  return true;
+}
+
+function update_ini_file() {
+  $output = array();
+  $result_code = null;
+  $cmd = "php -i";
+  $ini_file_path = "";
+  exec($cmd, $output, $result_code);
+  foreach($output as $entry) {
+    if (!str_starts_with($entry, "Loaded Configuration File => ")) {
+      continue;
+    }
+    $ini_file_path = substr($entry, strlen("Loaded Configuration File => "));
+    break;
+  }
+  $extension_exists = false;
+  if ($ini_file = fopen($ini_file_path, "r")) {
+    while(!feof($ini_file)) {
+        $entry = fgets($ini_file);
+        if (str_starts_with($entry, "extension=otel_instrumentation.so")) {
+          $extension_exists = true;
+        }
+    }
+    fclose($ini_file);
+  }
+  if (!$extension_exists) {
+    file_put_contents($ini_file_path, "extension=otel_instrumentation.so", FILE_APPEND);
+  }
+}
+
+// PHP otel extension is installed
+// and added to ini file
+function check_postconditions() {
+  {
+    $output = array();
+    $result_code = null;
+    $cmd = "php -i";
+    exec($cmd, $output, $result_code);
+    $extension_file = "";
+    if (PHP_OS_FAMILY === "Windows") {
+      $extension_file = "\otel_instrumentation.dll";
+    } else {
+      $extension_file = "/otel_instrumentation.so";
+    }
+    foreach($output as $entry) {
+      if (!str_starts_with($entry, "extension_dir => ")) {
+        continue;
+      }
+      $extension_dir_entry = substr($entry, strlen("extension_dir => "));
+      $extension_dirs = explode(" ", $extension_dir_entry);
+      if (!file_exists($extension_dirs[0] . $extension_file)) {
+        colorLog("\nERROR : otel_instrumentation has not been installed correcly", 'e');
+        exit(-1);
+      }
+    }
+  }
+  if (!is_otel_module_exists()) {
+    colorLog("\nERROR : otel_instrumentation extension has not been added to ini file", 'e');
+    exit(-1);
+  }
+  colorLog("\notel_instrumentation extension has been successfully installed", 's');
 }
 
 function choose_element($elements, $default_index, $command_line):int {
@@ -163,7 +252,12 @@ function make_composer_show_command($package_name) {
   return "composer show -a " . $package_name . " -n";
 }
 
-function make_default_setup($dependencies, $packages) {
+function make_basic_setup($dependencies, $packages) {
+  execute_command(make_pickle_install(
+    "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
+    "#main", ""), " 2>&1");
+  update_ini_file();
+
   execute_command(make_composer_config_command(
     "minimum-stability dev",
     ""), " 2>&1");
@@ -181,9 +275,6 @@ function make_default_setup($dependencies, $packages) {
         "", 
         "--with-all-dependencies"), " 2>&1");
     }
-    execute_command(make_pickle_install(
-      "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
-      "#main", ""), " 2>&1");
 }
 
 function choose_http_async_impl_provider($providers):int {
@@ -206,9 +297,8 @@ function choose_version($versions, $package):int {
   return choose_element($versions, count($versions), "version for " . $package);
 }
 
-function install_package($package):bool {
+function ask_for($message):bool {
   $val = "";
-  $message = "Do you want install " . $package . " [Y]es/No: ";
   $colorMessage = "\033[31m$message \033[0m";
   do {
     $val = readline($colorMessage);
@@ -223,7 +313,24 @@ function install_package($package):bool {
   return false;
 }
 
+function install_package($package):bool {
+  $message = "Do you want install " . $package . " [Y]es/No: ";
+  return ask_for($message);
+}
+
 function make_advanced_setup($packages) {
+  // C extension is taken and installed from source code
+  // this is intermediate step and kind of workaround
+  // until extension will be available at PECL
+  // For this reason, version from main is installed
+  execute_command(make_pickle_install(
+    "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
+    "#main", ""), " 2>&1");
+  $message = "Do you want add extension to php.ini file [Y]es/No: ";
+  if (ask_for($message)) {
+    update_ini_file();
+  }
+
   $providers = get_php_async_client_impl();
   colorLog("\nChoose http client async provider:\n", 'e');
   $provider_index = choose_http_async_impl_provider($providers);
@@ -250,21 +357,15 @@ function make_advanced_setup($packages) {
         ":" . $versions[$version_index],
         "--with-all-dependencies"), " 2>&1");
   }
-  // C extension is taken and installed from source code
-  // this is intermediate step and kind of workaround
-  // until extension will be available at PECL
-  // For this reason, version from main is installed
-  execute_command(make_pickle_install(
-    "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
-    "#main", ""), " 2>&1");
 }
 
 check_preconditions();
 $mode = check_args($argc, $argv);
 
-if ($mode == "default") {
-  make_default_setup($dependencies, $opentelemetry_packages);
+if ($mode == "basic") {
+  make_basic_setup($dependencies, $opentelemetry_packages);
 } else {
   make_advanced_setup($opentelemetry_packages);
 }
 unlink("pickle.phar");
+check_postconditions();
