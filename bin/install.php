@@ -17,7 +17,11 @@ $opentelemetry_packages = array(
 );
 
 function command_exists($command_name) {
-  return (null === shell_exec("command -v $command_name")) ? false : true;
+  $os_cmd = 'command -v';
+  if (PHP_OS_FAMILY === "Windows") {
+    $os_cmd = 'where';
+  }
+  return (null === shell_exec("$os_cmd $command_name")) ? false : true;
 }
 
 function colorLog($str, $type = 'i'){
