@@ -280,12 +280,11 @@ function make_basic_setup($dependencies, $packages) {
         "", 
         "--with-all-dependencies"), " 2>&1");
     }
-
     foreach ($packages as $package) {
       execute_command(make_composer_require_command(
         $package, 
-        "", 
-        "--with-all-dependencies"), " 2>&1");
+        " ^1.0",
+        ""), " 2>&1");
     }
 }
 
