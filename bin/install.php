@@ -267,7 +267,7 @@ function make_composer_show_command($package_name) {
 function make_basic_setup($dependencies, $packages) {
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
-    "#main", ""), " 2>&1");
+    "#main", " -n"), " 2>&1");
   update_ini_file();
 
   execute_command(make_composer_config_command(
@@ -336,7 +336,7 @@ function make_advanced_setup($packages) {
   // For this reason, version from main is installed
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
-    "#main", ""), " 2>&1");
+    "#main", " -n"), " 2>&1");
   $message = "Do you want add extension to php.ini file [Y]es/No: ";
   if (ask_for($message)) {
     update_ini_file();
