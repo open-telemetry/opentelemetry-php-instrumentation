@@ -305,7 +305,7 @@ function choose_http_async_impl_provider($providers):int {
 }
 
 function choose_version($versions, $package):int {
-  return choose_element($versions, count($versions), "version for " . $package);
+  return choose_element($versions, 1, "version for " . $package);
 }
 
 function ask_for($message):bool {
