@@ -124,10 +124,7 @@ function check_preconditions() {
 }
 
 function is_otel_module_exists():bool {
-  $output = array();
-  $result_code = null;
-  $cmd = "php -m";
-  exec($cmd, $output, $result_code);
+  $output = get_loaded_extensions();
   if(!in_array("otel_instrumentation", $output)) {
     return false;
   }
