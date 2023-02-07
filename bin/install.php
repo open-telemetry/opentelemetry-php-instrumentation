@@ -120,6 +120,10 @@ function check_preconditions() {
     colorLog("composer is not installed", 'e');
     exit(-1);
   }
+  if (!command_exists("phpize")) {
+    colorLog("php-sdk is not installed", 'e');
+    exit(-1);
+  }
   if (!check_composer_json()) {
     colorLog("project does not contain composer.json", 'e');
     exit(-1);
