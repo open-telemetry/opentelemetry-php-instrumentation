@@ -155,18 +155,25 @@ function update_ini_file() {
     $ini_file_path = substr($entry, strlen("Loaded Configuration File => "));
     break;
   }
+
+  $extension_in_ini = "";
+  if (PHP_OS_FAMILY === "Windows") {
+    $extension_in_ini = "extension=php_otel_instrumentation.dll";
+  } else {
+    $extension_in_ini = "extension=otel_instrumentation.so";
+  }
   $extension_exists = false;
   if ($ini_file = fopen($ini_file_path, "r")) {
     while(!feof($ini_file)) {
         $entry = fgets($ini_file);
-        if (str_starts_with($entry, "extension=otel_instrumentation.so")) {
+        if (str_starts_with($entry, $extension_in_ini)) {
           $extension_exists = true;
         }
     }
     fclose($ini_file);
   }
   if (!$extension_exists) {
-    file_put_contents($ini_file_path, "extension=otel_instrumentation.so", FILE_APPEND);
+    file_put_contents($ini_file_path, $extension_in_ini, FILE_APPEND);
   }
 }
 
@@ -180,7 +187,7 @@ function check_postconditions() {
     exec($cmd, $output, $result_code);
     $extension_file = "";
     if (PHP_OS_FAMILY === "Windows") {
-      $extension_file = "\otel_instrumentation.dll";
+      $extension_file = "\php_otel_instrumentation.dll";
     } else {
       $extension_file = "/otel_instrumentation.so";
     }
@@ -190,6 +197,7 @@ function check_postconditions() {
       }
       $extension_dir_entry = substr($entry, strlen("extension_dir => "));
       $extension_dirs = explode(" ", $extension_dir_entry);
+      // TODO does not work with relative paths
       if (!file_exists($extension_dirs[0] . $extension_file)) {
         colorLog("\nERROR : otel_instrumentation has not been installed correcly", 'e');
         exit(-1);
