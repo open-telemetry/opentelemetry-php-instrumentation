@@ -102,9 +102,11 @@ function check_composer_json():bool {
   return file_exists("composer.json");
 }
 
-// There are 2 preconditions
+// There are few preconditions
 // - installed php engine 8 or above
 // - installed composer
+// - c compiler
+// - php sdk
 // pickle will be installed automatically
 function check_preconditions() {
   check_php_version();
