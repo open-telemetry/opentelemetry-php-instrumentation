@@ -62,11 +62,11 @@ function usage() {
 function check_args($argc, $argv):string {
   if ($argc != 2) {
     usage();
-    exit(1);
+    exit(-1);
   }
   if ($argv[1] != "basic" && $argv[1] != "advanced") {
     usage();
-    exit(1);
+    exit(-1);
   }
   return $argv[1];
 }
@@ -137,7 +137,10 @@ function check_preconditions() {
 }
 
 function is_otel_module_exists():bool {
-  $output = get_loaded_extensions();
+  $output = array();
+  $result_code = null;
+  $cmd = "php -m";
+  exec($cmd, $output, $result_code);
   if(!in_array("otel_instrumentation", $output)) {
     return false;
   }
