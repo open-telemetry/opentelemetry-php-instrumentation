@@ -112,6 +112,17 @@ function check_preconditions() {
     colorLog("composer is not installed", 'e');
     exit(-1);
   }
+  if (PHP_OS_FAMILY === "Windows") {
+    if (!command_exists("cl") && !command_exists("link")) {
+      colorLog("c compiler is not installed or not available", 'e');
+      exit(-1);
+    }
+  } else {
+    if (!command_exists("gcc --version") || !command_exists("clang --version")) {
+      colorLog("c compiler is not installed or not available", 'e');
+      exit(-1);
+    }
+  }
   if (!command_exists("phpize")) {
     colorLog("php-sdk is not installed", 'e');
     exit(-1);
@@ -173,13 +184,16 @@ function update_ini_file(array $output) {
 
 // PHP otel extension is installed
 // and added to ini file
-function check_postconditions(array $output) {
-  {
+function check_postconditions(array $output):bool {
+{
     $extension_file = "";
     if (PHP_OS_FAMILY === "Windows") {
       $extension_file = "\php_otel_instrumentation.dll";
     } else {
       $extension_file = "/otel_instrumentation.so";
+    }
+    if (count($output) == 0) {
+      return false;
     }
     foreach($output as $entry) {
       if (!str_starts_with($entry, "extension_dir => ")) {
@@ -190,15 +204,15 @@ function check_postconditions(array $output) {
       // TODO does not work with relative paths
       if (!file_exists($extension_dirs[0] . $extension_file)) {
         colorLog("\nERROR : otel_instrumentation has not been installed correcly", 'e');
-        exit(-1);
+        return false;
       }
     }
   }
   if (!is_otel_module_exists()) {
     colorLog("\nERROR : otel_instrumentation extension has not been added to ini file", 'e');
-    exit(-1);
+    false;
   }
-  colorLog("\notel_instrumentation extension has been successfully installed", 's');
+  return true;
 }
 
 function choose_element($elements, $default_index, $command_line):int {
@@ -340,10 +354,11 @@ function install_package($package):bool {
 }
 
 function make_advanced_setup($core_packages, $auto_packages) {
-  // C extension is taken and installed from source code
+  // C extension is taken and installed from source code (github)
   // this is intermediate step and kind of workaround
   // until extension will be available at PECL
-  // For this reason, version from main is installed
+  // (which for Unix like systems also means from source but via PECL not github)
+  // For this reason, version from main is always installed
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", " -n"), " 2>&1");
@@ -394,6 +409,10 @@ function make_advanced_setup($core_packages, $auto_packages) {
 
 }
 
+if (!isset($argc)) {
+  return;
+}
+
 check_preconditions();
 $mode = check_args($argc, $argv);
 
@@ -403,4 +422,6 @@ if ($mode == "basic") {
   make_advanced_setup($opentelemetry_core_packages, $opentelemetry_auto_packages);
 }
 unlink("pickle.phar");
-check_postconditions(get_php_info_output());
+if (check_postconditions(get_php_info_output())) {
+  colorLog("\notel_instrumentation extension has been successfully installed", 's');
+}
