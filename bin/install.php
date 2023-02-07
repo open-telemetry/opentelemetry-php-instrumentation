@@ -7,10 +7,15 @@ $dependencies = array(
   "php-http/guzzle7-adapter"
 );
 
-$opentelemetry_packages = array(
+// core packages are always installed
+$opentelemetry_core_packages = array(
   "open-telemetry/sdk", 
   "open-telemetry/api",
   "open-telemetry/sdk-contrib",
+);
+
+// TODO, this list should be taken through packagist API
+$opentelemetry_auto_packages = array(
   "open-telemetry/opentelemetry-auto-slim",
   "open-telemetry/opentelemetry-auto-psr15",
   "open-telemetry/opentelemetry-auto-psr18",
@@ -278,7 +283,7 @@ function make_composer_show_command($package_name) {
   return "composer show -a " . $package_name . " -n";
 }
 
-function make_basic_setup($dependencies, $packages) {
+function make_basic_setup($dependencies, $core_packages, $auto_packages) {
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", " -n"), " 2>&1");
@@ -294,13 +299,19 @@ function make_basic_setup($dependencies, $packages) {
         "", 
         "--with-all-dependencies"), " 2>&1");
     }
-    foreach ($packages as $package) {
+    foreach ($core_packages as $package) {
       execute_command(make_composer_require_command(
-        $package, 
+        $package,
         " ^1.0",
         ""), " 2>&1");
     }
-}
+    foreach ($auto_packages as $package) {
+      execute_command(make_composer_require_command(
+        $package,
+        " ^1.0",
+        ""), " 2>&1");
+    }
+  }
 
 function choose_http_async_impl_provider($providers):int {
   $message = "Choose provider (1-" . count($providers) . "): ";
@@ -343,7 +354,7 @@ function install_package($package):bool {
   return ask_for($message);
 }
 
-function make_advanced_setup($packages) {
+function make_advanced_setup($core_packages, $auto_packages) {
   // C extension is taken and installed from source code
   // this is intermediate step and kind of workaround
   // until extension will be available at PECL
@@ -366,7 +377,20 @@ function make_advanced_setup($packages) {
     $providers[$provider_index]->name,
     "",
     "--with-all-dependencies"), " 2>&1");
-    foreach ($packages as $package) {
+    foreach ($core_packages as $package) {
+      $output = array();
+      $result_code = null;
+      $cmd = make_composer_show_command($package);
+      colorLog("\nChoose version for " . $package . ":\n", 'e');
+      exec($cmd, $output, $result_code);
+      $versions = get_versions($output, 'i');
+      $version_index = choose_version($versions, $package);
+      execute_command(make_composer_require_command(
+        $package,
+        ":" . $versions[$version_index],
+        "--with-all-dependencies"), " 2>&1");
+  }
+    foreach ($auto_packages as $package) {
       if(!install_package($package)) {
         continue;
       }
@@ -382,15 +406,16 @@ function make_advanced_setup($packages) {
         ":" . $versions[$version_index],
         "--with-all-dependencies"), " 2>&1");
   }
+
 }
 
 check_preconditions();
 $mode = check_args($argc, $argv);
 
 if ($mode == "basic") {
-  make_basic_setup($dependencies, $opentelemetry_packages);
+  make_basic_setup($dependencies, $opentelemetry_core_packages, $opentelemetry_auto_packages);
 } else {
-  make_advanced_setup($opentelemetry_packages);
+  make_advanced_setup($opentelemetry_core_packages, $opentelemetry_auto_packages);
 }
 unlink("pickle.phar");
 check_postconditions();
