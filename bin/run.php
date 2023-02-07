@@ -26,22 +26,24 @@ $otel_php_traces_procesors = array(
 );
 
 function choose_element($elements, $default_index, $command_line):int {
-    $counter = 1;
-    foreach ($elements as $element) {
-      echo($counter . ") " . $element . "\n");
-      ++$counter;
-    }
-    echo "\n";
-    $element_index = count($elements) - 1;
-    do {
-      $element_index = intval(readline("Choose " . $command_line . " (1-" . count($elements) . ") [" . $default_index . "] : "));
-      if ($element_index == 0) {
-        $element_index = $default_index;
-        break;
-      }
-    } while ($element_index < 1 || $element_index > count($elements)) ;
-    return $element_index - 1;
+  $message = "Choose " . $command_line . " (1-" . count($elements) . ") [" . $default_index . "] : ";
+  $colorMessage = "\033[31m$message \033[0m";
+  $counter = 1;
+  foreach ($elements as $element) {
+    echo($counter . ") " . $element . "\n");
+    ++$counter;
   }
+  echo "\n";
+  $element_index = count($elements) - 1;
+  do {
+    $element_index = intval(readline($colorMessage));
+    if ($element_index == 0) {
+      $element_index = $default_index;
+      break;
+    }
+  } while ($element_index < 1 || $element_index > count($elements)) ;
+  return $element_index - 1;
+}
 
 function choose_otel_traces_exporter($exporters):int {
     return choose_element($exporters, 1, "trace exporter");
@@ -63,9 +65,11 @@ function choose_otel_traces_exporter($exporters):int {
                    $otel_exporter_otlp_protocols,
                    $otel_php_traces_procesors) {
     $OTEL_PHP_AUTOLOAD_ENABLED = true;
+    $message = "set OTEL_PHP_AUTOLOAD_ENABLED=[true]: ";
+    $colorMessage = "\033[31m$message \033[0m";
     $val = "";
     do {
-      $val = readline("set OTEL_PHP_AUTOLOAD_ENABLED=[true]: ");
+      $val = readline($colorMessage);
       if ($val == "") {
         $val = "true";
         break;
@@ -83,7 +87,10 @@ function choose_otel_traces_exporter($exporters):int {
     // echo "\n";
   
     $OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
-    $val = readline("set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:4318]: ");
+    $message = "set OTEL_EXPORTER_OTLP_ENDPOINT=[http://localhost:4318]: ";
+    $colorMessage = "\033[31m$message \033[0m";
+
+    $val = readline($colorMessage);
     if ($val == "") {
       $val = "http://localhost:4318";
     }
@@ -91,8 +98,10 @@ function choose_otel_traces_exporter($exporters):int {
     putenv('OTEL_EXPORTER_OTLP_ENDPOINT=' . $OTEL_EXPORTER_OTLP_ENDPOINT);
     echo "\n";
   
+    $message = "set OTEL_EXPORTER_ZIPKIN_ENDPOINT=[http://localhost:9411/api/v2/spans]: ";
+    $colorMessage = "\033[31m$message \033[0m";
     $OTEL_EXPORTER_ZIPKIN_ENDPOINT = "http://localhost:9411/api/v2/spans";
-    $val = readline("set OTEL_EXPORTER_ZIPKIN_ENDPOINT=[http://localhost:9411/api/v2/spans]: ");
+    $val = readline($colorMessage);
     if ($val == "") {
       $val = "http://localhost:9411/api/v2/spans";
     }
@@ -105,7 +114,10 @@ function choose_otel_traces_exporter($exporters):int {
     echo "\n";
   
     $OTEL_SERVICE_NAME = "auto";
-    $val = readline("set OTEL_SERVICE_NAME: ");
+    $message = "set OTEL_SERVICE_NAME: ";
+    $colorMessage = "\033[31m$message \033[0m";
+
+    $val = readline($colorMessage);
     if ($val == "") {
       $val = "auto";
     } 
