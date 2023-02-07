@@ -92,20 +92,7 @@ function get_pickle() {
 }
 
 function check_php_version() {
-  $output = array();
-  $result_code = null;
-  $cmd = "php -i";
-  $ini_file_path = "";
-  exec($cmd, $output, $result_code);
-  $php_version = "";
-  foreach($output as $entry) {
-    if (!str_starts_with($entry, "PHP Version => ")) {
-      continue;
-    }
-    $php_version = substr($entry, strlen("PHP Version => "));
-    break;
-  }
-  if (!str_starts_with($php_version, "8.")) {
+  if (version_compare(phpversion(), '8.0.0', '<')) {
     colorLog("PHP 8 or higher is required", 'e');
     exit(-1);
   }
