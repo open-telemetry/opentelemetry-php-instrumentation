@@ -3,11 +3,16 @@
 // This simple CLI script installs and setup
 // everything what's needed for auto-instrumentation.
 
+// default http async implementation
+// in basic mode
 $dependencies = array(
   "php-http/guzzle7-adapter"
 );
 
 // core packages are always installed
+// it's possible to get them via packagist API
+// however there is no way at the moment
+// to distinguish core packages from others
 $opentelemetry_core_packages = array(
   "open-telemetry/sdk", 
   "open-telemetry/api",
