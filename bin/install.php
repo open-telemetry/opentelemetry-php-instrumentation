@@ -131,12 +131,17 @@ function is_otel_module_exists():bool {
   return true;
 }
 
-function update_ini_file() {
+function get_php_info_output():array
+{
   $output = array();
   $result_code = null;
   $cmd = "php -i";
   $ini_file_path = "";
   exec($cmd, $output, $result_code);
+  return $output;
+}
+
+function update_ini_file(array $output) {
   foreach($output as $entry) {
     if (!str_starts_with($entry, "Loaded Configuration File => ")) {
       continue;
@@ -168,12 +173,8 @@ function update_ini_file() {
 
 // PHP otel extension is installed
 // and added to ini file
-function check_postconditions() {
+function check_postconditions(array $output) {
   {
-    $output = array();
-    $result_code = null;
-    $cmd = "php -i";
-    exec($cmd, $output, $result_code);
     $extension_file = "";
     if (PHP_OS_FAMILY === "Windows") {
       $extension_file = "\php_otel_instrumentation.dll";
@@ -271,7 +272,7 @@ function make_basic_setup($dependencies, $core_packages, $auto_packages) {
   execute_command(make_pickle_install(
     "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git",
     "#main", " -n"), " 2>&1");
-  update_ini_file();
+  update_ini_file(get_php_info_output());
 
   execute_command(make_composer_config_command(
     "minimum-stability dev",
@@ -348,7 +349,7 @@ function make_advanced_setup($core_packages, $auto_packages) {
     "#main", " -n"), " 2>&1");
   $message = "Do you want add extension to php.ini file [Y]es/No: ";
   if (ask_for($message)) {
-    update_ini_file();
+    update_ini_file(get_php_info_output());
   }
 
   $providers = get_php_async_client_impl();
@@ -402,4 +403,4 @@ if ($mode == "basic") {
   make_advanced_setup($opentelemetry_core_packages, $opentelemetry_auto_packages);
 }
 unlink("pickle.phar");
-check_postconditions();
+check_postconditions(get_php_info_output());
