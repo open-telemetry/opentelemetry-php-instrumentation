@@ -19,6 +19,8 @@ $opentelemetry_auto_packages = array(
   "open-telemetry/opentelemetry-auto-slim",
   "open-telemetry/opentelemetry-auto-psr15",
   "open-telemetry/opentelemetry-auto-psr18",
+  "open-telemetry/opentelemetry-auto-wordpress",
+  "open-telemetry/opentelemetry-auto-pdo",
 );
 
 function command_exists($command_name) {
@@ -312,7 +314,7 @@ function make_basic_setup($dependencies, $core_packages, $auto_packages) {
     foreach ($auto_packages as $package) {
       execute_command(make_composer_require_command(
         $package,
-        " ^1.0",
+        " ",
         ""), " 2>&1");
     }
   }
