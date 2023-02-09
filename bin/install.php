@@ -122,6 +122,8 @@ function check_preconditions() {
     exit(-1);
   }
   if (PHP_OS_FAMILY === "Windows") {
+    colorLog("windows is not supported yet", 'e');
+    exit(-1);
     if (!command_exists("cl") && !command_exists("link")) {
       colorLog("c compiler is not installed or not available", 'e');
       exit(-1);
