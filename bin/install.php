@@ -306,6 +306,10 @@ function make_basic_setup($dependencies, $core_packages, $auto_packages) {
     "minimum-stability dev",
     ""), " 2>&1");
 
+  execute_command(make_composer_config_command(
+    "--no-plugins allow-plugins.php-http/discovery false",
+    ""), " 2>&1");
+
     foreach ($dependencies as $dep) {
       execute_command(make_composer_require_command(
         $dep, 
@@ -387,6 +391,11 @@ function make_advanced_setup($core_packages, $auto_packages) {
   execute_command(make_composer_config_command(
     "minimum-stability dev",
     ""), " 2>&1");
+
+  execute_command(make_composer_config_command(
+    "--no-plugins allow-plugins.php-http/discovery false",
+    ""), " 2>&1");
+
   execute_command(make_composer_require_command(
     $providers[$provider_index]->name,
     "",
