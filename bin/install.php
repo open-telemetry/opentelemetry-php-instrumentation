@@ -314,18 +314,18 @@ function make_basic_setup($dependencies, $core_packages, $auto_packages) {
       execute_command(make_composer_require_command(
         $dep, 
         "", 
-        "--with-all-dependencies"), " 2>&1");
+        "--with-all-dependencies -n"), " 2>&1");
     }
     foreach ($core_packages as $package) {
       execute_command(make_composer_require_command(
         $package,
-        " ^1.0",
+        " ^1.0 -n",
         ""), " 2>&1");
     }
     foreach ($auto_packages as $package) {
       execute_command(make_composer_require_command(
         $package,
-        " ",
+        " -n",
         ""), " 2>&1");
     }
   }
@@ -399,7 +399,7 @@ function make_advanced_setup($core_packages, $auto_packages) {
   execute_command(make_composer_require_command(
     $providers[$provider_index]->name,
     "",
-    "--with-all-dependencies"), " 2>&1");
+    "--with-all-dependencies -n"), " 2>&1");
     foreach ($core_packages as $package) {
       $output = array();
       $result_code = null;
@@ -411,7 +411,7 @@ function make_advanced_setup($core_packages, $auto_packages) {
       execute_command(make_composer_require_command(
         $package,
         ":" . $versions[$version_index],
-        "--with-all-dependencies"), " 2>&1");
+        "--with-all-dependencies -n"), " 2>&1");
   }
     foreach ($auto_packages as $package) {
       if(!install_package($package)) {
@@ -427,7 +427,7 @@ function make_advanced_setup($core_packages, $auto_packages) {
       execute_command(make_composer_require_command(
         $package,
         ":" . $versions[$version_index],
-        "--with-all-dependencies"), " 2>&1");
+        "--with-all-dependencies -n"), " 2>&1");
   }
 
 }
