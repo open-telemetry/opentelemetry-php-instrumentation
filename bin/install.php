@@ -26,6 +26,8 @@ $opentelemetry_auto_packages = array(
   "open-telemetry/opentelemetry-auto-psr18",
   "open-telemetry/opentelemetry-auto-wordpress",
   "open-telemetry/opentelemetry-auto-pdo",
+  "open-telemetry/opentelemetry-auto-symfony",
+  "open-telemetry/opentelemetry-auto-laravel",
 );
 
 function command_exists($command_name) {
