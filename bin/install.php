@@ -19,17 +19,6 @@ $opentelemetry_core_packages = array(
   "open-telemetry/sdk-contrib",
 );
 
-// TODO, this list should be taken through packagist API
-$opentelemetry_auto_packages = array(
-  "open-telemetry/opentelemetry-auto-slim",
-  "open-telemetry/opentelemetry-auto-psr15",
-  "open-telemetry/opentelemetry-auto-psr18",
-  "open-telemetry/opentelemetry-auto-wordpress",
-  "open-telemetry/opentelemetry-auto-pdo",
-  "open-telemetry/opentelemetry-auto-symfony",
-  "open-telemetry/opentelemetry-auto-laravel",
-);
-
 function command_exists($command_name) {
   $os_cmd = 'command -v';
   if (PHP_OS_FAMILY === "Windows") {
@@ -78,6 +67,24 @@ function check_args($argc, $argv):string {
     exit(-1);
   }
   return $argv[1];
+}
+
+function get_auto_packages(): array {
+  $auto_packages = "https://packagist.org/search.json?q=opentelemetry-auto";
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_URL, $auto_packages);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+  $output = curl_exec($ch);
+  curl_close($ch);
+  $json = json_decode($output);
+  $results = $json->{"results"};
+  $opentelemetry_auto_packages = array();
+  foreach ($results as $package) {
+    array_push($opentelemetry_auto_packages, $package->name);
+  }
+  return $opentelemetry_auto_packages;
 }
 
 function get_php_async_client_impl(): array {
@@ -440,6 +447,8 @@ if (!isset($argc)) {
 
 check_preconditions();
 $mode = check_args($argc, $argv);
+
+$opentelemetry_auto_packages = get_auto_packages();
 
 if ($mode == "basic") {
   make_basic_setup($dependencies, $opentelemetry_core_packages, $opentelemetry_auto_packages);
