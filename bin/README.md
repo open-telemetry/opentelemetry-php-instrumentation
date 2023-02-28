@@ -17,6 +17,6 @@ To generate application, we follow steps described here: https://www.slimframewo
 ```bash
     composer create-project slim/slim-skeleton:dev-master slimauto
     cd slimauto
-    php [path to opentelemetry-php-instrumentation]\bin\install.sh basic
-    php [path to opentelemetry-php-instrumentation]\bin\run.sh php -S localhost:8080 -t public public/index.php
+    php [path to opentelemetry-php-instrumentation]\bin\install.php basic
+    php [path to opentelemetry-php-instrumentation]\bin\run.php php -S localhost:8080 -t public public/index.php
 ```
