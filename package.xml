@@ -25,7 +25,7 @@
         <release>beta</release>
         <api>stable</api>
     </stability>
-    <license uri="https://opensource.org/license/apache-2-0/">Apache 2.0</license>
+    <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
     <notes>
         * See https://github.com/open-telemetry/opentelemetry-php and https://github.com/open-telemetry/opentelemetry-php-instrumentation
     </notes>
@@ -39,6 +39,7 @@
             <file baseinstalldir="/" name="otel_observer.c" role="src"/>
             <file baseinstalldir="/" name="otel_observer.h" role="src"/>
             <file baseinstalldir="/" name="php_otel_instrumentation.h" role="src"/>
+            <file name="LICENSE" role="doc"/>
         </dir>
     </contents>
     <dependencies>
