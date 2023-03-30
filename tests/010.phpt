@@ -1,7 +1,7 @@
 --TEST--
 Check if hook can modify return value
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', null, fn(): int => 17);

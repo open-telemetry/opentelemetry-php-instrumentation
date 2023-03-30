@@ -1,7 +1,7 @@
 --TEST--
 Check if hook receives exception
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(

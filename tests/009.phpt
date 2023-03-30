@@ -1,7 +1,7 @@
 --TEST--
 Check if hook can modify not provided arguments
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', fn() => [1 => 'b']);

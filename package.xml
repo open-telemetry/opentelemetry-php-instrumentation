@@ -33,12 +33,12 @@
         <dir baseinstalldir="/" name="/">
             <file baseinstalldir="/" name="config.m4" role="src"/>
             <file baseinstalldir="/" name="config.w32" role="src"/>
-            <file baseinstalldir="/" name="otel_instrumentation.c" role="src"/>
-            <file baseinstalldir="/" name="otel_instrumentation.stub.php" role="src"/>
-            <file baseinstalldir="/" name="otel_instrumentation_arginfo.h" role="src"/>
+            <file baseinstalldir="/" name="opentelemetry.c" role="src"/>
+            <file baseinstalldir="/" name="opentelemetry.stub.php" role="src"/>
+            <file baseinstalldir="/" name="opentelemetry_arginfo.h" role="src"/>
             <file baseinstalldir="/" name="otel_observer.c" role="src"/>
             <file baseinstalldir="/" name="otel_observer.h" role="src"/>
-            <file baseinstalldir="/" name="php_otel_instrumentation.h" role="src"/>
+            <file baseinstalldir="/" name="php_opentelemetry.h" role="src"/>
             <file name="LICENSE" role="doc"/>
             <file name="DEVELOPMENT.md" role="doc"/>
             <file name="README.md" role="doc"/>

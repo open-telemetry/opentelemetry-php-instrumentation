@@ -2,7 +2,7 @@
 #ifndef OTEL_INSTRUMENTATION_OBSERVER_H
 #define OTEL_INSTRUMENTATION_OBSERVER_H
 
-void otel_instrumentation_observer_init(INIT_FUNC_ARGS);
+void opentelemetry_observer_init(INIT_FUNC_ARGS);
 void observer_globals_init(void);
 void observer_globals_cleanup(void);
 
