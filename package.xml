@@ -3,7 +3,7 @@
     <name>otel_instrumentation</name>
     <channel>pecl.php.net</channel>
     <summary>OpenTelemetry auto-instrumentation support extension</summary>
-    <description>https://github.com/open-telemetry/opentelemetry-php</description>
+    <description>https://github.com/open-telemetry/opentelemetry-php-instrumentation</description>
     <lead>
         <name>OpenTelemetry contributors</name>
         <user>otel</user>
@@ -12,16 +12,16 @@
     </lead>
     <date>2022-09-04</date>
     <version>
-        <release>0.1.0</release>
-        <api>0.1.0</api>
+        <release>1.0.0beta3</release>
+        <api>1.0.0</api>
     </version>
     <stability>
-        <release>alpha</release>
-        <api>alpha</api>
+        <release>beta</release>
+        <api>stable</api>
     </stability>
-    <license uri="https://opensource.org/licenses/BSD-3-Clause">BSD-3-Clause</license>
+    <license uri="https://opensource.org/license/apache-2-0/">Apache 2.0</license>
     <notes>
-        * See github.com/open-telemetry/opentelemetry-php
+        * See https://github.com/open-telemetry/opentelemetry-php and https://github.com/open-telemetry/opentelemetry-php-instrumentation
     </notes>
     <contents>
         <dir baseinstalldir="/" name="/">

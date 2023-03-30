@@ -2,7 +2,7 @@
 
 [![Build and test](https://github.com/open-telemetry/opentelemetry-php-instrumentation/actions/workflows/build.yml/badge.svg)](https://github.com/open-telemetry/opentelemetry-php-instrumentation/actions/workflows/build.yml)
 
-This is an _experimental_ extension for OpenTelemetry, to enable auto-instrumentation.
+This is a PHP extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
 The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry. 
@@ -13,26 +13,42 @@ The extension allows creating `pre` and `post` hook functions to arbitrary PHP f
 
 ## Installation
 
-1. Install the extension via [pickle](https://github.com/FriendsOfPHP/pickle) or [php-extension-installer](https://github.com/mlocati/docker-php-extension-installer) (docker specific):
+The extension can be installed in all of the usual ways:
 
-    * **pickle** can be used to install extensions that are available via http://pecl.php.net, however that's not the case
-    for opentelemetry-php-instrumentation yet, so the only way for it is to install directly from source code.
-    Following command line shows how to do that using specific version of extension (1.0.0beta1 in this case).
+### pecl
 
-        ```console
-        $ php pickle.phar install --source https://github.com/open-telemetry/opentelemetry-php-instrumentation.git#1.0.0beta1
-        ```
+```shell
+pecl install opentelemetry
+```
+### pickle
 
-   *  **php-extension-installer**
-        ```console
-        $ install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
-        ```
+[pickle](https://github.com/FriendsOfPHP/pickle) can be used to install extensions that are available via http://pecl.php.net, or install directly from source code.
 
-2. Verify that the extension is installed and enabled:
+To install directly from source code:
+```shell
+php pickle.phar install --source https://github.com/open-telemetry/opentelemetry-php-instrumentation.git#1.0.0beta1
+```
 
-   ```console
-   $ php -m | grep  otel_instrumentation
-   ```
+### php-extension-installer
+
+If you are using the [official PHP docker images](https://hub.docker.com/_/php) then you can use
+[php-extension-installer](https://github.com/mlocati/docker-php-extension-installer)
+
+From github:
+```shell
+install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
+```
+
+Via pecl/pickle:
+```shell
+install-php-extensions opentelemetry[-beta|-stable|-latest]
+```
+
+## Verify that the extension is installed and enabled
+
+```shell
+php -m | grep  otel_instrumentation
+```
 
 ## Usage
 
