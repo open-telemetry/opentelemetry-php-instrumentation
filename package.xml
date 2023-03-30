@@ -5,9 +5,15 @@
     <summary>OpenTelemetry auto-instrumentation support extension</summary>
     <description>https://github.com/open-telemetry/opentelemetry-php-instrumentation</description>
     <lead>
-        <name>OpenTelemetry contributors</name>
-        <user>otel</user>
-        <email>otel@example.com</email>
+        <name>Brett McBride</name>
+        <user>brettmc</user>
+        <email>brett@example.com</email>
+        <active>yes</active>
+    </lead>
+    <lead>
+        <name>Przemek Delewski</name>
+        <user>pdelewski</user>
+        <email>pdelewski@example.com</email>
         <active>yes</active>
     </lead>
     <date>2023-03-30</date>

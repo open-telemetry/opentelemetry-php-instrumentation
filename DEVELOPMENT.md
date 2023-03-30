@@ -25,6 +25,12 @@ First, shell into the container:
 $ docker-compose run debian
 ```
 
+## Using pear/pecl
+
+```shell
+$ pear build
+```
+
 ## From source code
 ```shell
 $ phpize
@@ -113,6 +119,15 @@ stop there by:
 ```shell
 b otel_instrumentation_observer_init
 ```
+
+# Packaging for PECL
+
+```shell
+$ pear package-validate
+$ pear package
+```
+
+This will create a `.tgz` file which can be uploaded to https://pecl.php.net/release-upload.php by an authorized lead.
 
 # Usage
 
