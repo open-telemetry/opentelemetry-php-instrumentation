@@ -54,6 +54,7 @@ PHP_MINIT_FUNCTION(otel_instrumentation) {
 PHP_MINFO_FUNCTION(otel_instrumentation) {
     php_info_print_table_start();
     php_info_print_table_header(2, "otel_instrumentation support", "enabled");
+    php_info_print_table_row(2, "extension version", PHP_OPENTELEMETRY_VERSION);
     php_info_print_table_end();
 }
 

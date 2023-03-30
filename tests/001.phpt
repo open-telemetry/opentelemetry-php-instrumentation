@@ -4,7 +4,7 @@ Check if otel_instrumentation is loaded
 otel_instrumentation
 --FILE--
 <?php
-echo 'The extension "otel_instrumentation" is available';
+printf('The extension "otel_instrumentation" is available, version %s', phpversion('otel_instrumentation'));
 ?>
---EXPECT--
-The extension "otel_instrumentation" is available
+--EXPECTF--
+The extension "otel_instrumentation" is available, version %s
