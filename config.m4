@@ -18,13 +18,13 @@ PHP_ARG_ENABLE([opentelemetry],
     [Enable opentelemetry support])],
   [no])
 
-if test "$PHP_OTEL_INSTRUMENTATION" != "no"; then
+if test "$PHP_OPENTELEMETRY" != "no"; then
   dnl Write more examples of tests here...
 
   dnl Remove this code block if the library does not support pkg-config.
   dnl PKG_CHECK_MODULES([LIBFOO], [foo])
   dnl PHP_EVAL_INCLINE($LIBFOO_CFLAGS)
-  dnl PHP_EVAL_LIBLINE($LIBFOO_LIBS, OTEL_INSTRUMENTATION_SHARED_LIBADD)
+  dnl PHP_EVAL_LIBLINE($LIBFOO_LIBS, OPENTELEMETRY_SHARED_LIBADD)
 
   dnl If you need to check for a particular library version using PKG_CHECK_MODULES,
   dnl you can use comparison operators. For example:
@@ -36,37 +36,37 @@ if test "$PHP_OTEL_INSTRUMENTATION" != "no"; then
   dnl --with-opentelemetry -> check with-path
   dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
   dnl SEARCH_FOR="/include/opentelemetry.h"  # you most likely want to change this
-  dnl if test -r $PHP_OTEL_INSTRUMENTATION/$SEARCH_FOR; then # path given as parameter
-  dnl   OTEL_INSTRUMENTATION_DIR=$PHP_OTEL_INSTRUMENTATION
+  dnl if test -r $PHP_OPENTELEMETRY/$SEARCH_FOR; then # path given as parameter
+  dnl   OPENTELEMETRY_DIR=$PHP_OPENTELEMETRY
   dnl else # search default path list
   dnl   AC_MSG_CHECKING([for opentelemetry files in default path])
   dnl   for i in $SEARCH_PATH ; do
   dnl     if test -r $i/$SEARCH_FOR; then
-  dnl       OTEL_INSTRUMENTATION_DIR=$i
+  dnl       OPENTELEMETRY_DIR=$i
   dnl       AC_MSG_RESULT(found in $i)
   dnl     fi
   dnl   done
   dnl fi
   dnl
-  dnl if test -z "$OTEL_INSTRUMENTATION_DIR"; then
+  dnl if test -z "$OPENTELEMETRY_DIR"; then
   dnl   AC_MSG_RESULT([not found])
   dnl   AC_MSG_ERROR([Please reinstall the opentelemetry distribution])
   dnl fi
 
   dnl Remove this code block if the library supports pkg-config.
   dnl --with-opentelemetry -> add include path
-  dnl PHP_ADD_INCLUDE($OTEL_INSTRUMENTATION_DIR/include)
+  dnl PHP_ADD_INCLUDE($OPENTELEMETRY_DIR/include)
 
   dnl Remove this code block if the library supports pkg-config.
   dnl --with-opentelemetry -> check for lib and symbol presence
-  dnl LIBNAME=OTEL_INSTRUMENTATION # you may want to change this
-  dnl LIBSYMBOL=OTEL_INSTRUMENTATION # you most likely want to change this
+  dnl LIBNAME=OPENTELEMETRY # you may want to change this
+  dnl LIBSYMBOL=OPENTELEMETRY # you most likely want to change this
 
   dnl If you need to check for a particular library function (e.g. a conditional
   dnl or version-dependent feature) and you are using pkg-config:
   dnl PHP_CHECK_LIBRARY($LIBNAME, $LIBSYMBOL,
   dnl [
-  dnl   AC_DEFINE(HAVE_OTEL_INSTRUMENTATION_FEATURE, 1, [ ])
+  dnl   AC_DEFINE(HAVE_OPENTELEMETRY_FEATURE, 1, [ ])
   dnl ],[
   dnl   AC_MSG_ERROR([FEATURE not supported by your opentelemetry library.])
   dnl ], [
@@ -77,18 +77,18 @@ if test "$PHP_OTEL_INSTRUMENTATION" != "no"; then
   dnl or version-dependent feature) and you are not using pkg-config:
   dnl PHP_CHECK_LIBRARY($LIBNAME, $LIBSYMBOL,
   dnl [
-  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $OTEL_INSTRUMENTATION_DIR/$PHP_LIBDIR, OTEL_INSTRUMENTATION_SHARED_LIBADD)
-  dnl   AC_DEFINE(HAVE_OTEL_INSTRUMENTATION_FEATURE, 1, [ ])
+  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $OPENTELEMETRY_DIR/$PHP_LIBDIR, OPENTELEMETRY_SHARED_LIBADD)
+  dnl   AC_DEFINE(HAVE_OPENTELEMETRY_FEATURE, 1, [ ])
   dnl ],[
   dnl   AC_MSG_ERROR([FEATURE not supported by your opentelemetry library.])
   dnl ],[
-  dnl   -L$OTEL_INSTRUMENTATION_DIR/$PHP_LIBDIR -lm
+  dnl   -L$OPENTELEMETRY_DIR/$PHP_LIBDIR -lm
   dnl ])
   dnl
-  dnl PHP_SUBST(OTEL_INSTRUMENTATION_SHARED_LIBADD)
+  dnl PHP_SUBST(OPENTELEMETRY_SHARED_LIBADD)
 
   dnl In case of no dependencies
-  AC_DEFINE(HAVE_OTEL_INSTRUMENTATION, 1, [ Have opentelemetry support ])
+  AC_DEFINE(HAVE_OPENTELEMETRY, 1, [ Have opentelemetry support ])
 
   PHP_NEW_EXTENSION(opentelemetry, opentelemetry.c otel_observer.c, $ext_shared)
 fi

@@ -1,6 +1,6 @@
 
-#ifndef PHP_OTEL_INSTRUMENTATION_H
-# define PHP_OTEL_INSTRUMENTATION_H
+#ifndef PHP_OPENTELEMETRY_H
+# define PHP_OPENTELEMETRY_H
 
 extern zend_module_entry opentelemetry_module_entry;
 # define phpext_opentelemetry_ptr &opentelemetry_module_entry
@@ -16,10 +16,9 @@ ZEND_EXTERN_MODULE_GLOBALS(opentelemetry)
 # define OTEL_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(opentelemetry, v)
 
 # define PHP_OPENTELEMETRY_VERSION "1.0.0beta2"
-# define PHP_OTEL_INSTRUMENTATION_VERSION PHP_OPENTELEMETRY_VERSION
 
-# if defined(ZTS) && defined(COMPILE_DL_OTEL_INSTRUMENTATION)
+# if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
 ZEND_TSRMLS_CACHE_EXTERN()
 # endif
 
-#endif	/* PHP_OTEL_INSTRUMENTATION_H */
+#endif	/* PHP_OPENTELEMETRY_H */

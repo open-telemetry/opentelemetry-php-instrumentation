@@ -30,7 +30,7 @@ PHP_FUNCTION(hook) {
 }
 
 PHP_RINIT_FUNCTION(opentelemetry) {
-#if defined(ZTS) && defined(COMPILE_DL_OTEL_INSTRUMENTATION)
+#if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
     ZEND_TSRMLS_CACHE_UPDATE();
 #endif
 
@@ -71,7 +71,7 @@ zend_module_entry opentelemetry_module_entry = {
     PHP_RINIT(opentelemetry),
     PHP_RSHUTDOWN(opentelemetry),
     PHP_MINFO(opentelemetry),
-    PHP_OTEL_INSTRUMENTATION_VERSION,
+    PHP_OPENTELEMETRY_VERSION,
     PHP_MODULE_GLOBALS(opentelemetry),
     PHP_GINIT(opentelemetry),
     NULL,
@@ -79,7 +79,7 @@ zend_module_entry opentelemetry_module_entry = {
     STANDARD_MODULE_PROPERTIES_EX,
 };
 
-#ifdef COMPILE_DL_OTEL_INSTRUMENTATION
+#ifdef COMPILE_DL_OPENTELEMETRY
 # ifdef ZTS
 ZEND_TSRMLS_CACHE_DEFINE()
 # endif

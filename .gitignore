@@ -42,5 +42,5 @@ tests/**/*.db
 tests/**/*.mem
 tmp-php.ini
 config.h.in~
-otel_instrumentation.dep
+opentelemetry.dep
 otel_observer.dep
