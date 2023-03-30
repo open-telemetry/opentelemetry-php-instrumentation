@@ -40,6 +40,27 @@
             <file baseinstalldir="/" name="otel_observer.h" role="src"/>
             <file baseinstalldir="/" name="php_otel_instrumentation.h" role="src"/>
             <file name="LICENSE" role="doc"/>
+            <file name="DEVELOPMENT.md" role="doc"/>
+            <file name="README.md" role="doc"/>
+            <dir name="tests">
+                <file name="001.phpt" role="test"/>
+                <file name="002.phpt" role="test"/>
+                <file name="003.phpt" role="test"/>
+                <file name="004.phpt" role="test"/>
+                <file name="005.phpt" role="test"/>
+                <file name="006.phpt" role="test"/>
+                <file name="007.phpt" role="test"/>
+                <file name="008.phpt" role="test"/>
+                <file name="009.phpt" role="test"/>
+                <file name="010.phpt" role="test"/>
+                <file name="function_closure.phpt" role="test"/>
+                <file name="function_first_class_callable.phpt" role="test"/>
+                <file name="function_internal.phpt" role="test"/>
+                <file name="multiple_hooks_modify_exception.phpt" role="test"/>
+                <file name="multiple_hooks_modify_params.phpt" role="test"/>
+                <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
+                <file name="reimplemented_interface.phpt" role="test"/>
+            </dir>
         </dir>
     </contents>
     <dependencies>
