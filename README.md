@@ -71,9 +71,9 @@ OpenTelemetry\Instrumentation\hook(
     DemoClass::class,
     'run',
     static function (DemoClass $demo, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($tracer) {
-        $tracer->spanBuilder($class)
-            ->startSpan()
-            ->activate();
+        $span = $tracer->spanBuilder($class)
+            ->startSpan();
+        Context::storage()->attach($span->storeInContext(Context::getCurrent()));
     },
     static function (DemoClass $demo, array $params, $returnValue, ?Throwable $exception) use ($tracer) {
         $scope = Context::storage()->scope();
