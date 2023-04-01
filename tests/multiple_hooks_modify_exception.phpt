@@ -1,7 +1,7 @@
 --TEST--
 Check if hooks receive modified exception
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, mixed $return, Exception $throwable) => throw new Exception(previous: $throwable));

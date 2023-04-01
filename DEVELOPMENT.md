@@ -41,7 +41,7 @@ $ make install
 $ make clean
 ```
 
-This will build `otel_instrumentation.so` and install it into php modules dir (but not enable it).
+This will build `opentelemetry.so` and install it into php modules dir (but not enable it).
 
 To clean up, especially between builds with different PHP versions and/or build options:
 
@@ -72,12 +72,12 @@ $ install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
 # Enabling the extension
 
 ```shell
-$ php -dextension=otel_instrumentation -m
+$ php -dextension=opentelemetry -m
 ```
 
 Or via .ini:
 ```shell
-$ echo 'extension=otel_instrumentation' > $(php-config --ini-dir)/otel_instrumentation.ini
+$ echo 'extension=opentelemetry' > $(php-config --ini-dir)/opentelemetry.ini
 ```
 
 If the extension is successfully installed, you will see it listed in the output of `php -m`.
@@ -114,10 +114,10 @@ For gdb, arguments look very similar:
 gdb --args $HOME/php-bin/DEBUG/bin/php test.php
 ```
 
-and set breakpoint in function like `otel_instrumentation_observer_init` just to test if debugger will
+and set breakpoint in function like `opentelemetry_observer_init` just to test if debugger will
 stop there by:
 ```shell
-b otel_instrumentation_observer_init
+b opentelemetry_observer_init
 ```
 
 # Packaging for PECL

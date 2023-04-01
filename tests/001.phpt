@@ -1,10 +1,10 @@
 --TEST--
-Check if otel_instrumentation is loaded
+Check if opentelemetry extension is loaded
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
-printf('The extension "otel_instrumentation" is available, version %s', phpversion('otel_instrumentation'));
+printf('The extension "opentelemetry" is available, version %s', phpversion('opentelemetry'));
 ?>
 --EXPECTF--
-The extension "otel_instrumentation" is available, version %s
+The extension "opentelemetry" is available, version %s

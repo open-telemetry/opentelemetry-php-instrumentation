@@ -47,7 +47,7 @@ install-php-extensions opentelemetry[-beta|-stable|-latest]
 ## Verify that the extension is installed and enabled
 
 ```shell
-php -m | grep  otel_instrumentation
+php -m | grep  opentelemetry
 ```
 
 ## Usage

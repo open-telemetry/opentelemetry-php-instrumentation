@@ -1,7 +1,7 @@
 --TEST--
 Check if hooks are invoked only once for reimplemented interfaces
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 interface A {

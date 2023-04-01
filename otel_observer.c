@@ -5,7 +5,7 @@
 #include "zend_execute.h"
 #include "zend_extensions.h"
 #include "zend_exceptions.h"
-#include "php_otel_instrumentation.h"
+#include "php_opentelemetry.h"
 
 static int op_array_extension = -1;
 
@@ -513,9 +513,9 @@ void observer_globals_cleanup(void) {
     }
 }
 
-void otel_instrumentation_observer_init(INIT_FUNC_ARGS) {
+void opentelemetry_observer_init(INIT_FUNC_ARGS) {
     if (type != MODULE_TEMPORARY) {
         zend_observer_fcall_register(observer_fcall_init);
-        op_array_extension = zend_get_op_array_extension_handle("otel_instrumentation");
+        op_array_extension = zend_get_op_array_extension_handle("opentelemetry");
     }
 }

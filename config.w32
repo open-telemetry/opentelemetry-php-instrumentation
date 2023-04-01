@@ -1,7 +1,7 @@
-ARG_ENABLE('otel_instrumentation', 'otel_instrumentation support', 'no');
+ARG_ENABLE('opentelemetry', 'opentelemetry support', 'no');
 
-if (PHP_OTEL_INSTRUMENTATION != 'no') {
-    AC_DEFINE('HAVE_OTEL_INSTRUMENTATION', 1, 'otel_instrumentation support enabled');
+if (PHP_OPENTELEMETRY != 'no') {
+    AC_DEFINE('HAVE_OPENTELEMETRY', 1, 'opentelemetry support enabled');
 
-    EXTENSION('otel_instrumentation', 'otel_instrumentation.c' 'otel_observer.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+    EXTENSION('opentelemetry', 'opentelemetry.c' 'otel_observer.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
 }
