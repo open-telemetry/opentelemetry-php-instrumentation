@@ -1,7 +1,7 @@
 --TEST--
 Check if hooks are invoked for closures
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', fn() => var_dump('PRE'), fn() => var_dump('POST'));

@@ -3,7 +3,7 @@ Check if hooks are invoked for internal functions
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80200) die('skip requires PHP >= 8.2'); ?>
 --EXTENSIONS--
-otel_instrumentation
+opentelemetry
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'array_map', fn() => var_dump('PRE'), fn() => var_dump('POST'));
