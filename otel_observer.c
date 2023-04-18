@@ -14,10 +14,12 @@ typedef struct otel_observer {
     zend_llist post_hooks;
 } otel_observer;
 
-static inline void func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
+static inline void
+func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
     if (execute_data->func->op_array.scope) {
         if (execute_data->func->op_array.fn_flags & ZEND_ACC_STATIC) {
-            zend_class_entry *called_scope = zend_get_called_scope(execute_data);
+            zend_class_entry *called_scope =
+                zend_get_called_scope(execute_data);
             ZVAL_STR(zv, called_scope->name);
         } else {
             zend_object *this = zend_get_this_object(execute_data);
@@ -37,7 +39,8 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
 
-    // @see https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
+    // @see
+    // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
     if (arg_count) {
         array_init_size(zv, arg_count);
         first_extra_arg = ex->func->op_array.num_args;
@@ -61,7 +64,8 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
                     p++;
                     i++;
                 }
-                p = ZEND_CALL_VAR_NUM(ex, ex->func->op_array.last_var + ex->func->op_array.T);
+                p = ZEND_CALL_VAR_NUM(ex, ex->func->op_array.last_var +
+                                              ex->func->op_array.T);
             }
             while (i < arg_count) {
                 q = p;
@@ -78,10 +82,10 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
                 p++;
                 i++;
             }
-        } ZEND_HASH_FILL_END();
+        }
+        ZEND_HASH_FILL_END();
         Z_ARRVAL_P(zv)->nNumOfElements = arg_count;
-    }
-    else {
+    } else {
         ZVAL_EMPTY_ARRAY(zv);
     }
 }
@@ -141,14 +145,16 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     func_get_filename(&params[4], execute_data);
     func_get_lineno(&params[5], execute_data);
 
-    for (zend_llist_element *element = hooks->head; element; element = element->next) {
+    for (zend_llist_element *element = hooks->head; element;
+         element = element->next) {
         zend_fcall_info fci = {};
         zend_fcall_info_cache fcc = {};
-        if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci, &fcc, NULL, NULL) != SUCCESS)) {
+        if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
+                                            &fcc, NULL, NULL) != SUCCESS)) {
             continue;
         }
 
-        zval ret = { .u1.type_info = IS_UNDEF };
+        zval ret = {.u1.type_info = IS_UNDEF};
         fci.param_count = param_count;
         fci.params = params;
         fci.named_params = NULL;
@@ -167,10 +173,12 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                     uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);
                     if (idx >= arg_count) {
                         // TODO Extend call frame?
-                        // zend_vm_stack_extend_call_frame(&execute_data, arg_count, idx + 1 - arg_count);
+                        // zend_vm_stack_extend_call_frame(&execute_data,
+                        // arg_count, idx + 1 - arg_count);
                         for (uint32_t i = arg_count; i < idx; i++) {
                             ZVAL_UNDEF(ZEND_CALL_ARG(execute_data, i + 1));
-                            ZEND_ADD_CALL_FLAG(execute_data, ZEND_CALL_MAY_HAVE_UNDEF);
+                            ZEND_ADD_CALL_FLAG(execute_data,
+                                               ZEND_CALL_MAY_HAVE_UNDEF);
                         }
                         ZEND_CALL_NUM_ARGS(execute_data) = idx + 1;
                         ZVAL_COPY(ZEND_CALL_ARG(execute_data, idx + 1), val);
@@ -185,7 +193,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                             zend_hash_index_update(Z_ARR(params[1]), idx, val);
                         }
                     }
-                } ZEND_HASH_FOREACH_END();
+                }
+                ZEND_HASH_FOREACH_END();
             }
         }
 
@@ -198,7 +207,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
 
     if (UNEXPECTED(ZEND_CALL_INFO(execute_data) & ZEND_CALL_MAY_HAVE_UNDEF)) {
         zend_object *exception = EG(exception);
-        EG(exception) = (void*)(uintptr_t) -1;
+        EG(exception) = (void *)(uintptr_t)-1;
         if (zend_handle_undef_args(execute_data) == FAILURE) {
             uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);
             for (uint32_t i = 0; i < arg_count; i++) {
@@ -218,7 +227,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     }
 }
 
-static void observer_end(zend_execute_data *execute_data, zval *retval, zend_llist *hooks) {
+static void observer_end(zend_execute_data *execute_data, zval *retval,
+                         zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
     }
@@ -235,14 +245,16 @@ static void observer_end(zend_execute_data *execute_data, zval *retval, zend_lli
     func_get_filename(&params[6], execute_data);
     func_get_lineno(&params[7], execute_data);
 
-    for (zend_llist_element *element = hooks->tail; element; element = element->prev) {
+    for (zend_llist_element *element = hooks->tail; element;
+         element = element->prev) {
         zend_fcall_info fci = {};
         zend_fcall_info_cache fcc = {};
-        if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci, &fcc, NULL, NULL) != SUCCESS)) {
+        if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
+                                            &fcc, NULL, NULL) != SUCCESS)) {
             continue;
         }
 
-        zval ret = { .u1.type_info = IS_UNDEF };
+        zval ret = {.u1.type_info = IS_UNDEF};
         fci.param_count = param_count;
         fci.params = params;
         fci.named_params = NULL;
@@ -253,9 +265,12 @@ static void observer_end(zend_execute_data *execute_data, zval *retval, zend_lli
         EG(prev_exception) = NULL;
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
-            if (!Z_ISUNDEF(ret)
-                && (fcc.function_handler->op_array.fn_flags & ZEND_ACC_HAS_RETURN_TYPE)
-                && !(ZEND_TYPE_PURE_MASK(fcc.function_handler->common.arg_info[-1].type) & MAY_BE_VOID)) {
+            if (!Z_ISUNDEF(ret) &&
+                (fcc.function_handler->op_array.fn_flags &
+                 ZEND_ACC_HAS_RETURN_TYPE) &&
+                !(ZEND_TYPE_PURE_MASK(
+                      fcc.function_handler->common.arg_info[-1].type) &
+                  MAY_BE_VOID)) {
                 if (execute_data->return_value) {
                     zval_ptr_dtor(execute_data->return_value);
                     ZVAL_COPY(execute_data->return_value, &ret);
@@ -286,7 +301,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval, zend_lli
 }
 
 static void observer_begin_handler(zend_execute_data *execute_data) {
-    otel_observer *observer = ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension);
+    otel_observer *observer = ZEND_OP_ARRAY_EXTENSION(
+        &execute_data->func->op_array, op_array_extension);
     if (!observer || !zend_llist_count(&observer->pre_hooks)) {
         return;
     }
@@ -294,8 +310,10 @@ static void observer_begin_handler(zend_execute_data *execute_data) {
     observer_begin(execute_data, &observer->pre_hooks);
 }
 
-static void observer_end_handler(zend_execute_data *execute_data, zval *retval) {
-    otel_observer *observer = ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension);
+static void observer_end_handler(zend_execute_data *execute_data,
+                                 zval *retval) {
+    otel_observer *observer = ZEND_OP_ARRAY_EXTENSION(
+        &execute_data->func->op_array, op_array_extension);
     if (!observer || !zend_llist_count(&observer->post_hooks)) {
         return;
     }
@@ -309,31 +327,36 @@ static void free_observer(otel_observer *observer) {
     efree(observer);
 }
 
-static void init_observer(otel_observer* observer) {
-    zend_llist_init(&observer->pre_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
-    zend_llist_init(&observer->post_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
+static void init_observer(otel_observer *observer) {
+    zend_llist_init(&observer->pre_hooks, sizeof(zval),
+                    (llist_dtor_func_t)zval_ptr_dtor, 0);
+    zend_llist_init(&observer->post_hooks, sizeof(zval),
+                    (llist_dtor_func_t)zval_ptr_dtor, 0);
 }
 
-static otel_observer* create_observer() {
+static otel_observer *create_observer() {
     otel_observer *observer = emalloc(sizeof(otel_observer));
     init_observer(observer);
     return observer;
 }
 
-static void copy_observer(otel_observer* source, otel_observer* destination) {
-     destination->pre_hooks = source->pre_hooks;
-     destination->post_hooks = source->post_hooks;
+static void copy_observer(otel_observer *source, otel_observer *destination) {
+    destination->pre_hooks = source->pre_hooks;
+    destination->post_hooks = source->post_hooks;
 }
 
-static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
+                           zend_llist *post_hooks) {
     otel_observer *observer = zend_hash_find_ptr_lc(ht, n);
     if (observer) {
-        for (zend_llist_element *element = observer->pre_hooks.head; element; element = element->next) {
-            zval_add_ref((zval*)&element->data);
+        for (zend_llist_element *element = observer->pre_hooks.head; element;
+             element = element->next) {
+            zval_add_ref((zval *)&element->data);
             zend_llist_add_element(pre_hooks, &element->data);
         }
-        for (zend_llist_element *element = observer->post_hooks.head; element; element = element->next) {
-            zval_add_ref((zval*)&element->data);
+        for (zend_llist_element *element = observer->post_hooks.head; element;
+             element = element->next) {
+            zval_add_ref((zval *)&element->data);
             zend_llist_add_element(post_hooks, &element->data);
         }
         return true;
@@ -341,9 +364,9 @@ static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
     return false;
 }
 
-static void find_class_observers(HashTable *ht,
-                                HashTable* type_visited_lookup,
-                                zend_class_entry *ce, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static void find_class_observers(HashTable *ht, HashTable *type_visited_lookup,
+                                 zend_class_entry *ce, zend_llist *pre_hooks,
+                                 zend_llist *post_hooks) {
     for (; ce; ce = ce->parent) {
         // Omit type if it was already visited
         if (zend_hash_exists(type_visited_lookup, ce->name)) {
@@ -353,17 +376,20 @@ static void find_class_observers(HashTable *ht,
             zend_hash_add_empty_element(type_visited_lookup, ce->name);
         }
         for (uint32_t i = 0; i < ce->num_interfaces; i++) {
-            find_class_observers(ht, type_visited_lookup, ce->interfaces[i], pre_hooks, post_hooks);
+            find_class_observers(ht, type_visited_lookup, ce->interfaces[i],
+                                 pre_hooks, post_hooks);
         }
     }
 }
 
-static void find_method_observers(HashTable *ht,
-                                  HashTable* type_visited_lookup,
-                                  zend_class_entry *ce, zend_string *fn, zend_llist *pre_hooks, zend_llist *post_hooks) {
+static void find_method_observers(HashTable *ht, HashTable *type_visited_lookup,
+                                  zend_class_entry *ce, zend_string *fn,
+                                  zend_llist *pre_hooks,
+                                  zend_llist *post_hooks) {
     HashTable *lookup = zend_hash_find_ptr_lc(ht, fn);
     if (lookup) {
-        find_class_observers(lookup, type_visited_lookup, ce, pre_hooks, post_hooks);
+        find_class_observers(lookup, type_visited_lookup, ce, pre_hooks,
+                             post_hooks);
     }
 }
 
@@ -384,16 +410,19 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
         // of extensive class hierarchy
         HashTable type_visited_lookup;
         zend_hash_init(&type_visited_lookup, 8, NULL, NULL, 0);
-        find_method_observers(OTEL_G(observer_class_lookup), &type_visited_lookup,
-                              fbc->op_array.scope, fbc->common.function_name,
-                              &observer_instance.pre_hooks, &observer_instance.post_hooks);
+        find_method_observers(
+            OTEL_G(observer_class_lookup), &type_visited_lookup,
+            fbc->op_array.scope, fbc->common.function_name,
+            &observer_instance.pre_hooks, &observer_instance.post_hooks);
         zend_hash_destroy(&type_visited_lookup);
     } else {
-        find_observers(OTEL_G(observer_function_lookup), fbc->common.function_name,
-                       &observer_instance.pre_hooks, &observer_instance.post_hooks);
+        find_observers(OTEL_G(observer_function_lookup),
+                       fbc->common.function_name, &observer_instance.pre_hooks,
+                       &observer_instance.post_hooks);
     }
 
-    if (!zend_llist_count(&observer_instance.pre_hooks) && !zend_llist_count(&observer_instance.post_hooks)) {
+    if (!zend_llist_count(&observer_instance.pre_hooks) &&
+        !zend_llist_count(&observer_instance.post_hooks)) {
         return NULL;
     }
     otel_observer *observer = create_observer();
@@ -403,7 +432,8 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     return observer;
 }
 
-static zend_observer_fcall_handlers observer_fcall_init(zend_execute_data *execute_data) {
+static zend_observer_fcall_handlers
+observer_fcall_init(zend_execute_data *execute_data) {
     if (op_array_extension == -1) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
@@ -413,20 +443,15 @@ static zend_observer_fcall_handlers observer_fcall_init(zend_execute_data *execu
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
 
-    ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension) = observer;
+    ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension) =
+        observer;
     return (zend_observer_fcall_handlers){
-        zend_llist_count(&observer->pre_hooks)
-            ? observer_begin_handler
-            : NULL,
-        zend_llist_count(&observer->post_hooks)
-            ? observer_end_handler
-            : NULL,
+        zend_llist_count(&observer->pre_hooks) ? observer_begin_handler : NULL,
+        zend_llist_count(&observer->post_hooks) ? observer_end_handler : NULL,
     };
 }
 
-static void destroy_observer_lookup(zval *zv) {
-    free_observer(Z_PTR_P(zv));
-}
+static void destroy_observer_lookup(zval *zv) { free_observer(Z_PTR_P(zv)); }
 
 static void destroy_observer_class_lookup(zval *zv) {
     HashTable *table = Z_PTR_P(zv);
@@ -434,7 +459,8 @@ static void destroy_observer_class_lookup(zval *zv) {
     FREE_HASHTABLE(table);
 }
 
-static void add_function_observer(HashTable *ht, zend_string *fn, zval *pre_hook, zval *post_hook) {
+static void add_function_observer(HashTable *ht, zend_string *fn,
+                                  zval *pre_hook, zval *post_hook) {
     zend_string *lc = zend_string_tolower(fn);
     otel_observer *observer = zend_hash_find_ptr(ht, lc);
     if (!observer) {
@@ -453,7 +479,8 @@ static void add_function_observer(HashTable *ht, zend_string *fn, zval *pre_hook
     }
 }
 
-static void add_method_observer(HashTable *ht, zend_string *cn, zend_string *fn, zval *pre_hook, zval *post_hook) {
+static void add_method_observer(HashTable *ht, zend_string *cn, zend_string *fn,
+                                zval *pre_hook, zval *post_hook) {
     zend_string *lc = zend_string_tolower(fn);
     HashTable *function_table = zend_hash_find_ptr(ht, lc);
     if (!function_table) {
@@ -466,15 +493,18 @@ static void add_method_observer(HashTable *ht, zend_string *cn, zend_string *fn,
     add_function_observer(function_table, cn, pre_hook, post_hook);
 }
 
-bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook, zval *post_hook) {
+bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook,
+                  zval *post_hook) {
     if (op_array_extension == -1) {
         return false;
     }
 
     if (cn) {
-        add_method_observer(OTEL_G(observer_class_lookup), cn, fn, pre_hook, post_hook);
+        add_method_observer(OTEL_G(observer_class_lookup), cn, fn, pre_hook,
+                            post_hook);
     } else {
-        add_function_observer(OTEL_G(observer_function_lookup), fn, pre_hook, post_hook);
+        add_function_observer(OTEL_G(observer_function_lookup), fn, pre_hook,
+                              post_hook);
     }
 
     return true;
@@ -483,15 +513,18 @@ bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook, zval *post_h
 void observer_globals_init(void) {
     if (!OTEL_G(observer_class_lookup)) {
         ALLOC_HASHTABLE(OTEL_G(observer_class_lookup));
-        zend_hash_init(OTEL_G(observer_class_lookup), 8, NULL, destroy_observer_class_lookup, 0);
+        zend_hash_init(OTEL_G(observer_class_lookup), 8, NULL,
+                       destroy_observer_class_lookup, 0);
     }
     if (!OTEL_G(observer_function_lookup)) {
         ALLOC_HASHTABLE(OTEL_G(observer_function_lookup));
-        zend_hash_init(OTEL_G(observer_function_lookup), 8, NULL, destroy_observer_lookup, 0);
+        zend_hash_init(OTEL_G(observer_function_lookup), 8, NULL,
+                       destroy_observer_lookup, 0);
     }
     if (!OTEL_G(observer_aggregates)) {
         ALLOC_HASHTABLE(OTEL_G(observer_aggregates));
-        zend_hash_init(OTEL_G(observer_aggregates), 8, NULL, destroy_observer_lookup, 0);
+        zend_hash_init(OTEL_G(observer_aggregates), 8, NULL,
+                       destroy_observer_lookup, 0);
     }
 }
 
@@ -516,6 +549,7 @@ void observer_globals_cleanup(void) {
 void opentelemetry_observer_init(INIT_FUNC_ARGS) {
     if (type != MODULE_TEMPORARY) {
         zend_observer_fcall_register(observer_fcall_init);
-        op_array_extension = zend_get_op_array_extension_handle("opentelemetry");
+        op_array_extension =
+            zend_get_op_array_extension_handle("opentelemetry");
     }
 }
