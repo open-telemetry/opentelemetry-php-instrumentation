@@ -88,5 +88,8 @@ OpenTelemetry\Instrumentation\hook(
 
 There are more examples in the [tests directory](./tests/)
 
+## Code formatting
+Invoke `clang-format -i *.c *.h` before commit your changes, just for preserve formatting consistency.
+
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
