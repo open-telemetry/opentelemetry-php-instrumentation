@@ -12,6 +12,9 @@ opentelemetry
 
 
 function helloWorld() {
+  // below scandir call or any other
+  // IO operation is necessary to trigger
+  // segfault.
   scandir(".");
 }
 
