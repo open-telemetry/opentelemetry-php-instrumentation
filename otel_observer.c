@@ -267,8 +267,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval, zend_lli
         if (UNEXPECTED(EG(exception))) {
             if (exception) {
                 OBJ_RELEASE(exception);
+                OBJ_RELEASE(Z_OBJ(params[3]));
             }
-            OBJ_RELEASE(Z_OBJ(params[3]));
 
             ZVAL_OBJ_COPY(&params[3], EG(exception));
         }
