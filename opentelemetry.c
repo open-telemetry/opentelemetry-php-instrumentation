@@ -1,6 +1,6 @@
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include "php.h"
@@ -80,8 +80,8 @@ zend_module_entry opentelemetry_module_entry = {
 };
 
 #ifdef COMPILE_DL_OPENTELEMETRY
-# ifdef ZTS
+#ifdef ZTS
 ZEND_TSRMLS_CACHE_DEFINE()
-# endif
+#endif
 ZEND_GET_MODULE(opentelemetry)
 #endif
