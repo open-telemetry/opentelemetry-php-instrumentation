@@ -18,8 +18,8 @@ use Closure;
  * @see https://github.com/open-telemetry/opentelemetry-php-instrumentation
  */
 function hook(
-    ?string $class,
-    string $function,
+    ?string  $class,
+    string   $function,
     ?Closure $pre = null,
     ?Closure $post = null,
 ): bool {}
