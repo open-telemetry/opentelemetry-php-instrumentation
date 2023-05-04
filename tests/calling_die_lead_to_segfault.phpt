@@ -22,10 +22,8 @@ class TestClass {
 hook(
     'TestClass',
     'countFunction',
-    pre: static function ($object, array $params, string $class, string $function, ?string $filename, ?int $lineno) {
-    },
-    post: static function ($object, array $params, mixed $ret, ?\Throwable $exception ) {
-    }
+    null,
+    post: static function ($object, array $params, mixed $ret, ?\Throwable $exception ) {}
 );
 
 try{
@@ -33,6 +31,7 @@ TestClass::countFunction();
 }
 catch(Exception) {}
 // Comment out line below and revert fix in order to trigger segfault
+// reproduction frequency depends on platform
 catch(TypeError) {}
 ?>
 
