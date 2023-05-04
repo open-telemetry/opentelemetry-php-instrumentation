@@ -280,11 +280,13 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         }
 
         if (UNEXPECTED(EG(exception))) {
-            if (exception) {
-                OBJ_RELEASE(exception);
+            // do not release params[3] if exit was called
+            if (exception && !zend_is_unwind_exit(exception)) {
                 OBJ_RELEASE(Z_OBJ(params[3]));
             }
-
+            if (exception) {
+                OBJ_RELEASE(exception);
+            }
             ZVAL_OBJ_COPY(&params[3], EG(exception));
         }
 
