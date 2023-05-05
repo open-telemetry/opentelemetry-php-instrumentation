@@ -12,6 +12,110 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(opentelemetry)
 
+void validate_pre_args(zval *pre, zend_string *class_name) {
+    if (!pre) {
+        return;
+    }
+    const zend_function *closure = zend_get_closure_method_def(Z_OBJ_P(pre));
+    if (!closure) {
+        return;
+    }
+    uint32_t num_args = closure->common.num_args;
+    if (num_args > 6) {
+        zend_error(E_ERROR,
+                   "This function has been called wrong number of arguments");
+        return;
+    }
+    zend_arg_info *args = closure->common.arg_info;
+
+    for (int i = 0; i != num_args; ++i) {
+        zend_string *type = zend_type_to_string(args[i].type);
+        if (!type) {
+            continue;
+        }
+        switch (i) {
+        case 0:
+            if (class_name && !zend_string_equals(type, class_name)) {
+                zend_error(E_ERROR, "First argument should be: %s",
+                           ZSTR_VAL(class_name));
+                return;
+            }
+            break;
+        case 1:
+            if (!zend_string_equals_literal(type, "array")) {
+                zend_error(E_ERROR, "Second argument should be array type");
+                return;
+            }
+            break;
+        case 2:
+            if (!zend_string_equals_literal(type, "string")) {
+                zend_error(E_ERROR, "Third argument should be string type");
+                return;
+            }
+            break;
+        case 3:
+            if (!zend_string_equals_literal(type, "string")) {
+                zend_error(E_ERROR, "Fourth argument should be string type");
+                return;
+            }
+            break;
+        case 4:
+            if (!zend_string_equals_literal(type, "?string")) {
+                zend_error(E_ERROR, "Five argument should be ?string type");
+                return;
+            }
+            break;
+        case 5:
+            if (!zend_string_equals_literal(type, "?int")) {
+                zend_error(E_ERROR, "Sixth argument should be ?int type");
+                return;
+            }
+            break;
+        }
+        zend_string_release(type);
+    }
+}
+
+void validate_post_args(zval *post, zend_string *class_name) {
+    if (!post) {
+        return;
+    }
+    const zend_function *closure = zend_get_closure_method_def(Z_OBJ_P(post));
+    if (!closure) {
+        return;
+    }
+    uint32_t num_args = closure->common.num_args;
+    if (num_args > 4) {
+        zend_error(E_ERROR,
+                   "This function has been called wrong number of arguments");
+        return;
+    }
+    zend_arg_info *args = closure->common.arg_info;
+
+    for (int i = 0; i != num_args; ++i) {
+        zend_string *type = zend_type_to_string(args[i].type);
+        if (!type) {
+            continue;
+        }
+        switch (i) {
+        case 0:
+            if (class_name && !zend_string_equals(type, class_name)) {
+                zend_error(E_ERROR, "First argument should be: %s %s",
+                           ZSTR_VAL(class_name), ZSTR_VAL(type));
+                return;
+            }
+            break;
+        case 1:
+            if (!zend_string_equals_literal(type, "array")) {
+                zend_error(E_ERROR, "Second argument should be array type");
+                return;
+            }
+            break;
+        }
+        zend_string_release(type);
+    }
+}
+
 PHP_FUNCTION(hook) {
     zend_string *class_name;
     zend_string *function_name;
@@ -25,7 +129,8 @@ PHP_FUNCTION(hook) {
         Z_PARAM_OBJECT_OF_CLASS_OR_NULL(pre, zend_ce_closure)
         Z_PARAM_OBJECT_OF_CLASS_OR_NULL(post, zend_ce_closure)
     ZEND_PARSE_PARAMETERS_END();
-
+    validate_pre_args(pre, class_name);
+    validate_post_args(post, class_name);
     RETURN_BOOL(add_observer(class_name, function_name, pre, post));
 }
 
