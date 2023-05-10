@@ -1,110 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.9.5" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
-    <name>opentelemetry</name>
-    <channel>pecl.php.net</channel>
-    <summary>OpenTelemetry auto-instrumentation support extension</summary>
-    <description>https://github.com/open-telemetry/opentelemetry-php-instrumentation</description>
-    <lead>
-        <name>Brett McBride</name>
-        <user>brettmc</user>
-        <email>brett@example.com</email>
-        <active>yes</active>
-    </lead>
-    <lead>
-        <name>Przemek Delewski</name>
-        <user>pdelewski</user>
-        <email>pdelewski@example.com</email>
-        <active>yes</active>
-    </lead>
-    <date>2023-04-19</date>
-    <time>12:25:51</time>
-    <version>
-        <release>1.0.0beta4</release>
-        <api>1.0</api>
-    </version>
-    <stability>
+  <name>opentelemetry</name>
+  <channel>pecl.php.net</channel>
+  <summary>OpenTelemetry auto-instrumentation support extension</summary>
+  <description>https://github.com/open-telemetry/opentelemetry-php-instrumentation</description>
+  <lead>
+    <name>Brett McBride</name>
+    <user>brettmc</user>
+    <email>brett@example.com</email>
+    <active>yes</active>
+  </lead>
+  <lead>
+    <name>Przemek Delewski</name>
+    <user>pdelewski</user>
+    <email>pdelewski@example.com</email>
+    <active>yes</active>
+  </lead>
+  <date>2023-05-10</date>
+  <time>14:16:02</time>
+  <version>
+    <release>1.0.0beta5</release>
+    <api>1.0</api>
+  </version>
+  <stability>
+    <release>beta</release>
+    <api>stable</api>
+  </stability>
+  <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
+  <notes>opentelemetry 1.0.0beta5
+* calling die or exit directly lead to segfault (#55)
+* adding phpdoc to stubs (#54)
+</notes>
+  <contents>
+    <dir baseinstalldir="/" name="/">
+      <file baseinstalldir="/" name="config.m4" role="src"/>
+      <file baseinstalldir="/" name="config.w32" role="src"/>
+      <file baseinstalldir="/" name="opentelemetry.c" role="src"/>
+      <file baseinstalldir="/" name="opentelemetry.stub.php" role="src"/>
+      <file baseinstalldir="/" name="opentelemetry_arginfo.h" role="src"/>
+      <file baseinstalldir="/" name="otel_observer.c" role="src"/>
+      <file baseinstalldir="/" name="otel_observer.h" role="src"/>
+      <file baseinstalldir="/" name="php_opentelemetry.h" role="src"/>
+      <file name="LICENSE" role="doc"/>
+      <file name="DEVELOPMENT.md" role="doc"/>
+      <file name="README.md" role="doc"/>
+      <dir name="tests">
+        <file name="001.phpt" role="test"/>
+        <file name="002.phpt" role="test"/>
+        <file name="003.phpt" role="test"/>
+        <file name="004.phpt" role="test"/>
+        <file name="005.phpt" role="test"/>
+        <file name="006.phpt" role="test"/>
+        <file name="007.phpt" role="test"/>
+        <file name="008.phpt" role="test"/>
+        <file name="009.phpt" role="test"/>
+        <file name="010.phpt" role="test"/>
+        <file name="function_closure.phpt" role="test"/>
+        <file name="function_first_class_callable.phpt" role="test"/>
+        <file name="function_internal.phpt" role="test"/>
+        <file name="multiple_hooks_modify_exception.phpt" role="test"/>
+        <file name="multiple_hooks_modify_params.phpt" role="test"/>
+        <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
+        <file name="reimplemented_interface.phpt" role="test"/>
+      </dir>
+    </dir>
+  </contents>
+  <dependencies>
+    <required>
+      <php>
+        <min>8.0.0</min>
+      </php>
+      <pearinstaller>
+        <min>1.4.0</min>
+      </pearinstaller>
+    </required>
+  </dependencies>
+  <providesextension>opentelemetry</providesextension>
+  <extsrcrelease/>
+  <changelog>
+    <release>
+      <date>2023-03-30</date>
+      <time/>
+      <version>
+        <release>1.0.0beta2</release>
+        <api>1.0.0</api>
+      </version>
+      <stability>
         <release>beta</release>
         <api>stable</api>
-    </stability>
-    <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-    <notes>opentelemetry 1.0.0beta4
-        * Consistent source code formatting  (#52)
-        * segfault during exception in post hook (#51)
-    </notes>
-    <contents>
-        <dir baseinstalldir="/" name="/">
-            <file baseinstalldir="/" name="config.m4" role="src"/>
-            <file baseinstalldir="/" name="config.w32" role="src"/>
-            <file baseinstalldir="/" name="opentelemetry.c" role="src"/>
-            <file baseinstalldir="/" name="opentelemetry.stub.php" role="src"/>
-            <file baseinstalldir="/" name="opentelemetry_arginfo.h" role="src"/>
-            <file baseinstalldir="/" name="otel_observer.c" role="src"/>
-            <file baseinstalldir="/" name="otel_observer.h" role="src"/>
-            <file baseinstalldir="/" name="php_opentelemetry.h" role="src"/>
-            <file name="LICENSE" role="doc"/>
-            <file name="DEVELOPMENT.md" role="doc"/>
-            <file name="README.md" role="doc"/>
-            <dir name="tests">
-                <file name="001.phpt" role="test"/>
-                <file name="002.phpt" role="test"/>
-                <file name="003.phpt" role="test"/>
-                <file name="004.phpt" role="test"/>
-                <file name="005.phpt" role="test"/>
-                <file name="006.phpt" role="test"/>
-                <file name="007.phpt" role="test"/>
-                <file name="008.phpt" role="test"/>
-                <file name="009.phpt" role="test"/>
-                <file name="010.phpt" role="test"/>
-                <file name="function_closure.phpt" role="test"/>
-                <file name="function_first_class_callable.phpt" role="test"/>
-                <file name="function_internal.phpt" role="test"/>
-                <file name="multiple_hooks_modify_exception.phpt" role="test"/>
-                <file name="multiple_hooks_modify_params.phpt" role="test"/>
-                <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
-                <file name="reimplemented_interface.phpt" role="test"/>
-            </dir>
-        </dir>
-    </contents>
-    <dependencies>
-        <required>
-            <php>
-                <min>8.0.0</min>
-            </php>
-            <pearinstaller>
-                <min>1.4.0</min>
-            </pearinstaller>
-        </required>
-    </dependencies>
-    <providesextension>opentelemetry</providesextension>
-    <extsrcrelease/>
-    <changelog>
-        <release>
-            <date>2023-03-30</date>
-            <time/>
-            <version>
-                <release>1.0.0beta2</release>
-                <api>1.0.0</api>
-            </version>
-            <stability>
-                <release>beta</release>
-                <api>stable</api>
-            </stability>
-            <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-            <notes>* See https://github.com/open-telemetry/opentelemetry-php and https://github.com/open-telemetry/opentelemetry-php-instrumentation</notes>
-        </release>
-        <release>
-            <date>2023-04-01</date>
-            <time>00:32:40</time>
-            <version>
-                <release>1.0.0beta3</release>
-                <api>1.0</api>
-            </version>
-            <stability>
-                <release>beta</release>
-                <api>stable</api>
-            </stability>
-            <license>Apache 2.0</license>
-            <notes>opentelemetry 1.0.0beta3
+      </stability>
+      <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
+      <notes>* See https://github.com/open-telemetry/opentelemetry-php and https://github.com/open-telemetry/opentelemetry-php-instrumentation</notes>
+    </release>
+    <release>
+      <date>2023-04-01</date>
+      <time>00:32:40</time>
+      <version>
+        <release>1.0.0beta3</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.0beta3
 
                 * rename extension from otel_instrumentation to opentelemetry (#49)
                 * display extension version in phpinfo (#48)
@@ -122,6 +122,23 @@
                 * install and setup auto-instrumentation with one command (#29)
                 * docs: update/sync(opentelemetry.io) installation description (#27)
             </notes>
-        </release>
-    </changelog>
+    </release>
+    <release>
+      <date>2023-04-19</date>
+      <time>12:25:51</time>
+      <version>
+        <release>1.0.0beta4</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.0beta4
+        * Consistent source code formatting  (#52)
+        * segfault during exception in post hook (#51)
+    </notes>
+    </release>
+  </changelog>
 </package>
