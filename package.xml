@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2023-05-10</date>
-  <time>14:16:02</time>
+  <date>2023-06-14</date>
+  <time>08:44:49</time>
   <version>
-    <release>1.0.0beta5</release>
+    <release>1.0.0beta6</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,9 +27,8 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.0beta5
-* calling die or exit directly lead to segfault (#55)
-* adding phpdoc to stubs (#54)
+  <notes>opentelemetry 1.0.0beta6
+* handle UnwindExit (#62)
 </notes>
   <contents>
     <dir baseinstalldir="/" name="/">
@@ -139,6 +138,23 @@
         * Consistent source code formatting  (#52)
         * segfault during exception in post hook (#51)
     </notes>
+    </release>
+    <release>
+      <date>2023-05-10</date>
+      <time>14:16:02</time>
+      <version>
+        <release>1.0.0beta5</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.0beta5
+* calling die or exit directly lead to segfault (#55)
+* adding phpdoc to stubs (#54)
+</notes>
     </release>
   </changelog>
 </package>
