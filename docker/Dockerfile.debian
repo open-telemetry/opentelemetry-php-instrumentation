@@ -1,5 +1,18 @@
-FROM debian:buster-slim as builder
+FROM debian:bullseye-slim
 WORKDIR /usr/src
+
+#clang-format and gdb
+RUN apt-get update \
+  && apt-get install -y \
+    curl \
+    gdb \
+    gnupg2 \
+  && curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
+  && echo "deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
+  && echo "deb-src http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
+  && apt-get update \
+  && apt-get install -y \
+    clang-format
 
 ENV PHPIZE_DEPS \
 		autoconf \
