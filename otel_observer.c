@@ -99,8 +99,11 @@ static inline void func_get_retval(zval *zv, zval *retval) {
 }
 
 static inline void func_get_exception(zval *zv) {
-    if (UNEXPECTED(EG(exception))) {
-        ZVAL_OBJ_COPY(zv, EG(exception));
+    zend_object *exception = EG(exception);
+    if (exception && zend_is_unwind_exit(exception)) {
+        ZVAL_NULL(zv);
+    } else if (UNEXPECTED(exception)) {
+        ZVAL_OBJ_COPY(zv, exception);
     } else {
         ZVAL_NULL(zv);
     }
