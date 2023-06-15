@@ -86,7 +86,7 @@ OpenTelemetry\Instrumentation\hook(
 );
 ```
 
-There are more examples in the [tests directory](./tests/)
+There are more examples in the [tests directory](ext/tests/)
 
 ## Code formatting
 Invoke `clang-format -i *.c *.h` before commit your changes, just for preserve formatting consistency.
