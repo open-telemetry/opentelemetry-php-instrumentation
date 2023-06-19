@@ -20,14 +20,6 @@ The extension can be installed in all of the usual ways:
 ```shell
 pecl install opentelemetry
 ```
-### pickle
-
-[pickle](https://github.com/FriendsOfPHP/pickle) can be used to install extensions that are available via http://pecl.php.net, or install directly from source code.
-
-To install directly from source code:
-```shell
-php pickle.phar install --source https://github.com/open-telemetry/opentelemetry-php-instrumentation.git#1.0.0beta1
-```
 
 ### php-extension-installer
 
@@ -86,7 +78,7 @@ OpenTelemetry\Instrumentation\hook(
 );
 ```
 
-There are more examples in the [tests directory](./tests/)
+There are more examples in the [tests directory](ext/tests/)
 
 ## Code formatting
 Invoke `clang-format -i *.c *.h` before commit your changes, just for preserve formatting consistency.

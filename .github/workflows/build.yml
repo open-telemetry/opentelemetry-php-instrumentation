@@ -2,9 +2,12 @@ name: Build and test
 
 on:
   push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
+
+defaults:
+  run:
+    working-directory: ext
 
 jobs:
   php:
