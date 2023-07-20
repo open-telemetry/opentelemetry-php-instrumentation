@@ -53,22 +53,6 @@ $ git clean -Xf
 
 or `make clean` from in the container.
 
-## With install-php-extensions
-
-_n.b that this will strip debug symbols_
-
-See https://github.com/mlocati/docker-php-extension-installer#installing-from-source-code
-
-```shell
-$ install-php-extensions $(pwd)
-```
-
-You can also install straight from github:
-
-```shell
-$ install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
-```
-
 # Enabling the extension
 
 ```shell
