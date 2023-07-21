@@ -42,8 +42,6 @@
       <file baseinstalldir="/" name="otel_observer.h" role="src"/>
       <file baseinstalldir="/" name="php_opentelemetry.h" role="src"/>
       <file name="LICENSE" role="doc"/>
-      <file name="DEVELOPMENT.md" role="doc"/>
-      <file name="README.md" role="doc"/>
       <dir name="tests">
         <file name="001.phpt" role="test"/>
         <file name="002.phpt" role="test"/>
