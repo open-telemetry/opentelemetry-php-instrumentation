@@ -1,5 +1,5 @@
 --TEST--
-Check if hook can modify return value
+Check if post hook can modify return value
 --EXTENSIONS--
 opentelemetry
 --FILE--

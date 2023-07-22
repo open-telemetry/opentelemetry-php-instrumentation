@@ -1,5 +1,5 @@
 --TEST--
-Check if hook can modify not provided arguments
+Check if pre hook can modify not provided arguments
 --EXTENSIONS--
 opentelemetry
 --FILE--
