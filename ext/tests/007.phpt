@@ -1,5 +1,5 @@
 --TEST--
-Check if hook receives exception
+Check if post hook receives exception
 --EXTENSIONS--
 opentelemetry
 --FILE--
