@@ -12,7 +12,8 @@ RUN apt-get update \
   && echo "deb-src http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
   && apt-get update \
   && apt-get install -y \
-    clang-format
+    clang-format \
+    valgrind
 
 ENV PHPIZE_DEPS \
 		autoconf \
@@ -35,6 +36,7 @@ RUN apt-get update -y \
 
 ARG PHP_VERSION
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
+ENV CFLAGS="-ggdb3"
 
 RUN echo "$PHP_URL" && curl -fsSL -o php.tar.xz "$PHP_URL"
 RUN cd /usr/src \
