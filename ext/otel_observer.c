@@ -171,6 +171,11 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
             if (Z_TYPE(ret) == IS_ARRAY) {
                 zend_ulong idx;
                 zval *val;
+                if (zend_is_identical(&ret, &params[1])) {
+                    // the input $params was returned
+                    zval_dtor(&params[1]);
+                    continue;
+                }
                 ZEND_HASH_FOREACH_NUM_KEY_VAL(Z_ARR(ret), idx, val) {
                     zval *target = NULL;
                     uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);

@@ -12,7 +12,5 @@ function helloWorld($a) {
 
 helloWorld('a');
 ?>
---XFAIL--
-Core dump (assertion) on refcount
 --EXPECT--
 string(1) "a"
