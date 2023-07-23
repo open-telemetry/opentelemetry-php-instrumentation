@@ -10,7 +10,5 @@ opentelemetry
 
 array_map(var_dump(...), ['HELLO']);
 ?>
---XFAIL--
-Core dump (assertion) on refcount
 --EXPECT--
 string(5) "HELLO"
