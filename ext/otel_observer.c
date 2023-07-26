@@ -168,7 +168,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         EG(prev_exception) = NULL;
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
-            if (Z_TYPE(ret) == IS_ARRAY && !zend_is_identical(&ret, &params[1])) {
+            if (Z_TYPE(ret) == IS_ARRAY &&
+                !zend_is_identical(&ret, &params[1])) {
                 zend_ulong idx;
                 zval *val;
                 ZEND_HASH_FOREACH_NUM_KEY_VAL(Z_ARR(ret), idx, val) {
