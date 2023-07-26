@@ -68,6 +68,8 @@ If the extension is successfully installed, you will see it listed in the output
 
 # Debugging
 
+## Locally
+
 In order to debug extension, php engine has to be compiled in debug mode. All needed steps
 are described on the following page: https://www.zend.com/resources/php-extensions/setting-up-your-php-build-environment
 Above page describes building environment for linux. On other systems (like MacOS), some additional steps might be
@@ -104,14 +106,46 @@ stop there by:
 b opentelemetry_observer_init
 ```
 
-# Packaging for PECL
+## Docker
 
+You can use docker + compose to debug the extension.
+
+Run all tests:
 ```shell
-$ pear package-validate
-$ pear package
+PHP_VERSION=8.2.8 docker compose build debian
+PHP_VERSION=8.2.8 docker compose run debian
+phpize
+./configure
+make clean
+make
+make test
 ```
 
-This will create a `.tgz` file which can be uploaded to https://pecl.php.net/release-upload.php by an authorized lead.
+The docker image has gdb and valgrind installed, to enable debugging and memory-leak checking.
+
+Run all tests with valgrind:
+```shell
+php run-tests.php -d extension=$(pwd)/modules/opentelemetry.so -m
+```
+
+Run one test with valgrind:
+```shell
+php run-tests.php -d extension=$(pwd)/modules/opentelemetry.so -m tests/<name>.phpt
+```
+
+If any tests fail, a `.sh` script is created which you can use
+to run the test in isolation, and optionally with `gdb` or `valgrind`:
+
+```shell
+tests/name_of_test.sh gdb # will start gdb
+tests/name_of_test.sh valgrind # will run test and display valgrind report
+```
+
+Further reading: https://www.phpinternalsbook.com/php7/memory_management/memory_debugging.html#debugging-memory
+
+# Packaging for PECL
+
+See https://github.com/opentelemetry-php/dev-tools#pecl-release-tool
 
 # Usage
 
