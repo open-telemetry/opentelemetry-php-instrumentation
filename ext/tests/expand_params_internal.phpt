@@ -1,7 +1,10 @@
 --TEST--
 Check if pre hook can expand params of internal function
 --DESCRIPTION--
-The segfault is actually during shutdown (garbage collection?). Removing the `post` callback avoids the segfault.
+Removing the `post` callback avoids the segfault. The segfault is actually during shutdown,
+from `zend_observer_fcall_end_all` (https://github.com/php/php-src/blob/php-8.2.8/Zend/zend_observer.c#L291).
+When it traverses back through zend_execute_data, the top-level frame appears corrupted, and any attempt to reference
+it is what causes the segfault.
 --EXTENSIONS--
 opentelemetry
 --XFAIL--
