@@ -80,8 +80,70 @@ OpenTelemetry\Instrumentation\hook(
 
 There are more examples in the [tests directory](ext/tests/)
 
-## Code formatting
-Invoke `clang-format -i *.c *.h` before commit your changes, just for preserve formatting consistency.
+# Modifying parameters and return values of the observed function
+
+## Parameters
+
+From a `pre` hook function, you may modify the parameters before they are received by the observed function.
+The arguments are passed in as a numerically-indexed array. The returned array from the `pre` hook is used
+to modify (_not_ replace) the existing parameters:
+
+```php
+<?php
+OpenTelemetry\Instrumentation\hook(
+    null,
+    'hello',
+     function($obj, array $params) {
+        return [
+          0 => null,  //make first param null
+          2 => 'baz', //replace 3rd param
+          3 => 'bat', //add 4th param
+        ];
+    }
+);
+function hello($one = null, $two = null, $three = null, $four = null) {
+  var_dump(func_get_args());
+}
+
+hello('a', 'b', 'c');
+```
+
+gives output:
+```
+array(4) {
+  [0]=>
+  NULL
+  [1]=>
+  string(1) "b"
+  [2]=>
+  string(3) "baz"
+  [3]=>
+  string(3) "bat"
+}
+```
+
+## Return values
+
+`post` hook methods can modify the observed function's return value:
+
+```php
+<?php
+<?php
+\OpenTelemetry\Instrumentation\hook(null, 'hello', post: fn(mixed $object, array $params, string $return): int => ++$return);
+
+function helloWorld(int $val) {
+    return $val;
+}
+
+var_dump(hello(1));
+```
+
+gives output:
+```
+int(3)
+```
+
+*Important*: the post method _must_ provide a return type-hint, otherwise the return value will be ignored.
 
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
