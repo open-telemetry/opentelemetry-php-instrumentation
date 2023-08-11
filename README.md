@@ -80,7 +80,7 @@ OpenTelemetry\Instrumentation\hook(
 
 There are more examples in the [tests directory](ext/tests/)
 
-# Modifying parameters and return values of the observed function
+# Modifying parameters, exceptions and return values of the observed function
 
 ## Parameters
 
@@ -128,10 +128,9 @@ array(4) {
 
 ```php
 <?php
-<?php
 \OpenTelemetry\Instrumentation\hook(null, 'hello', post: fn(mixed $object, array $params, string $return): int => ++$return);
 
-function helloWorld(int $val) {
+function hello(int $val) {
     return $val;
 }
 
@@ -140,10 +139,38 @@ var_dump(hello(1));
 
 gives output:
 ```
-int(3)
+int(2)
 ```
 
 *Important*: the post method _must_ provide a return type-hint, otherwise the return value will be ignored.
+
+## Exceptions
+
+`post` hook methods can modify an exception thrown from the observed function:
+
+```php
+<?php
+\OpenTelemetry\Instrumentation\hook(null, 'hello', post: function(mixed $object, array $params, mixed $return, ?Throwable $throwable) {
+    throw new Exception('new', previous: $throwable);
+});
+
+function hello() {
+    throw new Exception('original');
+}
+
+try {
+    hello();
+} catch (\Throwable $t) {
+    var_dump($t->getMessage());
+    var_dump($t->getPrevious()?->getMessage());
+}
+```
+
+gives output:
+```php
+string(3) "new"
+string(8) "original"
+```
 
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
