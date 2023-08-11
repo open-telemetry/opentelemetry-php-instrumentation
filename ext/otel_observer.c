@@ -168,7 +168,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         EG(prev_exception) = NULL;
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
-            if (Z_TYPE(ret) == IS_ARRAY) {
+            if (Z_TYPE(ret) == IS_ARRAY &&
+                !zend_is_identical(&ret, &params[1])) {
                 zend_ulong idx;
                 zend_string *str_idx;
                 zval *val;
@@ -200,9 +201,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         zval_dtor(target);
                         ZVAL_COPY(target, val);
                         if (Z_TYPE(params[1]) == IS_ARRAY) {
-                            if (Z_REFCOUNTED_P(val)) {
-                                Z_ADDREF_P(val);
-                            }
+                            Z_TRY_ADDREF_P(val);
                             zend_hash_index_update(Z_ARR(params[1]), idx, val);
                         }
                     }
