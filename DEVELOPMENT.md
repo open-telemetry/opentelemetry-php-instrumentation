@@ -66,6 +66,9 @@ $ echo 'extension=opentelemetry' > $(php-config --ini-dir)/opentelemetry.ini
 
 If the extension is successfully installed, you will see it listed in the output of `php -m`.
 
+# Code formatting
+Run `make format` before committing changes, which will run `clang-format -i *.c *.h`.
+
 # Debugging
 
 ## Locally
