@@ -183,6 +183,20 @@ static inline bool is_valid_signature(zend_fcall_info fci,
     return true;
 }
 
+static void log_invalid_message(char *msg, zval *scope, zval *function) {
+    char *s;
+    if (Z_TYPE_P(scope) == IS_NULL) {
+        s = "null";
+    } else {
+        s = Z_STRVAL_P(scope);
+    }
+    char *f = Z_STRVAL_P(function);
+    char formatted[strlen(msg) + strlen(s) + strlen(f) + 1];
+    snprintf(formatted, sizeof(formatted), msg, s, f);
+
+    php_log_err(formatted);
+}
+
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
@@ -214,6 +228,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
+            char *msg = "OpenTelemetry: pre hook invalid signature, class=%s function=%s";
+            log_invalid_message(msg, &params[2], &params[3]);
             continue;
         }
 
@@ -323,6 +339,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
+            char *msg = "OpenTelemetry: post hook invalid signature, class=%s function=%s";
+            log_invalid_message(msg, &params[4], &params[5]);
             continue;
         }
 
