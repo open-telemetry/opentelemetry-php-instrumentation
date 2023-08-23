@@ -39,20 +39,39 @@ install-php-extensions opentelemetry[-beta|-stable|-latest]
 ## Verify that the extension is installed and enabled
 
 ```shell
-php -m | grep  opentelemetry
+php --ri  opentelemetry
+```
+
+## Known issues
+
+The OpenTelemetry extension does not play nicely with the following other extensions:
+- blackfire
+
+You can control conflicts via the `opentelemetry.conflicts` ini setting.
+
+If a conflicting extension is found, then the OpenTelemetry extension will disable itself:
+
+```shell
+php --ri opentelemetry
+
+Notice: PHP Startup: Conflicting extension found (blackfire), disabling OpenTelemetry in Unknown on line 0
+
+opentelemetry
+
+opentelemetry support => disabled
+extension version => 1.0.0beta6
+
+Directive => Local Value => Master Value
+opentelemetry.conflicts => blackfire => blackfire
 ```
 
 ## Usage
 
-The following example adds an observer to the `DemoClass::run` method, and provides two functions which will be run before and after the method call.
-
-The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
-
-#### Warning
-Be aware of that, trivial functions are candidates for optimizations.
+*Warning* Be aware that trivial functions are candidates for optimizations.
 Optimizer can optimize them out and replace user function call with more optimal set of instructions (inlining).
 In this case hooks will not be invoked as there will be no function.
 
+The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
 
 ```php
 <?php
@@ -62,12 +81,12 @@ $tracer = new Tracer(...);
 OpenTelemetry\Instrumentation\hook(
     DemoClass::class,
     'run',
-    static function (DemoClass $demo, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($tracer) {
+    pre: static function (DemoClass $demo, array $params, string $class, string $function, ?string $filename, ?int $lineno) use ($tracer) {
         $span = $tracer->spanBuilder($class)
             ->startSpan();
         Context::storage()->attach($span->storeInContext(Context::getCurrent()));
     },
-    static function (DemoClass $demo, array $params, $returnValue, ?Throwable $exception) use ($tracer) {
+    post: static function (DemoClass $demo, array $params, $returnValue, ?Throwable $exception) use ($tracer) {
         $scope = Context::storage()->scope();
         $scope?->detach();
         $span = Span::fromContext($scope->context());
