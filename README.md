@@ -44,6 +44,8 @@ php --ri  opentelemetry
 
 ## Known issues
 
+### Conflicting extensions
+
 The OpenTelemetry extension does not play nicely with the following other extensions:
 - blackfire
 
@@ -58,12 +60,21 @@ Notice: PHP Startup: Conflicting extension found (blackfire), disabling OpenTele
 
 opentelemetry
 
-opentelemetry support => disabled
+opentelemetry hooks => disabled (conflict)
 extension version => 1.0.0beta6
 
 Directive => Local Value => Master Value
 opentelemetry.conflicts => blackfire => blackfire
+opentelemetry.validate_hook_functions => On => On
 ```
+
+### Invalid pre/post hooks
+
+Invalid argument types in pre and post callbacks can cause fatal errors. Runtime checking is performed on the
+hook functions to ensure they are compatible. If not, the hook will not be executed and an error will be logged
+to error_log.
+
+This feature can be disabled by setting the `opentelemetry.validate_hook_functions` ini value to `Off`;
 
 ## Usage
 

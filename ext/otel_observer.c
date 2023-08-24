@@ -146,9 +146,13 @@ bool is_object_compatible_with_type_hint(zval *object_zval,
  * Check if pre/post function callback's signature is compatible with
  * the expected function signature.
  * This is a runtime check, since some parameters are only known at runtime.
+ * Can be disabled via the opentelemetry.check_hook_functions ini value.
  */
 static inline bool is_valid_signature(zend_fcall_info fci,
                                       zend_fcall_info_cache fcc) {
+    if (OTEL_G(validate_hook_functions) == 0) {
+        return 1;
+    }
     zend_function *func = fcc.function_handler;
     zend_arg_info *arg_info;
     zend_type *arg_type;
