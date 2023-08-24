@@ -8,7 +8,7 @@ opentelemetry
     null,
     'helloWorld',
     null,
-    fn(object|string|null $scope, array $params, mixed $returnValue, ?Throwable $throwable) => var_dump($throwable?->getMessage()));
+    fn(object|null $obj, array $params, mixed $returnValue, ?Throwable $throwable) => var_dump($throwable?->getMessage()));
 
 function helloWorld() {
     throw new Exception('error');

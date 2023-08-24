@@ -8,9 +8,82 @@
 #include "php_opentelemetry.h"
 #include "opentelemetry_arginfo.h"
 #include "otel_observer.h"
+#include "stdlib.h"
+#include "string.h"
 #include "zend_closures.h"
 
+static int check_conflict(HashTable *registry, const char *extension_name) {
+    if (!extension_name || !*extension_name) {
+        return 0;
+    }
+    zend_module_entry *module_entry;
+    ZEND_HASH_FOREACH_PTR(registry, module_entry) {
+        if (strcmp(module_entry->name, extension_name) == 0) {
+            php_error_docref(NULL, E_NOTICE,
+                             "Conflicting extension found (%s), OpenTelemetry "
+                             "extension will be disabled",
+                             extension_name);
+            return 1;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+    return 0;
+}
+
+static void check_conflicts() {
+    int conflict_found = 0;
+    char *input = OTEL_G(conflicts);
+
+    if (!input || !*input) {
+        return;
+    }
+
+    HashTable *registry = &module_registry;
+    const char *s = NULL, *e = input;
+    /** @see https://github.com/php/php-src/blob/php-8.2.9/Zend/zend_API.c#L3324
+     */
+    while (*e) {
+        switch (*e) {
+        case ' ':
+        case ',':
+            if (s) {
+                size_t len = e - s;
+                char *result = (char *)malloc((len + 1) * sizeof(char));
+                strncpy(result, s, len);
+                result[len] = '\0'; // null terminate
+                if (check_conflict(registry, result)) {
+                    conflict_found = 1;
+                }
+                s = NULL;
+            }
+            break;
+        default:
+            if (!s) {
+                s = e;
+            }
+            break;
+        }
+        e++;
+    }
+    if (check_conflict(registry, s)) {
+        conflict_found = 1;
+    }
+
+    OTEL_G(disabled) = conflict_found;
+}
+
 ZEND_DECLARE_MODULE_GLOBALS(opentelemetry)
+
+PHP_INI_BEGIN()
+// conflicting extensions. a comma-separated list, eg "ext1,ext2"
+STD_PHP_INI_ENTRY("opentelemetry.conflicts", "blackfire", PHP_INI_ALL,
+                  OnUpdateString, conflicts, zend_opentelemetry_globals,
+                  opentelemetry_globals)
+STD_PHP_INI_ENTRY_EX("opentelemetry.validate_hook_functions", "On", PHP_INI_ALL,
+                     OnUpdateBool, validate_hook_functions,
+                     zend_opentelemetry_globals, opentelemetry_globals,
+                     zend_ini_boolean_displayer_cb)
+PHP_INI_END()
 
 PHP_FUNCTION(hook) {
     zend_string *class_name;
@@ -40,22 +113,32 @@ PHP_RINIT_FUNCTION(opentelemetry) {
 }
 
 PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
+    UNREGISTER_INI_ENTRIES();
     observer_globals_cleanup();
 
     return SUCCESS;
 }
 
 PHP_MINIT_FUNCTION(opentelemetry) {
-    opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
+    REGISTER_INI_ENTRIES();
+
+    check_conflicts();
+
+    if (!OTEL_G(disabled)) {
+        opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
+    }
 
     return SUCCESS;
 }
 
 PHP_MINFO_FUNCTION(opentelemetry) {
     php_info_print_table_start();
-    php_info_print_table_header(2, "opentelemetry support", "enabled");
+    php_info_print_table_row(2, "opentelemetry hooks",
+                             OTEL_G(disabled) ? "disabled (conflict)"
+                                              : "enabled");
     php_info_print_table_row(2, "extension version", PHP_OPENTELEMETRY_VERSION);
     php_info_print_table_end();
+    DISPLAY_INI_ENTRIES();
 }
 
 PHP_GINIT_FUNCTION(opentelemetry) {
