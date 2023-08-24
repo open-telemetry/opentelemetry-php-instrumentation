@@ -33,7 +33,4 @@ jobs:
       -   name: Test
           env:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
-          run: make test
-
-      -   name: Print failures
-          run: find tests -name "*.diff" -exec echo -e "\n\n"{} \; -exec cat {} \;
+          run: make test TESTS=--show-diff
