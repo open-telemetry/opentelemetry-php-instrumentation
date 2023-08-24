@@ -228,7 +228,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            char *msg = "OpenTelemetry: pre hook invalid signature, class=%s function=%s";
+            char *msg = "OpenTelemetry: pre hook invalid signature, class=%s "
+                        "function=%s";
             log_invalid_message(msg, &params[2], &params[3]);
             continue;
         }
@@ -343,7 +344,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            char *msg = "OpenTelemetry: post hook invalid signature, class=%s function=%s";
+            char *msg = "OpenTelemetry: post hook invalid signature, class=%s "
+                        "function=%s";
             log_invalid_message(msg, &params[4], &params[5]);
             continue;
         }
