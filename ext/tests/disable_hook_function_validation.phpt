@@ -18,4 +18,4 @@ function hello(int $val) {
 var_dump(hello(1));
 ?>
 --EXPECTF--
-%sArgument #1 ($object) must be of type Exception, null given %A
+%sArgument #1 ($object) must be of type Exception, null given%a
