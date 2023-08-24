@@ -133,6 +133,74 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
     }
 }
 
+/**
+ * Check if the object implements or extends the specified class
+ */
+bool is_object_compatible_with_type_hint(zval *object_zval,
+                                         zend_class_entry *type_hint) {
+    zend_class_entry *object_ce = Z_OBJCE_P(object_zval);
+    return instanceof_function(object_ce, type_hint);
+}
+
+/**
+ * Check if pre/post function callback's signature is compatible with
+ * the expected function signature.
+ * This is a runtime check, since some parameters are only known at runtime.
+ * Can be disabled via the opentelemetry.check_hook_functions ini value.
+ */
+static inline bool is_valid_signature(zend_fcall_info fci,
+                                      zend_fcall_info_cache fcc) {
+    if (OTEL_G(validate_hook_functions) == 0) {
+        return 1;
+    }
+    zend_function *func = fcc.function_handler;
+    zend_arg_info *arg_info;
+    zend_type *arg_type;
+    zend_string *arg_name;
+    uint32_t type;
+    uint32_t type_mask;
+
+    for (uint32_t i = 0; i < func->common.num_args; i++) {
+        // get type mask of callback argument
+        arg_info = &func->common.arg_info[i];
+        arg_type = &arg_info->type;
+        type_mask = arg_type->type_mask;
+
+        // get actual value + type
+        zval param = fci.params[i];
+        type = Z_TYPE(fci.params[i]);
+
+        if ((type_mask == IS_UNDEF)) {
+            // no type mask -> ok
+        } else if (Z_TYPE(param) == IS_OBJECT) {
+            // object special-case handling (check for interfaces, subclasses)
+            zend_class_entry *ce = Z_OBJCE(param);
+            if (!is_object_compatible_with_type_hint(&param, ce)) {
+                return false;
+            }
+        } else if ((type_mask & (1 << type)) == 0) {
+            // type is not compatible with mask
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static void log_invalid_message(char *msg, zval *scope, zval *function) {
+    char *s;
+    if (Z_TYPE_P(scope) == IS_NULL) {
+        s = "null";
+    } else {
+        s = Z_STRVAL_P(scope);
+    }
+    char *f = Z_STRVAL_P(function);
+    char formatted[strlen(msg) + strlen(s) + strlen(f) + 1];
+    snprintf(formatted, sizeof(formatted), msg, s, f);
+
+    php_log_err(formatted);
+}
+
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
@@ -162,6 +230,13 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.params = params;
         fci.named_params = NULL;
         fci.retval = &ret;
+
+        if (!is_valid_signature(fci, fcc)) {
+            char *msg = "OpenTelemetry: pre hook invalid signature, class=%s "
+                        "function=%s";
+            log_invalid_message(msg, &params[2], &params[3]);
+            continue;
+        }
 
         zend_exception_save();
         zend_object *exception = EG(prev_exception);
@@ -271,6 +346,13 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.params = params;
         fci.named_params = NULL;
         fci.retval = &ret;
+
+        if (!is_valid_signature(fci, fcc)) {
+            char *msg = "OpenTelemetry: post hook invalid signature, class=%s "
+                        "function=%s";
+            log_invalid_message(msg, &params[4], &params[5]);
+            continue;
+        }
 
         zend_exception_save();
         zend_object *exception = EG(prev_exception);

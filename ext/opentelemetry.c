@@ -12,9 +12,7 @@
 #include "string.h"
 #include "zend_closures.h"
 
-static int disabled = 0;
-
-static int check_conflict(HashTable *registry, char *extension_name) {
+static int check_conflict(HashTable *registry, const char *extension_name) {
     if (!extension_name || !*extension_name) {
         return 0;
     }
@@ -32,12 +30,12 @@ static int check_conflict(HashTable *registry, char *extension_name) {
     return 0;
 }
 
-static int check_conflicts() {
+static void check_conflicts() {
     int conflict_found = 0;
-    const char *input = INI_STR("opentelemetry.conflicts");
+    char *input = OTEL_G(conflicts);
 
     if (!input || !*input) {
-        return 0;
+        return;
     }
 
     HashTable *registry = &module_registry;
@@ -52,7 +50,7 @@ static int check_conflicts() {
                 size_t len = e - s;
                 char *result = (char *)malloc((len + 1) * sizeof(char));
                 strncpy(result, s, len);
-                result[len] = NULL; // null terminate
+                result[len] = '\0'; // null terminate
                 if (check_conflict(registry, result)) {
                     conflict_found = 1;
                 }
@@ -71,10 +69,21 @@ static int check_conflicts() {
         conflict_found = 1;
     }
 
-    return conflict_found;
+    OTEL_G(disabled) = conflict_found;
 }
 
 ZEND_DECLARE_MODULE_GLOBALS(opentelemetry)
+
+PHP_INI_BEGIN()
+// conflicting extensions. a comma-separated list, eg "ext1,ext2"
+STD_PHP_INI_ENTRY("opentelemetry.conflicts", "blackfire", PHP_INI_ALL,
+                  OnUpdateString, conflicts, zend_opentelemetry_globals,
+                  opentelemetry_globals)
+STD_PHP_INI_ENTRY_EX("opentelemetry.validate_hook_functions", "On", PHP_INI_ALL,
+                     OnUpdateBool, validate_hook_functions,
+                     zend_opentelemetry_globals, opentelemetry_globals,
+                     zend_ini_boolean_displayer_cb)
+PHP_INI_END()
 
 PHP_FUNCTION(hook) {
     zend_string *class_name;
@@ -103,11 +112,6 @@ PHP_RINIT_FUNCTION(opentelemetry) {
     return SUCCESS;
 }
 
-PHP_INI_BEGIN()
-// default conflicting extensions. a comma-separated list, eg "ext1,ext2"
-PHP_INI_ENTRY("opentelemetry.conflicts", "blackfire", PHP_INI_ALL, NULL)
-PHP_INI_END()
-
 PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
     UNREGISTER_INI_ENTRIES();
     observer_globals_cleanup();
@@ -118,9 +122,9 @@ PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
 PHP_MINIT_FUNCTION(opentelemetry) {
     REGISTER_INI_ENTRIES();
 
-    disabled = check_conflicts();
+    check_conflicts();
 
-    if (!disabled) {
+    if (!OTEL_G(disabled)) {
         opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
     }
 
@@ -129,8 +133,9 @@ PHP_MINIT_FUNCTION(opentelemetry) {
 
 PHP_MINFO_FUNCTION(opentelemetry) {
     php_info_print_table_start();
-    php_info_print_table_header(2, "opentelemetry support",
-                                disabled ? "disabled" : "enabled");
+    php_info_print_table_row(2, "opentelemetry hooks",
+                             OTEL_G(disabled) ? "disabled (conflict)"
+                                              : "enabled");
     php_info_print_table_row(2, "extension version", PHP_OPENTELEMETRY_VERSION);
     php_info_print_table_end();
     DISPLAY_INI_ENTRIES();

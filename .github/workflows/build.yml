@@ -33,4 +33,4 @@ jobs:
       -   name: Test
           env:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
-          run: make test
+          run: make test TESTS=--show-diff

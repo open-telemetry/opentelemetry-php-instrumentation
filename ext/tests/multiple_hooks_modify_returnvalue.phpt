@@ -4,10 +4,10 @@ Check if hooks receive modified return value
 opentelemetry
 --FILE--
 <?php
-\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): int => ++$return);
-\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): int => ++$return);
+\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, int $return): int => ++$return);
+\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, int $return): int => ++$return);
 
-function helloWorld(int $val) {
+function helloWorld(int $val): int {
     return $val;
 }
 
