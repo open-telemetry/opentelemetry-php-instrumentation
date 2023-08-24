@@ -1,24 +1,17 @@
 --TEST--
-Check if hooks receive modified returnvalue
+Check if hooks receive modified return value
 --EXTENSIONS--
 opentelemetry
 --FILE--
 <?php
-\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): string => ++$return);
-\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): string => ++$return);
-//\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', null, fn(): string => 'b');
+\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): int => ++$return);
+\OpenTelemetry\Instrumentation\hook(null, 'helloWorld', post: fn(mixed $object, array $params, string $return): int => ++$return);
 
-function helloWorld() {
-    // below instruction (or any equivalent) is needed
-    // to prevent optimizer to optimize out
-    // helloWorld call and generate DO_UCALL
-    // otherwise hooks will not be invoked
-    // as there will be no function
-    echo ' ';
-    return 'a';
+function helloWorld(int $val) {
+    return $val;
 }
 
-var_dump(helloWorld());
+var_dump(helloWorld(1));
 ?>
 --EXPECT--
-string(1) "c"
+int(3)

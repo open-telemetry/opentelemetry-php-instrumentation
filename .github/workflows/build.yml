@@ -22,7 +22,7 @@ jobs:
       image: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php }}-${{ matrix.os }}-debug
 
     steps:
-      -   uses: actions/checkout@v2
+      -   uses: actions/checkout@v3
 
       -   name: Build
           run: |

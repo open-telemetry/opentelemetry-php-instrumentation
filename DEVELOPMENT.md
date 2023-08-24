@@ -13,7 +13,7 @@ You can add extra configure flags, but some may require extra dependencies to be
 You can also change the PHP version:
 
 ```shell
-$ docker-compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" --build-arg PHP_VERSION=8.0.23 [debian|alpine]
+$ docker compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" --build-arg PHP_VERSION=8.0.23 [debian|alpine]
 ```
 
 The latest PHP version can be found on: https://www.php.net/releases/index.php
@@ -22,7 +22,7 @@ The latest PHP version can be found on: https://www.php.net/releases/index.php
 
 First, shell into the container:
 ```shell
-$ docker-compose run debian
+$ docker compose run debian
 ```
 
 ## Using pear/pecl
@@ -65,6 +65,9 @@ $ echo 'extension=opentelemetry' > $(php-config --ini-dir)/opentelemetry.ini
 ```
 
 If the extension is successfully installed, you will see it listed in the output of `php -m`.
+
+# Code formatting
+Run `make format` before committing changes, which will run `clang-format -i *.c *.h`.
 
 # Debugging
 
