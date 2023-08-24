@@ -166,7 +166,7 @@ static inline bool is_valid_signature(zend_fcall_info fci,
         zval param = fci.params[i];
         type = Z_TYPE(fci.params[i]);
 
-        if (arg_type->type_mask == 0) {
+        if ((type_mask == IS_UNDEF)) {
             // no type mask -> ok
         } else if (Z_TYPE(param) == IS_OBJECT) {
             // object special-case handling (check for interfaces, subclasses)
