@@ -30,12 +30,12 @@ static int check_conflict(HashTable *registry, const char *extension_name) {
     return 0;
 }
 
-static int check_conflicts() {
+static void check_conflicts() {
     int conflict_found = 0;
     char *input = OTEL_G(conflicts);
 
     if (!input || !*input) {
-        return 0;
+        return;
     }
 
     HashTable *registry = &module_registry;
