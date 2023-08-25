@@ -8,7 +8,7 @@ it is what causes the segfault.
 --EXTENSIONS--
 opentelemetry
 --XFAIL--
-Providing a post callback when expanding params of internal function causes segfault
+Providing a post callback when expanding params of internal function causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(
