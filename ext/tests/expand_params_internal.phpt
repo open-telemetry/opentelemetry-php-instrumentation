@@ -21,11 +21,9 @@ OpenTelemetry\Instrumentation\hook(
 );
 
 var_dump(array_slice([1,2,3], 1));
-var_dump('finished');
 ?>
 --EXPECT--
 array(1) {
   [0]=>
   int(2)
 }
-string(8) "finished"

@@ -362,6 +362,9 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         EG(prev_exception) = NULL;
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
+            /* TODO rather than ignoring return value if post callback doesn't
+               have a return type-hint, could we check whether the types are
+               compatible and allow if they are? */
             if (!Z_ISUNDEF(ret) &&
                 (fcc.function_handler->op_array.fn_flags &
                  ZEND_ACC_HAS_RETURN_TYPE) &&
