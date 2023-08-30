@@ -220,6 +220,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
          element = element->next) {
         zend_fcall_info fci = {};
         zend_fcall_info_cache fcc = {};
+        zend_function *func = execute_data->func; // the observed function
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
             continue;
@@ -248,11 +249,6 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                 zend_ulong idx;
                 zend_string *str_idx;
                 zval *val;
-                if (zend_is_identical(&ret, &params[1])) {
-                    // the input $params was returned
-                    zval_dtor(&params[1]);
-                    continue;
-                }
                 ZEND_HASH_FOREACH_KEY_VAL(Z_ARR(ret), idx, str_idx, val) {
                     if (str_idx != NULL) {
                         // TODO support named params
@@ -261,6 +257,13 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                     zval *target = NULL;
                     uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);
                     if (idx >= arg_count) {
+                        if (func->type == ZEND_INTERNAL_FUNCTION) {
+                            // TODO expanding args for internal functions causes
+                            // segfault
+                            php_log_err("OpenTelemetry: expanding args of "
+                                        "internal functions not supported");
+                            continue;
+                        }
                         // TODO Extend call frame?
                         // zend_vm_stack_extend_call_frame(&execute_data,
                         // arg_count, idx + 1 - arg_count);
