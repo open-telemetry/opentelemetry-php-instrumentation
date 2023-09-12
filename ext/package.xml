@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2023-09-04</date>
-  <time>23:35:51</time>
+  <date>2023-09-12</date>
+  <time>02:23:02</time>
   <version>
-    <release>1.0.0beta7</release>
+    <release>1.0.0RC1</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,20 +27,7 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.0beta7
-    * adding more tests (#82)
-    * disabling expanding args for internal functions (#84)
-    * check for invalid hook function signatures (#79)
-    * adding checks for conflicting extensions (#83)
-    * adding notes and minor code improvements for issue 68 (#75)
-    * fixing crash + docs (#76)
-    * fixing clang-format install (#78)
-    * adding valgrind (#73)
-    * fixing segfault when returning params from pre callback (#72)
-    * adding failing tests for pre-hook params (#71)
-    * moving docs back to root (#70)
-    * add failing test for expand params with post callback (#69)
-    * moving extension to subdirectory (#65)
+  <notes>opentelemetry 1.0.0RC1
   </notes>
   <contents>
     <dir baseinstalldir="/" name="/">
@@ -66,14 +53,30 @@
         <file name="009.phpt" role="test"/>
         <file name="010.phpt" role="test"/>
         <file name="calling_die_lead_to_segfault.phpt" role="test"/>
+        <file name="disable_does_nothing_with_bad_data.phpt" role="test"/>
+        <file name="disable_hook_function_validation.phpt" role="test"/>
+        <file name="disabled_with_conflicting_extension.phpt" role="test"/>
+        <file name="expand_params.phpt" role="test"/>
+        <file name="expand_params_internal.phpt" role="test"/>
         <file name="function_closure.phpt" role="test"/>
         <file name="function_first_class_callable.phpt" role="test"/>
         <file name="function_internal.phpt" role="test"/>
+        <file name="invalid_post_callback_signature.phpt" role="test"/>
+        <file name="invalid_pre_callback_signature.phpt" role="test"/>
+        <file name="invalid_pre_callback_signature_with_function.phpt" role="test"/>
+        <file name="modify_named_params.phpt" role="test"/>
+        <file name="modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_exception.phpt" role="test"/>
         <file name="multiple_hooks_modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
+        <file name="post_hook_return_ignored_without_type.phpt" role="test"/>
         <file name="post_hook_throws_exception.phpt" role="test"/>
         <file name="reimplemented_interface.phpt" role="test"/>
+        <file name="return_expanded_params.phpt" role="test"/>
+        <file name="return_expanded_params_internal.phpt" role="test"/>
+        <file name="return_params.phpt" role="test"/>
+        <file name="return_params_internal.phpt" role="test"/>
+        <file name="return_reduced_params.phpt" role="test"/>
         <file name="unwind_exit.phpt" role="test"/>
       </dir>
     </dir>
@@ -184,6 +187,34 @@
       <license>Apache 2.0</license>
       <notes>opentelemetry 1.0.0beta6
         * handle UnwindExit (#62)
+      </notes>
+    </release>
+    <release>
+      <date>2023-09-04</date>
+      <time>23:35:51</time>
+      <version>
+        <release>1.0.0beta7</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.0beta7
+        * adding more tests (#82)
+        * disabling expanding args for internal functions (#84)
+        * check for invalid hook function signatures (#79)
+        * adding checks for conflicting extensions (#83)
+        * adding notes and minor code improvements for issue 68 (#75)
+        * fixing crash + docs (#76)
+        * fixing clang-format install (#78)
+        * adding valgrind (#73)
+        * fixing segfault when returning params from pre callback (#72)
+        * adding failing tests for pre-hook params (#71)
+        * moving docs back to root (#70)
+        * add failing test for expand params with post callback (#69)
+        * moving extension to subdirectory (#65)
       </notes>
     </release>
   </changelog>
