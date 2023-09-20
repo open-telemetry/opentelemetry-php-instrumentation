@@ -2,6 +2,12 @@
 Check if hooks receives arguments and return value
 --EXTENSIONS--
 opentelemetry
+--SKIPIF--
+<?php
+if(PATH_SEPARATOR == ';'){
+	echo 'skip';
+}
+?>
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', fn() => var_dump(func_get_args()), fn() => var_dump(func_get_args()));
