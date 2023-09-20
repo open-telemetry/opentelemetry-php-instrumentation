@@ -1,3 +1,6 @@
+// vim:ft=javascript
+// Changed ARGS to be always compiled static (shared will crash)
+
 ARG_ENABLE('opentelemetry', 'opentelemetry support', 'yes');
 
 if (PHP_OPENTELEMETRY == 'yes') {
