@@ -2,12 +2,6 @@
 Check if hooks receives function information
 --EXTENSIONS--
 opentelemetry
---SKIPIF--
-<?php
-if(PATH_SEPARATOR == ';'){
-	echo 'skip';
-}
-?>
 --FILE--
 <?php
 \OpenTelemetry\Instrumentation\hook(null, 'helloWorld', fn() => var_dump(func_get_args()), fn() => var_dump(func_get_args()));
@@ -30,7 +24,7 @@ array(6) {
   [3]=>
   string(10) "helloWorld"
   [4]=>
-  string(%d) "%s/tests/005.php"
+  string(%d) "%s%etests%e005.php"
   [5]=>
   int(4)
 }
@@ -50,7 +44,7 @@ array(8) {
   [5]=>
   string(10) "helloWorld"
   [6]=>
-  string(%d) "%s/tests/005.php"
+  string(%d) "%s%etests%e005.php"
   [7]=>
   int(4)
 }
