@@ -202,7 +202,8 @@ static void log_invalid_message(char *msg, zval *scope, zval *function) {
     // Allocate a buffer for the formatted message.
     char *formatted = malloc(formatted_size);
     if (formatted == NULL) {
-        php_log_err("OpenTelemetry: Failed to allocate memory for formatted message.");
+        php_log_err("OpenTelemetry: Failed to allocate "
+                    "memory for formatted message.");
         return;
     }
 
