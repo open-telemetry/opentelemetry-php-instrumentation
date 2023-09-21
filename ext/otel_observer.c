@@ -195,10 +195,26 @@ static void log_invalid_message(char *msg, zval *scope, zval *function) {
         s = Z_STRVAL_P(scope);
     }
     char *f = Z_STRVAL_P(function);
-    char formatted[strlen(msg) + strlen(s) + strlen(f) + 1];
-    snprintf(formatted, sizeof(formatted), msg, s, f);
 
+    // Calculate the size of the formatted message.
+    int formatted_size = strlen(msg) + strlen(s) + strlen(f) + 1;
+
+    // Allocate a buffer for the formatted message.
+    char *formatted = malloc(formatted_size);
+    if (formatted == NULL) {
+        php_log_err("OpenTelemetry: Failed to allocate "
+                    "memory for formatted message.");
+        return;
+    }
+
+    // Format the message.
+    snprintf(formatted, formatted_size, msg, s, f);
+
+    // Log the message.
     php_log_err(formatted);
+
+    // Free the allocated memory.
+    free(formatted);
 }
 
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
@@ -218,8 +234,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
 
     for (zend_llist_element *element = hooks->head; element;
          element = element->next) {
-        zend_fcall_info fci = {};
-        zend_fcall_info_cache fcc = {};
+        zend_fcall_info fci = empty_fcall_info;
+        zend_fcall_info_cache fcc = empty_fcall_info_cache;
         zend_function *func = execute_data->func; // the observed function
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
@@ -337,8 +353,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
 
     for (zend_llist_element *element = hooks->tail; element;
          element = element->prev) {
-        zend_fcall_info fci = {};
-        zend_fcall_info_cache fcc = {};
+        zend_fcall_info fci = empty_fcall_info;
+        zend_fcall_info_cache fcc = empty_fcall_info_cache;
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
             continue;
