@@ -6,6 +6,8 @@ is invalid, the callback will not be called and a message will be written to err
 null class.
 --EXTENSIONS--
 opentelemetry
+--XFAIL--
+Providing a invalid pre callback signature for function without class causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(

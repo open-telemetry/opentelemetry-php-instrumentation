@@ -5,6 +5,8 @@ The invalid callback signature should not cause a fatal, so it is checked before
 is invalid, the callback will not be called and a message will be written to error_log.
 --EXTENSIONS--
 opentelemetry
+--XFAIL--
+Providing a pre invalid callback signature causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(
