@@ -114,6 +114,10 @@ OpenTelemetry\Instrumentation\hook(
 
 There are more examples in the [tests directory](ext/tests/)
 
+### Static methods
+
+Note that if hooking a static class method, the first parameter to `pre` and `post` callbacks is a `string` containing the method's class name.
+
 # Modifying parameters, exceptions and return values of the observed function
 
 ## Parameters
