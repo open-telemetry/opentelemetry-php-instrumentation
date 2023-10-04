@@ -7,8 +7,6 @@ When it traverses back through zend_execute_data, the top-level frame appears co
 it is what causes the segfault.
 --EXTENSIONS--
 opentelemetry
---XFAIL--
-Providing a post callback when expanding params of internal function causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(
@@ -22,8 +20,11 @@ OpenTelemetry\Instrumentation\hook(
 
 var_dump(array_slice([1,2,3], 1));
 ?>
---EXPECT--
-array(1) {
+--EXPECTF--
+Notice: array_slice(): OpenTelemetry: expanding args of internal functions not supported in %s on line %d
+array(2) {
   [0]=>
   int(2)
+  [1]=>
+  int(3)
 }
