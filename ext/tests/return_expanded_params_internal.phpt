@@ -18,10 +18,11 @@ opentelemetry
 
 var_dump(array_slice(['a', 'b', 'c'], 1));
 ?>
---XFAIL--
-Core dump (same issue as in return_expanded_params.phpt)
---EXPECT--
-array(1) {
+--EXPECTF--
+Notice: array_slice(): OpenTelemetry: expanding args of internal functions not supported in %s on line %d
+array(2) {
   [0]=>
   string(1) "b"
+  [1]=>
+  string(1) "c"
 }
