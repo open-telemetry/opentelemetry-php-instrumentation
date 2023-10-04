@@ -36,6 +36,10 @@ Via pecl/pickle:
 install-php-extensions opentelemetry[-beta|-stable|-latest]
 ```
 
+### Windows
+
+See https://wiki.php.net/internals/windows/stepbystepbuild_sdk_2#building_pecl_extensions_with_phpize
+
 ## Verify that the extension is installed and enabled
 
 ```shell
@@ -109,6 +113,10 @@ OpenTelemetry\Instrumentation\hook(
 ```
 
 There are more examples in the [tests directory](ext/tests/)
+
+### Static methods
+
+Note that if hooking a static class method, the first parameter to `pre` and `post` callbacks is a `string` containing the method's class name.
 
 # Modifying parameters, exceptions and return values of the observed function
 
