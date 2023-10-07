@@ -1,11 +1,11 @@
 
-#include "php.h"
 #include "otel_observer.h"
-#include "zend_observer.h"
+#include "php.h"
+#include "php_opentelemetry.h"
+#include "zend_exceptions.h"
 #include "zend_execute.h"
 #include "zend_extensions.h"
-#include "zend_exceptions.h"
-#include "php_opentelemetry.h"
+#include "zend_observer.h"
 
 static int op_array_extension = -1;
 
@@ -651,4 +651,3 @@ void opentelemetry_observer_init(INIT_FUNC_ARGS) {
             zend_get_op_array_extension_handle("opentelemetry");
     }
 }
-
