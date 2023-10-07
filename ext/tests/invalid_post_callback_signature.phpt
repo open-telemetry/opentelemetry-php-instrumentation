@@ -33,4 +33,5 @@ TestClass::test();
 --EXPECTF--
 string(3) "pre"
 string(4) "test"
-OpenTelemetry: post hook invalid signature, class=TestClass function=test
+
+Warning: TestClass::test(): OpenTelemetry: post hook invalid signature, class=TestClass function=test in %s on line %d
