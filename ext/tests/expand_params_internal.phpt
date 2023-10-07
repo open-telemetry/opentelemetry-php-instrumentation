@@ -22,6 +22,7 @@ OpenTelemetry\Instrumentation\hook(
 
 var_dump(array_slice([1,2,3], 1));
 ?>
+--EXPECTF--
 Notice: array_slice(): OpenTelemetry: expanding args of internal functions not supported in %s on line %d
 array(2) {
   [0]=>
