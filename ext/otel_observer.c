@@ -218,11 +218,14 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.named_params = NULL;
         fci.retval = &ret;
 
-       if (!is_valid_signature(fci, fcc)) {
-            php_error_docref(
-                NULL, E_WARNING,
-                "OpenTelemetry: pre hook invalid signature, class=%s function=%s",
-                (Z_TYPE_P(&params[2]) == IS_NULL) ? "null" : Z_STRVAL_P(&params[2]), Z_STRVAL_P(&params[3]));
+        if (!is_valid_signature(fci, fcc)) {
+            php_error_docref(NULL, E_WARNING,
+                             "OpenTelemetry: pre hook invalid signature, "
+                             "class=%s function=%s",
+                             (Z_TYPE_P(&params[2]) == IS_NULL)
+                                 ? "null"
+                                 : Z_STRVAL_P(&params[2]),
+                             Z_STRVAL_P(&params[3]));
             continue;
         }
 
@@ -247,8 +250,10 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         if (func->type == ZEND_INTERNAL_FUNCTION) {
                             // TODO expanding args for internal functions causes
                             // segfault
-                           php_error_docref(NULL, E_NOTICE,
-                                "OpenTelemetry: expanding args of internal functions not supported");
+                            php_error_docref(
+                                NULL, E_NOTICE,
+                                "OpenTelemetry: expanding args of internal "
+                                "functions not supported");
                             continue;
                         }
                         // TODO Extend call frame?
@@ -338,10 +343,13 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            php_error_docref(
-                NULL, E_WARNING,
-                "OpenTelemetry: post hook invalid signature, class=%s function=%s",
-                (Z_TYPE_P(&params[4]) == IS_NULL) ? "null" : Z_STRVAL_P(&params[4]), Z_STRVAL_P(&params[5]));
+            php_error_docref(NULL, E_WARNING,
+                             "OpenTelemetry: post hook invalid signature, "
+                             "class=%s function=%s",
+                             (Z_TYPE_P(&params[4]) == IS_NULL)
+                                 ? "null"
+                                 : Z_STRVAL_P(&params[4]),
+                             Z_STRVAL_P(&params[5]));
             continue;
         }
 
@@ -643,3 +651,4 @@ void opentelemetry_observer_init(INIT_FUNC_ARGS) {
             zend_get_op_array_extension_handle("opentelemetry");
     }
 }
+
