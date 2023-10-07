@@ -1,11 +1,11 @@
 
-#include "otel_observer.h"
 #include "php.h"
-#include "php_opentelemetry.h"
-#include "zend_exceptions.h"
+#include "otel_observer.h"
+#include "zend_observer.h"
 #include "zend_execute.h"
 #include "zend_extensions.h"
-#include "zend_observer.h"
+#include "zend_exceptions.h"
+#include "php_opentelemetry.h"
 
 static int op_array_extension = -1;
 
@@ -220,8 +220,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
 
         if (!is_valid_signature(fci, fcc)) {
             php_error_docref(NULL, E_WARNING,
-                             "OpenTelemetry: pre hook invalid signature, "
-                             "class=%s function=%s",
+                             "OpenTelemetry: pre hook invalid signature,"
+                             " class=%s function=%s",
                              (Z_TYPE_P(&params[2]) == IS_NULL)
                                  ? "null"
                                  : Z_STRVAL_P(&params[2]),
@@ -252,8 +252,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                             // segfault
                             php_error_docref(
                                 NULL, E_NOTICE,
-                                "OpenTelemetry: expanding args of internal "
-                                "functions not supported");
+                                "OpenTelemetry: expanding args of "
+                                "internal functions not supported");
                             continue;
                         }
                         // TODO Extend call frame?
