@@ -35,17 +35,12 @@ jobs:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
           run: make test TESTS=--show-diff
   windows:
-    defaults:
-      run:
-        shell: cmd
     runs-on: windows-2019
     continue-on-error: false
     strategy:
       fail-fast: false
       matrix:
-        version: ['8.0', '8.1', '8.2']
-        arch: [x64]
-        ts: [nts, ts]
+        php: ['8.0', '8.1', '8.2']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,9 +48,9 @@ jobs:
         uses: cmb69/setup-php-sdk@v0.7
         id: setup-php-sdk
         with:
-          version: ${{ matrix.version }}
-          arch: ${{matrix.arch}}
-          ts: ${{matrix.ts}}
+          version: ${{ matrix.php }}
+          arch: x64
+          ts: nts
       - name: Install dependencies
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -64,25 +59,9 @@ jobs:
       - name: Build
         run: |
           phpize
-          ./configure --enable-opentelemetry --enable-debug-pack --with-prefix=${{ steps.setup-php-sdk.outputs.prefix }}
+          ./configure --enable-opentelemetry --with-prefix=${{ steps.setup-php-sdk.outputs.prefix }}
           nmake
       - name: Test
         env:
           TEST_PHP_ARGS: "-q"
         run: nmake test TESTS=--show-diff
-      - name: Package
-        run: |
-          md .install
-          copy LICENSE .install
-          if exist x64 (
-            if exist x64\Release (set prefix=x64\Release) else set prefix=x64\Release_TS
-          ) else (
-            if exist Release (set prefix=Release) else set prefix=Release_TS
-          )
-          copy %prefix%\php_opentelemetry.dll .install
-          copy %prefix%\php_opentelemetry.pdb .install
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: opentelemetry-${{matrix.version}}-${{matrix.arch}}-${{matrix.ts}}
-          path: .install
