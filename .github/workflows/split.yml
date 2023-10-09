@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        run: git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" && cd "$GITHUB_WORKSPACE" && git checkout $GITHUB_SHA
+        run: git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" && cd "$GITHUB_WORKSPACE"
       - name: test-gitsplit-token
         run: if [ -z ${{ secrets.GITSPLIT_TOKEN }} ]; then echo "GITSPLIT_TOKEN is unset"; else echo "GITSPLIT_TOKEN is set"; fi
       - name: Split repositories
