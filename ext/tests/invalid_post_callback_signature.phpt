@@ -5,8 +5,6 @@ The invalid callback signature should not cause a fatal, so it is checked before
 is invalid, the callback will not be called.
 --EXTENSIONS--
 opentelemetry
---XFAIL--
-Providing a post invalid callback signature causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(
@@ -33,4 +31,5 @@ TestClass::test();
 --EXPECTF--
 string(3) "pre"
 string(4) "test"
-OpenTelemetry: post hook invalid signature, class=TestClass function=test
+
+Warning: TestClass::test(): OpenTelemetry: post hook invalid signature, class=TestClass function=test in %s on line %d
