@@ -2,6 +2,8 @@
 Check if pre hook can expand and then return $params of internal function
 --DESCRIPTION--
 The existence of a post callback is part of the failure preconditions.
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80200) die('skip requires PHP >= 8.2'); ?>
 --EXTENSIONS--
 opentelemetry
 --FILE--
@@ -18,10 +20,11 @@ opentelemetry
 
 var_dump(array_slice(['a', 'b', 'c'], 1));
 ?>
---XFAIL--
-Core dump (same issue as in return_expanded_params.phpt)
---EXPECT--
-array(1) {
+--EXPECTF--
+Notice: array_slice(): OpenTelemetry: expanding args of internal functions not supported in %s on line %d
+array(2) {
   [0]=>
   string(1) "b"
+  [1]=>
+  string(1) "c"
 }

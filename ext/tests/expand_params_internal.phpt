@@ -5,10 +5,10 @@ Removing the `post` callback avoids the segfault. The segfault is actually durin
 from `zend_observer_fcall_end_all` (https://github.com/php/php-src/blob/php-8.2.8/Zend/zend_observer.c#L291).
 When it traverses back through zend_execute_data, the top-level frame appears corrupted, and any attempt to reference
 it is what causes the segfault.
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80200) die('skip requires PHP >= 8.2'); ?>
 --EXTENSIONS--
 opentelemetry
---XFAIL--
-Providing a post callback when expanding params of internal function causes segfault. The behaviour is currently disabled, so instead of a segfault a message is logged to error_log.
 --FILE--
 <?php
 OpenTelemetry\Instrumentation\hook(
@@ -22,8 +22,11 @@ OpenTelemetry\Instrumentation\hook(
 
 var_dump(array_slice([1,2,3], 1));
 ?>
---EXPECT--
-array(1) {
+--EXPECTF--
+Notice: array_slice(): OpenTelemetry: expanding args of internal functions not supported in %s on line %d
+array(2) {
   [0]=>
   int(2)
+  [1]=>
+  int(3)
 }

@@ -187,36 +187,6 @@ static inline bool is_valid_signature(zend_fcall_info fci,
     return true;
 }
 
-static void log_invalid_message(char *msg, zval *scope, zval *function) {
-    char *s;
-    if (Z_TYPE_P(scope) == IS_NULL) {
-        s = "null";
-    } else {
-        s = Z_STRVAL_P(scope);
-    }
-    char *f = Z_STRVAL_P(function);
-
-    // Calculate the size of the formatted message.
-    int formatted_size = strlen(msg) + strlen(s) + strlen(f) + 1;
-
-    // Allocate a buffer for the formatted message.
-    char *formatted = malloc(formatted_size);
-    if (formatted == NULL) {
-        php_log_err("OpenTelemetry: Failed to allocate "
-                    "memory for formatted message.");
-        return;
-    }
-
-    // Format the message.
-    snprintf(formatted, formatted_size, msg, s, f);
-
-    // Log the message.
-    php_log_err(formatted);
-
-    // Free the allocated memory.
-    free(formatted);
-}
-
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
@@ -249,9 +219,13 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            char *msg = "OpenTelemetry: pre hook invalid signature, class=%s "
-                        "function=%s";
-            log_invalid_message(msg, &params[2], &params[3]);
+            php_error_docref(NULL, E_WARNING,
+                             "OpenTelemetry: pre hook invalid signature,"
+                             " class=%s function=%s",
+                             (Z_TYPE_P(&params[2]) == IS_NULL)
+                                 ? "null"
+                                 : Z_STRVAL_P(&params[2]),
+                             Z_STRVAL_P(&params[3]));
             continue;
         }
 
@@ -276,8 +250,10 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         if (func->type == ZEND_INTERNAL_FUNCTION) {
                             // TODO expanding args for internal functions causes
                             // segfault
-                            php_log_err("OpenTelemetry: expanding args of "
-                                        "internal functions not supported");
+                            php_error_docref(
+                                NULL, E_NOTICE,
+                                "OpenTelemetry: expanding args of "
+                                "internal functions not supported");
                             continue;
                         }
                         // TODO Extend call frame?
@@ -367,9 +343,13 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            char *msg = "OpenTelemetry: post hook invalid signature, class=%s "
-                        "function=%s";
-            log_invalid_message(msg, &params[4], &params[5]);
+            php_error_docref(NULL, E_WARNING,
+                             "OpenTelemetry: post hook invalid signature, "
+                             "class=%s function=%s",
+                             (Z_TYPE_P(&params[4]) == IS_NULL)
+                                 ? "null"
+                                 : Z_STRVAL_P(&params[4]),
+                             Z_STRVAL_P(&params[5]));
             continue;
         }
 
