@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - split
+  pull_request:
   release:
     types: [published]
   create:
