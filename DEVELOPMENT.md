@@ -80,7 +80,7 @@ needed related to installing and configuring some dependencies.
 
 Next is to add extension to ini file as described above.
 
-After finising all above steps, you can start debugging session. There are few debuggers that
+After finishing all above steps, you can start a debugging session. There are few debuggers that
 can be used for debugging process, lldb, gdb or visual studio debugger on windows.
 To trigger auto instrumentation code you need to invoke observer api functionality.
 Following, very simple script can be used as reference example, created and saved as test.php
@@ -145,6 +145,28 @@ tests/name_of_test.sh valgrind # will run test and display valgrind report
 ```
 
 Further reading: https://www.phpinternalsbook.com/php7/memory_management/memory_debugging.html#debugging-memory
+
+### gdbserver
+
+To debug tests running in a docker container, you can use `gdbserver`:
+
+```shell
+docker build --build-arg PHP_VERSION=8.2.11 -f docker/Dockerfile.debian . -t otel:8.2.11
+docker run --rm -it -p "2345:2345" -v $(pwd)/ext:/usr/src/myapp otel:8.2.11 bash
+```
+
+Then, inside the container:
+
+```shell
+phpize
+./configure
+make
+gdbserver :2345 php -d extension=$(pwd)/modules/opentelemetry.so /path/to/file.php
+```
+
+Now, gdbserver should be running and awaiting a connection. Configure your IDE to connect via
+`gdb` to `127.0.0.1:2345` and start debugging, which should connect to the waiting server
+and start execution.
 
 # Packaging for PECL
 

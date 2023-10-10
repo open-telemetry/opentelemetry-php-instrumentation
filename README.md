@@ -5,7 +5,9 @@
 This is a PHP extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
-The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry. 
+The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry.
+
+In PHP 8.2+, internal/built-in PHP functions can also be observed.
 
 ## Requirements
 - PHP 8+
@@ -28,7 +30,7 @@ If you are using the [official PHP docker images](https://hub.docker.com/_/php) 
 
 From github:
 ```shell
-install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
+install-php-extensions opentelemetry-php/ext-opentelemetry@main
 ```
 
 Via pecl/pickle:
@@ -74,9 +76,8 @@ opentelemetry.validate_hook_functions => On => On
 
 ### Invalid pre/post hooks
 
-Invalid argument types in pre and post callbacks can cause fatal errors. Runtime checking is performed on the
-hook functions to ensure they are compatible. If not, the hook will not be executed and an error will be logged
-to error_log.
+Invalid argument types in `pre` and `post` callbacks can cause fatal errors. Runtime checking is performed on the
+hook functions to ensure they are compatible. If not, the hook will not be executed and an error will be generated.
 
 This feature can be disabled by setting the `opentelemetry.validate_hook_functions` ini value to `Off`;
 
