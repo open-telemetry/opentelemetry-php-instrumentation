@@ -30,7 +30,7 @@ If you are using the [official PHP docker images](https://hub.docker.com/_/php) 
 
 From github:
 ```shell
-install-php-extensions opentelemetry-php/ext-opentelemetry@main
+install-php-extensions open-telemetry/opentelemetry-php-instrumentation@main
 ```
 
 Via pecl/pickle:
