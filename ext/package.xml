@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2023-09-12</date>
-  <time>02:23:02</time>
+  <date>2023-10-17</date>
+  <time>03:23:33</time>
   <version>
-    <release>1.0.0RC1</release>
+    <release>1.0.0RC2</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,7 +27,13 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.0RC1
+  <notes>opentelemetry 1.0.0RC2
+    * documentation updates (#100)
+    * Change segfault method! (#97)
+    * adding windows build action (#93)
+    * adding test and doc for hooking static method (#94)
+    * Update opentelemetry.stub.php (#92)
+    * For WINDOWS build! (#88)
   </notes>
   <contents>
     <dir baseinstalldir="/" name="/">
@@ -216,6 +222,21 @@
         * moving docs back to root (#70)
         * add failing test for expand params with post callback (#69)
         * moving extension to subdirectory (#65)
+      </notes>
+    </release>
+    <release>
+      <date>2023-09-12</date>
+      <time>02:23:02</time>
+      <version>
+        <release>1.0.0RC1</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.0RC1
       </notes>
     </release>
   </changelog>
