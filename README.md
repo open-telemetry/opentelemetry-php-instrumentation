@@ -52,8 +52,8 @@ php --ri  opentelemetry
 
 ### Conflicting extensions
 
-The OpenTelemetry extension does not play nicely with the following other extensions:
-- blackfire
+The extension can be configured to not run if a conflicting extension is installed. Currently, we
+are not aware of any such extensions.
 
 You can control conflicts via the `opentelemetry.conflicts` ini setting.
 
