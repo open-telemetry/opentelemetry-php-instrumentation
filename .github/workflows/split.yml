@@ -14,8 +14,9 @@ jobs:
   gitsplit:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        run: git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" && cd "$GITHUB_WORKSPACE" && git checkout $GITHUB_SHA
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Split repositories
         uses: docker://jderusse/gitsplit:latest
         with:
