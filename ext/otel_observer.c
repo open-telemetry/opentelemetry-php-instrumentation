@@ -532,6 +532,15 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
 
 static zend_observer_fcall_handlers
 observer_fcall_init(zend_execute_data *execute_data) {
+    // This means that either RINIT has not yet been called, or RSHUTDOWN has
+    // already been called. The former can happen if another extension that is
+    // loaded before this one invokes PHP functions in its RINIT. The latter
+    // can happen if a header callback is set or when another extension invokes
+    // PHP functions in their RSHUTDOWN.
+    if (OTEL_G(observer_class_lookup) == NULL) {
+        return (zend_observer_fcall_handlers){NULL, NULL};
+    }
+
     if (op_array_extension == -1) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
