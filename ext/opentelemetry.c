@@ -76,9 +76,8 @@ ZEND_DECLARE_MODULE_GLOBALS(opentelemetry)
 
 PHP_INI_BEGIN()
 // conflicting extensions. a comma-separated list, eg "ext1,ext2"
-STD_PHP_INI_ENTRY("opentelemetry.conflicts", "blackfire", PHP_INI_ALL,
-                  OnUpdateString, conflicts, zend_opentelemetry_globals,
-                  opentelemetry_globals)
+STD_PHP_INI_ENTRY("opentelemetry.conflicts", "", PHP_INI_ALL, OnUpdateString,
+                  conflicts, zend_opentelemetry_globals, opentelemetry_globals)
 STD_PHP_INI_ENTRY_EX("opentelemetry.validate_hook_functions", "On", PHP_INI_ALL,
                      OnUpdateBool, validate_hook_functions,
                      zend_opentelemetry_globals, opentelemetry_globals,
