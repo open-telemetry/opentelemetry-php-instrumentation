@@ -15,12 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        run: git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" && cd "$GITHUB_WORKSPACE"
-      - name: test-gitsplit-token
-        env:
-          GITSPLIT_SECRET: ${{ secrets.GITSPLIT_TOKEN }}
-        if: ${{ env.GITSPLIT_SECRET == '' }}
-        run: echo "GITSPLIT_TOKEN is not set"
+        run: git clone "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" "$GITHUB_WORKSPACE" && cd "$GITHUB_WORKSPACE" && git checkout $GITHUB_SHA
       - name: Split repositories
         uses: docker://jderusse/gitsplit:latest
         with:
