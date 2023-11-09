@@ -22,13 +22,11 @@ jobs:
 
     steps:
       -   uses: actions/checkout@v3
-
       -   name: Build
           run: |
             phpize
             ./configure
             make
-
       -   name: Test
           env:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
@@ -38,7 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: php:8.2-cli
-
     steps:
       - uses: actions/checkout@v3
 
@@ -48,7 +45,6 @@ jobs:
           pear package-validate
           pear package
           cp opentelemetry-*.tgz binaries/
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
