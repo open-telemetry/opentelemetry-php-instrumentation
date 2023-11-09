@@ -44,5 +44,4 @@ jobs:
           file: docker/Dockerfile.${{ matrix.os }}
           build-args: |
             PHP_VERSION=${{ env.PHP_VERSION }}
-            PHP_CONFIG_OPTS=--enable-debug
           tags: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php-version }}-${{ matrix.os }}-debug
