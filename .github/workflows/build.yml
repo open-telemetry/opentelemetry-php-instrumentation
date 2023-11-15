@@ -1,4 +1,4 @@
-name: Build and test
+name: Build, test, release
 
 on:
   push:
@@ -10,9 +10,8 @@ defaults:
     working-directory: ext
 
 jobs:
-  php:
+  linux:
     runs-on: ubuntu-latest
-    name: linux
     strategy:
       fail-fast: false
       matrix:
@@ -23,17 +22,36 @@ jobs:
 
     steps:
       -   uses: actions/checkout@v3
-
       -   name: Build
           run: |
             phpize
             ./configure
             make
-
       -   name: Test
           env:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
           run: make test TESTS=--show-diff
+
+  pecl-package:
+    runs-on: ubuntu-latest
+    container:
+      image: php:8.2-cli
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Package and copy
+        run: |
+          mkdir binaries
+          pear package-validate
+          pear package
+          cp opentelemetry-*.tgz binaries/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: opentelemetry-pecl
+          path: ext/binaries/*.tgz
+          if-no-files-found: error
+
   windows:
     runs-on: windows-2019
     continue-on-error: false
@@ -65,3 +83,38 @@ jobs:
         env:
           TEST_PHP_ARGS: "-q"
         run: nmake test TESTS=--show-diff
+      - name: Copy binaries
+        env:
+          BUILD_NAME: "opentelemetry-${{matrix.php}}-windows-x64-nts}}"
+        run: |
+          md binaries\$BUILD_NAME
+          copy x64\Release\php_opentelemetry.dll binaries\$BUILD_NAME\php_opentelemetry.dll
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: opentelemetry-${{matrix.php}}-windows-x64-nts
+          path: ext\x64\Release\php_opentelemetry.dll
+          if-no-files-found: error
+
+  release-if-tag:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [linux, pecl-package, windows]
+    continue-on-error: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: mkdir
+        run: mkdir binaries
+      - name: download-artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ext/binaries
+      - name: zip
+        run: find ./binaries/* -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          draft: true
+          files: "**/binaries/*.zip"
