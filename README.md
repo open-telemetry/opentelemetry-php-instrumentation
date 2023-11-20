@@ -52,10 +52,14 @@ php --ri  opentelemetry
 
 ### Conflicting extensions
 
-The extension can be configured to not run if a conflicting extension is installed. Currently, we
-are not aware of any such extensions.
+The extension can be configured to not run if a conflicting extension is installed. The following extensions
+are known to not work when installed alongside OpenTelemetry:
 
-You can control conflicts via the `opentelemetry.conflicts` ini setting.
+* SourceGuardian
+
+If the conflicting extension is a regular PHP extension (i.e, not a
+[zend_extension](https://www.phpinternalsbook.com/php7/extensions_design/zend_extensions.html)), you can control
+conflicts via the `opentelemetry.conflicts` ini setting.
 
 If a conflicting extension is found, then the OpenTelemetry extension will disable itself:
 
