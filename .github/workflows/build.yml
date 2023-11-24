@@ -35,7 +35,7 @@ jobs:
   pecl-package:
     runs-on: ubuntu-latest
     container:
-      image: php:8.2-cli
+      image: php:8.3-cli
     steps:
       - uses: actions/checkout@v3
 
