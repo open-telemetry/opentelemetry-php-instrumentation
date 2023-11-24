@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.0', '8.1', '8.2']
+        php: ['8.0', '8.1', '8.2', '8.3']
         os: ['debian', 'alpine']
     container:
       image: ghcr.io/open-telemetry/opentelemetry-php-instrumentation/php:${{ matrix.php }}-${{ matrix.os }}-debug
@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.0', '8.1', '8.2']
+        php: ['8.0', '8.1', '8.2', '8.3']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
