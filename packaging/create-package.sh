@@ -14,7 +14,7 @@ else
 	BUILD_EXT_DIR=instrumentation/native/_build/linux-x86-64-release/ext/
 fi
 
-touch build/open-telemtry.ini
+touch build/open-telemetry.ini
 
 function createPackage () {
 

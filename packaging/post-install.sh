@@ -11,7 +11,7 @@ EXTENSION_DIR="${PHP_INSTRUMENTATION_DIR}/extensions"
 EXTENSION_CFG_DIR="${PHP_INSTRUMENTATION_DIR}/etc"
 BOOTSTRAP_FILE_PATH="${PHP_INSTRUMENTATION_DIR}/src/bootstrap_php_part.php"
 BACKUP_EXTENSION=".instrumentation.bck"
-OPENTELEMETRY_INI_FILE_NAME="open-telemtry.ini"
+OPENTELEMETRY_INI_FILE_NAME="open-telemetry.ini"
 
 ################################################################################
 ########################## FUNCTION CALLS BELOW ################################
