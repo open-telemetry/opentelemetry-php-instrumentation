@@ -8,7 +8,7 @@ PATH=${PATH}:/usr/local/bin
 ################################################################################
 ####### IMPORTANT: PHP_INSTRUMENTATION_DIR is needed otherwise fpm will fail when generating
 #######            the apk distribution with an Invalid tar stream error.
-PHP_INSTRUMENTATION_DIR=/opt/open-telemtry/php-instrumentation
+PHP_INSTRUMENTATION_DIR=/opt/open-telemetry/php-instrumentation
 BACKUP_EXTENSION=".instrumentation.uninstall.bck"
 
 ################################################################################

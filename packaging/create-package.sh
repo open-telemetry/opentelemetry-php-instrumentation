@@ -37,7 +37,7 @@ fpm --input-type dir \
 		--directories ${PHP_INSTRUMENTATION_DIR}/etc \
 		--config-files ${PHP_INSTRUMENTATION_DIR}/etc \
 		/app/packaging/post-install.sh=${PHP_INSTRUMENTATION_DIR}/bin/post-install.sh \
-		/app/build/open-telemtry.ini=${PHP_INSTRUMENTATION_DIR}/etc/ \
+		/app/build/open-telemetry.ini=${PHP_INSTRUMENTATION_DIR}/etc/ \
 		/app/packaging/before-uninstall.sh=${PHP_INSTRUMENTATION_DIR}/bin/before-uninstall.sh \
 		/app/instrumentation/php/=${PHP_INSTRUMENTATION_DIR}/src \
 		/tmp/extensions/=${PHP_INSTRUMENTATION_DIR}/extensions \
