@@ -6,7 +6,7 @@ PATH=${PATH}:/usr/local/bin
 ################################################################################
 ############################ GLOBAL VARIABLES ##################################
 ################################################################################
-PHP_INSTRUMENTATION_DIR=/opt/open-telemtry/php-instrumentation
+PHP_INSTRUMENTATION_DIR=/opt/open-telemetry/php-instrumentation
 EXTENSION_DIR="${PHP_INSTRUMENTATION_DIR}/extensions"
 EXTENSION_CFG_DIR="${PHP_INSTRUMENTATION_DIR}/etc"
 BOOTSTRAP_FILE_PATH="${PHP_INSTRUMENTATION_DIR}/src/bootstrap_php_part.php"
