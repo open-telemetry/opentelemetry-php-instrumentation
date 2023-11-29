@@ -5,7 +5,7 @@ services:
       context: docker
       dockerfile: Dockerfile.debian
       args:
-        PHP_VERSION: ${PHP_VERSION:-8.2.8}
+        PHP_VERSION: ${PHP_VERSION:-8.3.0}
     volumes:
       - ./ext:/usr/src/myapp
     environment:
@@ -15,7 +15,7 @@ services:
       context: docker
       dockerfile: Dockerfile.alpine
       args:
-        PHP_VERSION: ${PHP_VERSION:-8.2.8}
+        PHP_VERSION: ${PHP_VERSION:-8.3.0}
     volumes:
       - ./ext:/usr/src/myapp
     environment:
