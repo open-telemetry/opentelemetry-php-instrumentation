@@ -1,4 +1,4 @@
-PHP_VERSION ?= 8.2.7
+PHP_VERSION ?= 8.3.0
 DISTRO ?= debian
 
 .DEFAULT_GOAL : help
