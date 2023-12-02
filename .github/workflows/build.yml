@@ -63,8 +63,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install PHP ${{ matrix.php }}
-        uses: cmb69/setup-php-sdk@v0.7
         id: setup-php-sdk
+        uses: php/setup-php-sdk@v0.8
         with:
           version: ${{ matrix.php }}
           arch: x64
