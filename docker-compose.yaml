@@ -3,6 +3,20 @@ services:
   debian:
     build:
       context: docker
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.debian
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3.0}
     volumes:
-      - ./:/usr/src/myapp
+      - ./ext:/usr/src/myapp
+    environment:
+      TEST_PHP_ARGS: "-q"
+  alpine:
+    build:
+      context: docker
+      dockerfile: Dockerfile.alpine
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3.0}
+    volumes:
+      - ./ext:/usr/src/myapp
+    environment:
+      TEST_PHP_ARGS: "-q"

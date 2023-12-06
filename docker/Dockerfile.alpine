@@ -1,7 +1,7 @@
 FROM alpine:3.16 as builder
 WORKDIR /usr/src
 
-RUN apk add --no-cache \
+ENV PHPIZE_DEPS \
     autoconf \
     dpkg-dev \
     dpkg \
@@ -11,11 +11,13 @@ RUN apk add --no-cache \
     libc-dev \
     make \
     pkgconf \
-    re2c \
+    re2c
+
+RUN apk add --no-cache \
+    ${PHPIZE_DEPS} \
     bash \
     ca-certificates \
     curl \
-    less \
     tar \
     xz
 
@@ -27,14 +29,14 @@ RUN apk add --no-cache \
     readline-dev \
     sqlite-dev
 
-ARG PHP_VERSION=8.1.10
+ARG PHP_VERSION
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
 
 RUN echo "$PHP_URL" && curl -fsSL -o php.tar.xz "$PHP_URL"
 RUN cd /usr/src \
   && tar -xf php.tar.xz
 
-ARG PHP_CONFIG_OPTS="--enable-debug"
+ARG PHP_CONFIG_OPTS="--enable-debug --with-pear --with-zlib"
 RUN cd php-${PHP_VERSION} \
   && ./buildconf \
   && ./configure ${PHP_CONFIG_OPTS} \

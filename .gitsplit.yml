@@ -1,0 +1,16 @@
+# Path to a cache directory Used to speed up the split over time by reusing git's objects
+cache_url: "/cache/gitsplit"
+
+# Path to the repository to split (default = current path)
+project_url: "https://github.com/open-telemetry/opentelemetry-php-instrumentation.git"
+
+# List of splits.
+splits:
+  - prefix: "ext"
+    target: "https://${GH_TOKEN}@github.com/opentelemetry-php/ext-opentelemetry.git"
+
+# List of references to split (defined as regexp)
+origins:
+  - ^main$
+  - ^split$
+  - ^\d+\.\d+\.\d+.*$

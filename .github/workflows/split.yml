@@ -1,0 +1,24 @@
+name: gitsplit
+on:
+  push:
+    branches:
+      - main
+      - split
+  release:
+    types: [published]
+  create:
+  workflow_dispatch:
+
+jobs:
+  gitsplit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Split repositories
+        uses: docker://jderusse/gitsplit:latest
+        with:
+          args: gitsplit
+        env:
+          GH_TOKEN: ${{ secrets.GITSPLIT_TOKEN }}

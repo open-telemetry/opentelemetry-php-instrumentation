@@ -1,0 +1,54 @@
+FROM debian:bullseye-slim
+WORKDIR /usr/src
+
+#clang-format, gdb, valgrind
+RUN apt-get update \
+  && apt-get install -y \
+    curl \
+    gnupg2 \
+  && curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
+  && echo "deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
+  && echo "deb-src http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
+  && apt-get update \
+  && apt-get install -y \
+    clang-format-18 \
+    gdb \
+    gdbserver \
+    valgrind
+
+ENV PHPIZE_DEPS \
+		autoconf \
+		dpkg-dev \
+		file \
+		g++ \
+		gcc \
+		libc-dev \
+		make \
+		pkg-config \
+		re2c
+
+RUN apt-get update -y \
+  && apt-get install -y \
+    ${PHPIZE_DEPS} \
+    libxml2-dev \
+    libsqlite3-dev \
+    zlib1g-dev
+
+ARG PHP_VERSION
+ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz"
+ENV CFLAGS="-ggdb3"
+ENV TEST_PHP_ARGS="-q"
+
+RUN echo "$PHP_URL" \
+  && curl -fsSL -o php.tar.xz "$PHP_URL" \
+  && tar -xf php.tar.xz \
+  && rm php.tar.xz
+
+ARG PHP_CONFIG_OPTS="--enable-debug --with-pear --with-zlib"
+RUN cd php-${PHP_VERSION} \
+  && ./buildconf \
+  && ./configure ${PHP_CONFIG_OPTS} \
+  && make -j $(nproc) \
+  && make install
+
+WORKDIR /usr/src/myapp
