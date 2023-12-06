@@ -2,6 +2,14 @@
 
 [![Build and test](https://github.com/open-telemetry/opentelemetry-php-instrumentation/actions/workflows/build.yml/badge.svg)](https://github.com/open-telemetry/opentelemetry-php-instrumentation/actions/workflows/build.yml)
 
+## Current Project Status
+For more information, please consult the documentation of the main [OpenTelemetry PHP project](https://github.com/open-telemetry/opentelemetry-php).
+
+## Issues
+
+Issues have been disabled for this repo in order to help maintain consistency between this repo and the main [OpenTelemetry PHP project](https://github.com/open-telemetry/opentelemetry-php) repo. If you have an issue you'd like to raise about this issue, please use the [OpenTelemetry PHP Issue section](https://github.com/open-telemetry/opentelemetry-php/issues/new/choose). Please prefix the title of the issue with [opentelemetry-php-instrumentation].
+
+## Description
 This is a PHP extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
