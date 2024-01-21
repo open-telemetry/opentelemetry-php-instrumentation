@@ -22,6 +22,7 @@ try {
 helloWorld();
 } catch(Exception) {}
 
---EXPECT--
+--EXPECTF--
 string(3) "pre"
 
+Warning: helloWorld(): OpenTelemetry: post hook threw exception, class=null function=helloWorld message=error in %s
