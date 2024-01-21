@@ -425,8 +425,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
             continue;
         }
 
-        otel_exception_state saved_state;
-        exception_isolation_start(&saved_state);
+        otel_exception_state save_state;
+        exception_isolation_start(&save_state);
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
             /* TODO rather than ignoring return value if post callback doesn't
@@ -446,7 +446,7 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
             }
         }
 
-        zend_object *suppressed = exception_isolation_end(&saved_state);
+        zend_object *suppressed = exception_isolation_end(&save_state);
         exception_isolation_handle_exception(suppressed, &params[4], &params[5], "post hook");
 
         zval_dtor(&ret);
