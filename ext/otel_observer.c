@@ -18,6 +18,8 @@ typedef struct otel_exception_state {
     zend_object *exception;
     zend_object *prev_exception;
     const zend_op *opline_before_exception;
+    bool has_opline;
+    const zend_op *opline;
 } otel_exception_state;
 
 static inline void
@@ -196,17 +198,23 @@ static inline bool is_valid_signature(zend_fcall_info fci,
 static void exception_isolation_start(otel_exception_state *save_state) {
     save_state->exception = EG(exception);
     save_state->prev_exception = EG(prev_exception);
-    // Note that while exception throwing code sets
-    // EG(current_execute_data)->opline too, this does not have to be saved
-    // because zend_call_function switches to a different execute_data (which
-    // is basically stack frame info), so the called function does not tamper
-    // with the current one, but only modifies its own execute_data instance,
-    // leaving the current one in its original state.
     save_state->opline_before_exception = EG(opline_before_exception);
 
     EG(exception) = NULL;
     EG(prev_exception) = NULL;
     EG(opline_before_exception) = NULL;
+
+    // If the hook handler throws an exception, the execute_data of the outer
+    // frame may have its opline set to an exception handler too. This is done
+    // before the chance to clear the exception, so opline has to be restored
+    // to original value.
+    zend_execute_data *execute_data = EG(current_execute_data);
+    if (execute_data != NULL) {
+        save_state->has_opline = true;
+        save_state->opline = execute_data->opline;
+    } else {
+        save_state->has_opline = false;
+    }
 }
 
 static zend_object *exception_isolation_end(otel_exception_state *save_state) {
@@ -221,6 +229,11 @@ static zend_object *exception_isolation_end(otel_exception_state *save_state) {
     EG(exception) = save_state->exception;
     EG(prev_exception) = save_state->prev_exception;
     EG(opline_before_exception) = save_state->opline_before_exception;
+
+    zend_execute_data *execute_data = EG(current_execute_data);
+    if (execute_data != NULL && save_state->has_opline) {
+        execute_data->opline = save_state->opline;
+    }
 
     return suppressed;
 }
