@@ -14,6 +14,14 @@ typedef struct otel_observer {
     zend_llist post_hooks;
 } otel_observer;
 
+typedef struct otel_exception_state {
+    zend_object *exception;
+    zend_object *prev_exception;
+    const zend_op *opline_before_exception;
+    bool has_opline;
+    const zend_op *opline;
+} otel_exception_state;
+
 static inline void
 func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
     if (execute_data->func->op_array.scope) {
@@ -187,6 +195,83 @@ static inline bool is_valid_signature(zend_fcall_info fci,
     return true;
 }
 
+static void exception_isolation_start(otel_exception_state *save_state) {
+    save_state->exception = EG(exception);
+    save_state->prev_exception = EG(prev_exception);
+    save_state->opline_before_exception = EG(opline_before_exception);
+
+    EG(exception) = NULL;
+    EG(prev_exception) = NULL;
+    EG(opline_before_exception) = NULL;
+
+    // If the hook handler throws an exception, the execute_data of the outer
+    // frame may have its opline set to an exception handler too. This is done
+    // before the chance to clear the exception, so opline has to be restored
+    // to original value.
+    zend_execute_data *execute_data = EG(current_execute_data);
+    if (execute_data != NULL) {
+        save_state->has_opline = true;
+        save_state->opline = execute_data->opline;
+    } else {
+        save_state->has_opline = false;
+    }
+}
+
+static zend_object *exception_isolation_end(otel_exception_state *save_state) {
+    zend_object *suppressed = EG(exception);
+    // NULL this before call to zend_clear_exception, as it would try to jump
+    // to exception handler then.
+    EG(exception) = NULL;
+
+    // this clears prev_exception if it was set for any reason
+    zend_clear_exception();
+
+    EG(exception) = save_state->exception;
+    EG(prev_exception) = save_state->prev_exception;
+    EG(opline_before_exception) = save_state->opline_before_exception;
+
+    zend_execute_data *execute_data = EG(current_execute_data);
+    if (execute_data != NULL && save_state->has_opline) {
+        execute_data->opline = save_state->opline;
+    }
+
+    return suppressed;
+}
+
+static const char *zval_get_chars(zval *zv) {
+    if (zv != NULL && Z_TYPE_P(zv) == IS_STRING) {
+        return Z_STRVAL_P(zv);
+    }
+    return "null";
+}
+
+static void exception_isolation_handle_exception(zend_object *suppressed,
+                                                 zval *class_name,
+                                                 zval *function_name,
+                                                 const char *type) {
+    if (suppressed == NULL) {
+        return;
+    }
+
+    zend_class_entry *exception_base = zend_get_exception_base(suppressed);
+    zval return_value;
+    zval *message =
+        zend_read_property_ex(exception_base, suppressed,
+                              ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, &return_value);
+
+    php_error_docref(NULL, E_WARNING,
+                     "OpenTelemetry: %s threw exception,"
+                     " class=%s function=%s message=%s",
+                     type, zval_get_chars(class_name),
+                     zval_get_chars(function_name), zval_get_chars(message));
+
+    if (message != NULL) {
+        ZVAL_DEREF(message);
+    }
+
+    OBJ_RELEASE(suppressed);
+}
+
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
@@ -229,9 +314,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
             continue;
         }
 
-        zend_exception_save();
-        zend_object *exception = EG(prev_exception);
-        EG(prev_exception) = NULL;
+        otel_exception_state save_state;
+        exception_isolation_start(&save_state);
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
             if (Z_TYPE(ret) == IS_ARRAY &&
@@ -280,9 +364,9 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
             }
         }
 
-        zend_exception_restore();
-        EG(prev_exception) = exception;
-        zend_exception_restore();
+        zend_object *suppressed = exception_isolation_end(&save_state);
+        exception_isolation_handle_exception(suppressed, &params[2], &params[3],
+                                             "pre hook");
 
         zval_dtor(&ret);
     }
@@ -353,9 +437,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
             continue;
         }
 
-        zend_exception_save();
-        zend_object *exception = EG(prev_exception);
-        EG(prev_exception) = NULL;
+        otel_exception_state save_state;
+        exception_isolation_start(&save_state);
 
         if (zend_call_function(&fci, &fcc) == SUCCESS) {
             /* TODO rather than ignoring return value if post callback doesn't
@@ -375,20 +458,9 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
             }
         }
 
-        if (UNEXPECTED(EG(exception))) {
-            // do not release params[3] if exit was called
-            if (exception && !zend_is_unwind_exit(exception)) {
-                OBJ_RELEASE(Z_OBJ(params[3]));
-            }
-            if (exception) {
-                OBJ_RELEASE(exception);
-            }
-            ZVAL_OBJ_COPY(&params[3], EG(exception));
-        }
-
-        zend_exception_restore();
-        EG(prev_exception) = exception;
-        zend_exception_restore();
+        zend_object *suppressed = exception_isolation_end(&save_state);
+        exception_isolation_handle_exception(suppressed, &params[4], &params[5],
+                                             "post hook");
 
         zval_dtor(&ret);
     }

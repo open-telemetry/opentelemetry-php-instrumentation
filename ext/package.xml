@@ -61,12 +61,13 @@
         <file name="function_closure.phpt" role="test"/>
         <file name="function_first_class_callable.phpt" role="test"/>
         <file name="function_internal.phpt" role="test"/>
+        <file name="hooks_throw_exception.phpt" role="test"/>
+        <file name="hooks_throw_exception_for_failed_call.phpt" role="test"/>
         <file name="invalid_post_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature_with_function.phpt" role="test"/>
         <file name="modify_named_params.phpt" role="test"/>
         <file name="modify_params.phpt" role="test"/>
-        <file name="multiple_hooks_modify_exception.phpt" role="test"/>
         <file name="multiple_hooks_modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
         <file name="post_hook_return_ignored_without_type.phpt" role="test"/>
