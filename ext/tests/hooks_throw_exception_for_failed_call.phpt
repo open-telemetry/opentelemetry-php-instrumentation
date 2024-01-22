@@ -5,7 +5,7 @@ opentelemetry
 --FILE--
 <?php
 function helloWorld($argument) {
-    vardump('inside');
+    var_dump('inside');
 }
 \OpenTelemetry\Instrumentation\hook(
     null,

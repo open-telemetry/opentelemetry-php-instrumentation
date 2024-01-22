@@ -235,23 +235,22 @@ static const char *zval_get_chars(zval *zv) {
 static void exception_isolation_handle_exception(zend_object *suppressed,
                                                  zval *class_name,
                                                  zval *function_name,
-                                                 const char* type) {
+                                                 const char *type) {
     if (suppressed == NULL) {
         return;
     }
 
     zend_class_entry *exception_base = zend_get_exception_base(suppressed);
     zval return_value;
-    zval *message = zend_read_property_ex(exception_base, suppressed,
-        ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, &return_value);
+    zval *message =
+        zend_read_property_ex(exception_base, suppressed,
+                              ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, &return_value);
 
     php_error_docref(NULL, E_WARNING,
                      "OpenTelemetry: %s threw exception,"
                      " class=%s function=%s message=%s",
-                     type,
-                     zval_get_chars(class_name),
-                     zval_get_chars(function_name),
-                     zval_get_chars(message));
+                     type, zval_get_chars(class_name),
+                     zval_get_chars(function_name), zval_get_chars(message));
 
     if (message != NULL) {
         ZVAL_DEREF(message);
@@ -353,8 +352,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         }
 
         zend_object *suppressed = exception_isolation_end(&save_state);
-        exception_isolation_handle_exception(
-            suppressed, &params[2], &params[3], "pre hook");
+        exception_isolation_handle_exception(suppressed, &params[2], &params[3],
+                                             "pre hook");
 
         zval_dtor(&ret);
     }
@@ -447,7 +446,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         }
 
         zend_object *suppressed = exception_isolation_end(&save_state);
-        exception_isolation_handle_exception(suppressed, &params[4], &params[5], "post hook");
+        exception_isolation_handle_exception(suppressed, &params[4], &params[5],
+                                             "post hook");
 
         zval_dtor(&ret);
     }
