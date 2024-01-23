@@ -18,10 +18,7 @@ class Foo
     fn() => var_dump('pre'),
     fn(string $scope, array $params, mixed $returnValue, ?Throwable $throwable) => var_dump('post')); //NB invalid type for $scope
 
-try {
-  (new Foo())->bar();
-} catch(Exception) {}
-
+(new Foo())->bar();
 var_dump('baz');
 --EXPECTF--
 string(3) "pre"
