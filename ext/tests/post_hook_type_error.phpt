@@ -22,8 +22,10 @@ try {
   (new Foo())->bar();
 } catch(Exception) {}
 
+var_dump('baz');
 --EXPECTF--
 string(3) "pre"
 string(3) "bar"
 
 Warning: Foo::bar(): OpenTelemetry: post hook threw exception, class=Foo function=bar message=%sArgument #1 ($scope) must be of type string, Foo given%s
+string(3) "baz"
