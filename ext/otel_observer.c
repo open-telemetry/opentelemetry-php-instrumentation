@@ -410,7 +410,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         args_initialized = idx + 1;
                     } else {
                         // This slot was already initialized, need to
-                        // dereference its contents before overwriting
+                        // decrement refcount before overwriting
                         zval_dtor(target);
                     }
 
