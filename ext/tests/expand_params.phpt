@@ -1,5 +1,5 @@
 --TEST--
-Check if pre hook can expand params of function
+Check if pre hook can expand params of function if they are part of function definition
 --EXTENSIONS--
 opentelemetry
 --FILE--
