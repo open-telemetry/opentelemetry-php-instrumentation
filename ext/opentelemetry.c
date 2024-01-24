@@ -112,7 +112,6 @@ PHP_RINIT_FUNCTION(opentelemetry) {
 }
 
 PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
-    UNREGISTER_INI_ENTRIES();
     observer_globals_cleanup();
 
     return SUCCESS;
@@ -126,6 +125,12 @@ PHP_MINIT_FUNCTION(opentelemetry) {
     if (!OTEL_G(disabled)) {
         opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
     }
+
+    return SUCCESS;
+}
+
+PHP_MSHUTDOWN_FUNCTION(opentelemetry) {
+    UNREGISTER_INI_ENTRIES();
 
     return SUCCESS;
 }
@@ -149,7 +154,7 @@ zend_module_entry opentelemetry_module_entry = {
     "opentelemetry",
     ext_functions,
     PHP_MINIT(opentelemetry),
-    NULL,
+    PHP_MSHUTDOWN(opentelemetry),
     PHP_RINIT(opentelemetry),
     PHP_RSHUTDOWN(opentelemetry),
     PHP_MINFO(opentelemetry),
