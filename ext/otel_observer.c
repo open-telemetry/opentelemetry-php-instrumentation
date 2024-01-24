@@ -22,6 +22,18 @@ typedef struct otel_exception_state {
     const zend_op *opline;
 } otel_exception_state;
 
+typedef struct otel_arg_locator {
+    zend_execute_data *execute_data;
+    // Number of argument slots reserved in execute_data, any arguments beyond
+    // this limit will be stored after auxiliary slots
+    uint32_t reserved;
+    // Number of arguments provided at the call site. May exceed the number of
+    // arguments in the function definition
+    uint32_t provided;
+    // Number of slots between reserved and "extra" argument slots
+    uint32_t auxiliary_slots;
+} otel_arg_locator;
+
 static inline void
 func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
     if (execute_data->func->op_array.scope) {
@@ -51,7 +63,11 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
     // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
     if (arg_count) {
         array_init_size(zv, arg_count);
-        first_extra_arg = ex->func->op_array.num_args;
+        if (ex->func->type == ZEND_INTERNAL_FUNCTION) {
+            first_extra_arg = arg_count;
+        } else {
+            first_extra_arg = ex->func->op_array.num_args;
+        }
         zend_hash_real_init_packed(Z_ARRVAL_P(zv));
         ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(zv)) {
             i = 0;
@@ -301,6 +317,35 @@ static void exception_isolation_handle_exception(zend_object *suppressed,
     OBJ_RELEASE(suppressed);
 }
 
+static void arg_locator_initialize(otel_arg_locator *arg_locator,
+                                   zend_execute_data *execute_data) {
+    arg_locator->execute_data = execute_data;
+
+    if (execute_data->func->type == ZEND_INTERNAL_FUNCTION) {
+        // For internal functions, rather than having reserved number of slots
+        // before auxiliary slots and extra ones after that, internal functions
+        // have all (and only) arguments provided by call site before auxiliary
+        // slots, and there is nothing after auxiliary slots.
+        arg_locator->reserved = ZEND_CALL_NUM_ARGS(execute_data);
+    } else {
+        arg_locator->reserved = execute_data->func->op_array.last_var;
+    }
+
+    arg_locator->provided = ZEND_CALL_NUM_ARGS(execute_data);
+    arg_locator->auxiliary_slots = execute_data->func->op_array.T;
+}
+
+static zval *arg_locator_get_slot(otel_arg_locator *arg_locator,
+                                  uint32_t index) {
+    if (index < arg_locator->reserved) {
+        return ZEND_CALL_ARG(arg_locator->execute_data, index + 1);
+    } else if (index < arg_locator->provided) {
+        return ZEND_CALL_ARG(arg_locator->execute_data,
+                             index + arg_locator->auxiliary_slots + 1);
+    }
+    return NULL;
+}
+
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     if (!zend_llist_count(hooks)) {
         return;
@@ -352,6 +397,12 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                 zend_ulong idx;
                 zend_string *str_idx;
                 zval *val;
+                bool invalid_arg_warned = false;
+
+                otel_arg_locator arg_locator;
+                arg_locator_initialize(&arg_locator, execute_data);
+                uint32_t args_initialized = arg_locator.provided;
+
                 ZEND_HASH_FOREACH_KEY_VAL(Z_ARR(ret), idx, str_idx, val) {
                     if (str_idx != NULL) {
                         idx = func_get_arg_index_by_name(execute_data, str_idx);
@@ -366,39 +417,68 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                             continue;
                         }
                     }
-                    zval *target = NULL;
-                    uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);
-                    if (idx >= arg_count) {
-                        if (func->type == ZEND_INTERNAL_FUNCTION) {
-                            // TODO expanding args for internal functions causes
-                            // segfault
-                            php_error_docref(
-                                NULL, E_NOTICE,
-                                "OpenTelemetry: expanding args of "
-                                "internal functions not supported");
+
+                    zval *target = arg_locator_get_slot(&arg_locator, idx);
+
+                    if (target == NULL) {
+                        if (invalid_arg_warned) {
                             continue;
                         }
-                        // TODO Extend call frame?
-                        // zend_vm_stack_extend_call_frame(&execute_data,
-                        // arg_count, idx + 1 - arg_count);
-                        for (uint32_t i = arg_count; i < idx; i++) {
-                            ZVAL_UNDEF(ZEND_CALL_ARG(execute_data, i + 1));
+
+                        php_error_docref(
+                            NULL, E_NOTICE,
+                            "OpenTelemetry: pre hook invalid argument index "
+                            "%" PRIu32 ", class=%s function=%s",
+                            idx, zval_get_chars(&params[2]),
+                            zval_get_chars(&params[3]));
+                        invalid_arg_warned = true;
+                        continue;
+                    }
+
+                    if (idx >= args_initialized) {
+                        // This slot was not initialized, need to initialize
+                        // all slots between current and the last initialized
+                        // one
+                        for (uint32_t i = args_initialized; i < idx; i++) {
+                            ZVAL_UNDEF(arg_locator_get_slot(&arg_locator, i));
                             ZEND_ADD_CALL_FLAG(execute_data,
                                                ZEND_CALL_MAY_HAVE_UNDEF);
                         }
-                        ZEND_CALL_NUM_ARGS(execute_data) = idx + 1;
-                        ZVAL_COPY(ZEND_CALL_ARG(execute_data, idx + 1), val);
+
+                        args_initialized = idx + 1;
                     } else {
-                        target = ZEND_CALL_ARG(execute_data, idx + 1);
+                        // This slot was already initialized, need to
+                        // decrement refcount before overwriting
                         zval_dtor(target);
-                        ZVAL_COPY(target, val);
-                        if (Z_TYPE(params[1]) == IS_ARRAY) {
-                            Z_TRY_ADDREF_P(val);
-                            zend_hash_index_update(Z_ARR(params[1]), idx, val);
-                        }
+                    }
+
+                    if (idx >= arg_locator.reserved && Z_REFCOUNTED_P(val)) {
+                        // If there are any "extra parameters" that are
+                        // refcounted, then this flag must be set. While we
+                        // cannot add any new extra parameter slots, this flag
+                        // may not have been present because all the values
+                        // were previously not refcounted
+                        ZEND_ADD_CALL_FLAG(execute_data,
+                                           ZEND_CALL_FREE_EXTRA_ARGS);
+                    }
+
+                    ZVAL_COPY(target, val);
+
+                    if (idx < arg_locator.provided &&
+                        Z_TYPE(params[1]) == IS_ARRAY) {
+                        // This index is present in the array provided to begin
+                        // hook, update it in that array as well
+                        Z_TRY_ADDREF_P(val);
+                        zend_hash_index_update(Z_ARR(params[1]), idx, val);
                     }
                 }
                 ZEND_HASH_FOREACH_END();
+
+                // Update provided argument count if begin hook added arguments
+                // that were not provided originally
+                if (args_initialized > arg_locator.provided) {
+                    ZEND_CALL_NUM_ARGS(execute_data) = args_initialized;
+                }
             }
         }
 

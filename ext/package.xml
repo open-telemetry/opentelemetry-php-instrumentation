@@ -57,6 +57,7 @@
         <file name="disable_hook_function_validation.phpt" role="test"/>
         <file name="disabled_with_conflicting_extension.phpt" role="test"/>
         <file name="expand_params.phpt" role="test"/>
+        <file name="expand_params_extra.phpt" role="test"/>
         <file name="expand_params_internal.phpt" role="test"/>
         <file name="function_closure.phpt" role="test"/>
         <file name="function_first_class_callable.phpt" role="test"/>
@@ -67,6 +68,8 @@
         <file name="invalid_post_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature_with_function.phpt" role="test"/>
+        <file name="modify_extra_params.phpt" role="test"/>
+        <file name="modify_extra_params_internal.phpt" role="test"/>
         <file name="modify_named_params.phpt" role="test"/>
         <file name="modify_named_params_internal.phpt" role="test"/>
         <file name="modify_named_params_invalid.phpt" role="test"/>
