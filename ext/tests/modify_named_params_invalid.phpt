@@ -1,5 +1,5 @@
 --TEST--
-Check if pre hook can modify named params of function
+Check if pre hook can try to modify invalid named params of function
 --EXTENSIONS--
 opentelemetry
 --FILE--
@@ -7,9 +7,9 @@ opentelemetry
 OpenTelemetry\Instrumentation\hook(
     null,
     'hello',
-     function($obj, array $params) {
+    function($obj, array $params) {
         return [
-          'two' => 'replaced',
+          'four' => 'replaced',
         ];
     }
 );
@@ -19,12 +19,13 @@ function hello($one = null, $two = null, $three = null) {
 
 hello('a', 'b', 'c');
 ?>
---EXPECT--
+--EXPECTF--
+Notice: hello(): OpenTelemetry: pre hook unknown named arg four, class=null function=hello in %s
 array(3) {
   [0]=>
   string(1) "a"
   [1]=>
-  string(8) "replaced"
+  string(1) "b"
   [2]=>
   string(1) "c"
 }
