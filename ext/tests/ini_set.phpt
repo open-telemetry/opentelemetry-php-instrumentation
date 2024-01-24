@@ -1,5 +1,5 @@
 --TEST--
-Check if process exits gracefully after using ini_set with an opentelemtry option
+Check if process exits gracefully after using ini_set with an opentelemetry option
 --EXTENSIONS--
 opentelemetry
 --FILE--
