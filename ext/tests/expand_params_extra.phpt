@@ -1,5 +1,9 @@
 --TEST--
 Check if pre hook can expand params of function with extra parameters not provided by call site
+--DESCRIPTION--
+Extra parameters for user functions are parameters that were provided at call site but were not present in the function
+declaration. The extension only supports modifying existing ones, not adding new ones. Test that a warning is logged if
+adding new ones is attempted and that it does not crash.
 --EXTENSIONS--
 opentelemetry
 --FILE--

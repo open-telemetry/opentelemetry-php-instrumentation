@@ -289,6 +289,10 @@ static void arg_locator_initialize(otel_arg_locator *arg_locator,
     arg_locator->execute_data = execute_data;
 
     if (execute_data->func->type == ZEND_INTERNAL_FUNCTION) {
+        // For internal functions, rather than having reserved number of slots
+        // before auxiliary slots and extra ones after that, internal functions
+        // have all (and only) arguments provided by call site before auxiliary
+        // slots, and there is nothing after auxiliary slots.
         arg_locator->reserved = ZEND_CALL_NUM_ARGS(execute_data);
     } else {
         arg_locator->reserved = execute_data->func->op_array.last_var;

@@ -1,5 +1,9 @@
 --TEST--
 Check if pre hook can modify extra parameters
+--DESCRIPTION--
+Extra parameters for user functions are parameters that were provided at call site but were not present in the function
+declaration. It is important to test how these are handled because they are stored differently in memory and it should
+be checked that the extension handles them correctly.
 --EXTENSIONS--
 opentelemetry
 --FILE--

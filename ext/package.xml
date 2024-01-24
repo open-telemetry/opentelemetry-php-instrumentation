@@ -68,6 +68,7 @@
         <file name="invalid_pre_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature_with_function.phpt" role="test"/>
         <file name="modify_extra_params.phpt" role="test"/>
+        <file name="modify_extra_params_internal.phpt" role="test"/>
         <file name="modify_named_params.phpt" role="test"/>
         <file name="modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_params.phpt" role="test"/>
