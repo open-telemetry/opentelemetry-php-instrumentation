@@ -98,6 +98,35 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
     }
 }
 
+static uint32_t func_get_arg_index_by_name(zend_execute_data *execute_data,
+                                           zend_string *arg_name) {
+    // @see
+    // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_execute.c#L4515
+    zend_function *fbc = execute_data->func;
+    uint32_t num_args = fbc->common.num_args;
+    if (EXPECTED(fbc->type == ZEND_USER_FUNCTION) ||
+        EXPECTED(fbc->common.fn_flags & ZEND_ACC_USER_ARG_INFO)) {
+        for (uint32_t i = 0; i < num_args; i++) {
+            zend_arg_info *arg_info = &fbc->op_array.arg_info[i];
+            if (zend_string_equals(arg_name, arg_info->name)) {
+                return i;
+            }
+        }
+    } else {
+        for (uint32_t i = 0; i < num_args; i++) {
+            zend_internal_arg_info *arg_info =
+                &fbc->internal_function.arg_info[i];
+            size_t len = strlen(arg_info->name);
+            if (len == ZSTR_LEN(arg_name) &&
+                !memcmp(arg_info->name, ZSTR_VAL(arg_name), len)) {
+                return i;
+            }
+        }
+    }
+
+    return (uint32_t)-1;
+}
+
 static inline void func_get_retval(zval *zv, zval *retval) {
     if (UNEXPECTED(!retval || Z_ISUNDEF_P(retval))) {
         ZVAL_NULL(zv);
@@ -325,8 +354,17 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                 zval *val;
                 ZEND_HASH_FOREACH_KEY_VAL(Z_ARR(ret), idx, str_idx, val) {
                     if (str_idx != NULL) {
-                        // TODO support named params
-                        continue;
+                        idx = func_get_arg_index_by_name(execute_data, str_idx);
+
+                        if (idx == (uint32_t)-1) {
+                            php_error_docref(
+                                NULL, E_NOTICE,
+                                "OpenTelemetry: pre hook unknown "
+                                "named arg %s, class=%s function=%s",
+                                ZSTR_VAL(str_idx), zval_get_chars(&params[2]),
+                                zval_get_chars(&params[3]));
+                            continue;
+                        }
                     }
                     zval *target = NULL;
                     uint32_t arg_count = ZEND_CALL_NUM_ARGS(execute_data);
