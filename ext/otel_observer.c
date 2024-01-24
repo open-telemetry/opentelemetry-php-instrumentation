@@ -63,7 +63,11 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
     // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
     if (arg_count) {
         array_init_size(zv, arg_count);
-        first_extra_arg = ex->func->op_array.num_args;
+        if (ex->func->type == ZEND_INTERNAL_FUNCTION) {
+            first_extra_arg = arg_count;
+        } else {
+            first_extra_arg = ex->func->op_array.num_args;
+        }
         zend_hash_real_init_packed(Z_ARRVAL_P(zv));
         ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(zv)) {
             i = 0;
