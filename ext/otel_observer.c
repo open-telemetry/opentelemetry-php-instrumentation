@@ -117,7 +117,8 @@ static uint32_t func_get_arg_index_by_name(zend_execute_data *execute_data,
             zend_internal_arg_info *arg_info =
                 &fbc->internal_function.arg_info[i];
             size_t len = strlen(arg_info->name);
-            if (zend_string_equals_cstr(arg_name, arg_info->name, len)) {
+            if (len == ZSTR_LEN(arg_name) &&
+                !memcmp(arg_info->name, ZSTR_VAL(arg_name), len)) {
                 return i;
             }
         }
