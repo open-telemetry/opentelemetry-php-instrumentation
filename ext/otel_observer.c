@@ -209,7 +209,6 @@ static inline bool is_valid_signature(zend_fcall_info fci,
     zend_function *func = fcc.function_handler;
     zend_arg_info *arg_info;
     zend_type *arg_type;
-    zend_string *arg_name;
     uint32_t type;
     uint32_t type_mask;
 
@@ -365,7 +364,6 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
          element = element->next) {
         zend_fcall_info fci = empty_fcall_info;
         zend_fcall_info_cache fcc = empty_fcall_info_cache;
-        zend_function *func = execute_data->func; // the observed function
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
             continue;
@@ -428,7 +426,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         php_error_docref(
                             NULL, E_NOTICE,
                             "OpenTelemetry: pre hook invalid argument index "
-                            "%" PRIu32 ", class=%s function=%s",
+                            ZEND_ULONG_FMT ", class=%s function=%s",
                             idx, zval_get_chars(&params[2]),
                             zval_get_chars(&params[3]));
                         invalid_arg_warned = true;
