@@ -48,7 +48,10 @@ install-php-extensions opentelemetry[-beta|-stable|-latest]
 
 ### Windows
 
+Pre-built windows binaries are available from the [releases page](https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases)
+
 See https://wiki.php.net/internals/windows/stepbystepbuild_sdk_2#building_pecl_extensions_with_phpize
+for generic advice on building from source under Windows.
 
 ## Verify that the extension is installed and enabled
 
