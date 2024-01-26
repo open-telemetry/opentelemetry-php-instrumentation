@@ -19,7 +19,7 @@ static int check_conflict(HashTable *registry, const char *extension_name) {
     zend_module_entry *module_entry;
     ZEND_HASH_FOREACH_PTR(registry, module_entry) {
         if (strcmp(module_entry->name, extension_name) == 0) {
-            php_error_docref(NULL, E_NOTICE,
+            php_error_docref(NULL, E_CORE_WARNING,
                              "Conflicting extension found (%s), OpenTelemetry "
                              "extension will be disabled",
                              extension_name);
