@@ -23,7 +23,7 @@ function helloWorld($a, $b) {
 helloWorld('a');
 ?>
 --EXPECTF--
-Notice: helloWorld(): OpenTelemetry: pre hook invalid argument index 2, class=null function=helloWorld in %s
+Warning: helloWorld(): OpenTelemetry: pre hook invalid argument index 2, class=null function=helloWorld in %s
 array(2) {
   [0]=>
   string(1) "a"

@@ -20,7 +20,7 @@ function hello($one = null, $two = null, $three = null) {
 hello('a', 'b', 'c');
 ?>
 --EXPECTF--
-Notice: hello(): OpenTelemetry: pre hook unknown named arg four, class=null function=hello in %s
+Warning: hello(): OpenTelemetry: pre hook unknown named arg four, class=null function=hello in %s
 array(3) {
   [0]=>
   string(1) "a"

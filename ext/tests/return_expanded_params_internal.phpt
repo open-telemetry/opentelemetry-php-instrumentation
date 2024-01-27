@@ -21,7 +21,7 @@ opentelemetry
 var_dump(array_slice(['a', 'b', 'c'], 1));
 ?>
 --EXPECTF--
-Notice: array_slice(): OpenTelemetry: pre hook invalid argument index 2, class=null function=array_slice in %s
+Warning: array_slice(): OpenTelemetry: pre hook invalid argument index 2, class=null function=array_slice in %s
 array(2) {
   [0]=>
   string(1) "b"
