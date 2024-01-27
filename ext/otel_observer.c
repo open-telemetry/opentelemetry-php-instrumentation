@@ -303,7 +303,7 @@ static void exception_isolation_handle_exception(zend_object *suppressed,
         zend_read_property_ex(exception_base, suppressed,
                               ZSTR_KNOWN(ZEND_STR_MESSAGE), 1, &return_value);
 
-    php_error_docref(NULL, E_WARNING,
+    php_error_docref(NULL, E_CORE_WARNING,
                      "OpenTelemetry: %s threw exception,"
                      " class=%s function=%s message=%s",
                      type, zval_get_chars(class_name),
@@ -376,7 +376,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            php_error_docref(NULL, E_WARNING,
+            php_error_docref(NULL, E_CORE_WARNING,
                              "OpenTelemetry: pre hook invalid signature,"
                              " class=%s function=%s",
                              (Z_TYPE_P(&params[2]) == IS_NULL)
@@ -407,7 +407,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
 
                         if (idx == (uint32_t)-1) {
                             php_error_docref(
-                                NULL, E_NOTICE,
+                                NULL, E_CORE_WARNING,
                                 "OpenTelemetry: pre hook unknown "
                                 "named arg %s, class=%s function=%s",
                                 ZSTR_VAL(str_idx), zval_get_chars(&params[2]),
@@ -423,7 +423,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                             continue;
                         }
 
-                        php_error_docref(NULL, E_NOTICE,
+                        php_error_docref(NULL, E_CORE_WARNING,
                                          "OpenTelemetry: pre hook invalid "
                                          "argument index " ZEND_ULONG_FMT
                                          ", class=%s function=%s",
@@ -543,7 +543,7 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         fci.retval = &ret;
 
         if (!is_valid_signature(fci, fcc)) {
-            php_error_docref(NULL, E_WARNING,
+            php_error_docref(NULL, E_CORE_WARNING,
                              "OpenTelemetry: post hook invalid signature, "
                              "class=%s function=%s",
                              (Z_TYPE_P(&params[4]) == IS_NULL)
