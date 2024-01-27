@@ -423,12 +423,12 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                             continue;
                         }
 
-                        php_error_docref(
-                            NULL, E_NOTICE,
-                            "OpenTelemetry: pre hook invalid argument index "
-                            ZEND_ULONG_FMT ", class=%s function=%s",
-                            idx, zval_get_chars(&params[2]),
-                            zval_get_chars(&params[3]));
+                        php_error_docref(NULL, E_NOTICE,
+                                         "OpenTelemetry: pre hook invalid "
+                                         "argument index " ZEND_ULONG_FMT
+                                         ", class=%s function=%s",
+                                         idx, zval_get_chars(&params[2]),
+                                         zval_get_chars(&params[3]));
                         invalid_arg_warned = true;
                         continue;
                     }
