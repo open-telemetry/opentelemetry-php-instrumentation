@@ -77,6 +77,7 @@
         <file name="function_internal.phpt" role="test"/>
         <file name="hooks_throw_exception.phpt" role="test"/>
         <file name="hooks_throw_exception_for_failed_call.phpt" role="test"/>
+        <file name="hooks_throw_exception_error_handler.phpt" role="test"/>
         <file name="ini_set.phpt" role="test"/>
         <file name="invalid_post_callback_signature.phpt" role="test"/>
         <file name="invalid_pre_callback_signature.phpt" role="test"/>
