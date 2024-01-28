@@ -19,7 +19,7 @@
   <date>2024-01-27</date>
   <time>21:38:56</time>
   <version>
-    <release>1.0.0beta2</release>
+    <release>1.0.1beta2</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,7 +27,7 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.0beta2
+  <notes>opentelemetry 1.0.1beta2
     * Fix exception raised by `php_error_docref` that hangs the process in hook (#127)
     * clang format (#126)
     * Fix build warnings (#125)
