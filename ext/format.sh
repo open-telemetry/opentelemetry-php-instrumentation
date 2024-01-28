@@ -1,2 +1,2 @@
 #!/bin/sh
-clang-format-18 -i *.c *.h
+clang-format -i *.c *.h

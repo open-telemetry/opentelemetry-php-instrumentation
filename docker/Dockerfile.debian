@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 WORKDIR /usr/src
 
 #clang-format, gdb, valgrind
@@ -7,11 +7,11 @@ RUN apt-get update \
     curl \
     gnupg2 \
   && curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc \
-  && echo "deb http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
-  && echo "deb-src http://apt.llvm.org/bullseye/ llvm-toolchain-bullseye main" >> /etc/apt/sources.list \
+  && echo "deb http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm main" >> /etc/apt/sources.list \
+  && echo "deb-src http://apt.llvm.org/bookworm/ llvm-toolchain-bookworm main" >> /etc/apt/sources.list \
   && apt-get update \
   && apt-get install -y \
-    clang-format-18 \
+    clang-format \
     gdb \
     gdbserver \
     valgrind
