@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2024-01-24</date>
-  <time>23:26:21</time>
+  <date>2024-01-27</date>
+  <time>21:38:56</time>
   <version>
-    <release>1.0.1beta1</release>
+    <release>1.0.1beta2</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,20 +27,10 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.1beta1
-    * Fix modifying extra parameters, limit parameter expansion (#120)
-    * Fix crash by unregistering INI in MSHUTDOWN instead of RSHUTDOWN (#122)
-    * Support modifying named params (#121)
-    * adding test for post hook type error (#119)
-    * Isolate exception state for hooks (#118)
-    * Update README.md to point issues to the main repository (#117)
-    * Include PHP 8.3 in build matrix (#112)
-    * Build images whenever the actions definition changes (#115)
-    * adding php 8.3 dev image (#113)
-    * document SourceGuardian incompatibility (#111)
-    * create draft release on tag, publish windows and pecl builds (#109)
-    * adding test for post hooks after die/exit (#110)
-    * add pear to build (#108)
+  <notes>opentelemetry 1.0.1beta2
+    * Fix exception raised by `php_error_docref` that hangs the process in hook (#127)
+    * clang format (#126)
+    * Fix build warnings (#125)
   </notes>
   <contents>
     <dir baseinstalldir="/" name="/">
@@ -308,6 +298,34 @@
       </stability>
       <license>Apache 2.0</license>
       <notes>opentelemetry 1.0.0
+      </notes>
+    </release>
+    <release>
+      <date>2024-01-24</date>
+      <time>23:26:21</time>
+      <version>
+        <release>1.0.1beta1</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.1beta1
+        * Fix modifying extra parameters, limit parameter expansion (#120)
+        * Fix crash by unregistering INI in MSHUTDOWN instead of RSHUTDOWN (#122)
+        * Support modifying named params (#121)
+        * adding test for post hook type error (#119)
+        * Isolate exception state for hooks (#118)
+        * Update README.md to point issues to the main repository (#117)
+        * Include PHP 8.3 in build matrix (#112)
+        * Build images whenever the actions definition changes (#115)
+        * adding php 8.3 dev image (#113)
+        * document SourceGuardian incompatibility (#111)
+        * create draft release on tag, publish windows and pecl builds (#109)
+        * adding test for post hooks after die/exit (#110)
+        * add pear to build (#108)
       </notes>
     </release>
   </changelog>
