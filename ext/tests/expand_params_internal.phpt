@@ -23,7 +23,7 @@ OpenTelemetry\Instrumentation\hook(
 var_dump(array_slice([1,2,3], 1));
 ?>
 --EXPECTF--
-Warning: array_slice(): OpenTelemetry: pre hook invalid argument index 2, class=null function=array_slice in %s
+Warning: array_slice(): OpenTelemetry: pre hook invalid argument index 2 - stack extension must be enabled with opentelemetry.allow_stack_extension option, class=null function=array_slice in %s
 array(2) {
   [0]=>
   int(2)

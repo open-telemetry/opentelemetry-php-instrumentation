@@ -12,6 +12,7 @@ ZEND_BEGIN_MODULE_GLOBALS(opentelemetry)
     int validate_hook_functions;
     char *conflicts;
     int disabled; // module disabled? (eg due to conflicting extension loaded)
+    int allow_stack_extension;
 ZEND_END_MODULE_GLOBALS(opentelemetry)
 
 ZEND_EXTERN_MODULE_GLOBALS(opentelemetry)
