@@ -16,22 +16,18 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2024-01-27</date>
-  <time>21:38:56</time>
+  <date>2024-02-04</date>
+  <time>23:00:16</time>
   <version>
-    <release>1.0.1beta2</release>
+    <release>1.0.1</release>
     <api>1.0</api>
   </version>
   <stability>
-    <release>beta</release>
+    <release>stable</release>
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>opentelemetry 1.0.1beta2
-    * Fix exception raised by `php_error_docref` that hangs the process in hook (#127)
-    * clang format (#126)
-    * Fix build warnings (#125)
-  </notes>
+  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.1</notes>
   <contents>
     <dir baseinstalldir="/" name="/">
       <file baseinstalldir="/" name=".clang-format" role="src"/>
@@ -326,6 +322,24 @@
         * create draft release on tag, publish windows and pecl builds (#109)
         * adding test for post hooks after die/exit (#110)
         * add pear to build (#108)
+      </notes>
+    </release>
+    <release>
+      <date>2024-01-27</date>
+      <time>21:38:56</time>
+      <version>
+        <release>1.0.1beta2</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>opentelemetry 1.0.1beta2
+        * Fix exception raised by `php_error_docref` that hangs the process in hook (#127)
+        * clang format (#126)
+        * Fix build warnings (#125)
       </notes>
     </release>
   </changelog>
