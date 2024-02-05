@@ -12,13 +12,14 @@ ZEND_BEGIN_MODULE_GLOBALS(opentelemetry)
     int validate_hook_functions;
     char *conflicts;
     int disabled; // module disabled? (eg due to conflicting extension loaded)
+    int allow_stack_extension;
 ZEND_END_MODULE_GLOBALS(opentelemetry)
 
 ZEND_EXTERN_MODULE_GLOBALS(opentelemetry)
 
 #define OTEL_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(opentelemetry, v)
 
-#define PHP_OPENTELEMETRY_VERSION "1.0.1beta2"
+#define PHP_OPENTELEMETRY_VERSION "1.0.1"
 
 #if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
 ZEND_TSRMLS_CACHE_EXTERN()
