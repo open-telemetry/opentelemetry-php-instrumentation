@@ -82,6 +82,10 @@ STD_PHP_INI_ENTRY_EX("opentelemetry.validate_hook_functions", "On", PHP_INI_ALL,
                      OnUpdateBool, validate_hook_functions,
                      zend_opentelemetry_globals, opentelemetry_globals,
                      zend_ini_boolean_displayer_cb)
+STD_PHP_INI_ENTRY_EX("opentelemetry.allow_stack_extension", "Off", PHP_INI_ALL,
+                     OnUpdateBool, allow_stack_extension,
+                     zend_opentelemetry_globals, opentelemetry_globals,
+                     zend_ini_boolean_displayer_cb)
 PHP_INI_END()
 
 PHP_FUNCTION(hook) {

@@ -22,6 +22,8 @@ typedef struct otel_exception_state {
     const zend_op *opline;
 } otel_exception_state;
 
+#define STACK_EXTENSION_LIMIT 16
+
 typedef struct otel_arg_locator {
     zend_execute_data *execute_data;
     // Number of argument slots reserved in execute_data, any arguments beyond
@@ -32,6 +34,10 @@ typedef struct otel_arg_locator {
     uint32_t provided;
     // Number of slots between reserved and "extra" argument slots
     uint32_t auxiliary_slots;
+    uint32_t extended_start;
+    uint32_t extended_max;
+    uint32_t extended_used;
+    zval extended_slots[STACK_EXTENSION_LIMIT];
 } otel_arg_locator;
 
 static inline void
@@ -332,17 +338,92 @@ static void arg_locator_initialize(otel_arg_locator *arg_locator,
 
     arg_locator->provided = ZEND_CALL_NUM_ARGS(execute_data);
     arg_locator->auxiliary_slots = execute_data->func->op_array.T;
+
+    arg_locator->extended_used = 0;
+    arg_locator->extended_start = arg_locator->provided > arg_locator->reserved
+                                      ? arg_locator->provided
+                                      : arg_locator->reserved;
+
+    if (OTEL_G(allow_stack_extension)) {
+        arg_locator->extended_max = STACK_EXTENSION_LIMIT;
+
+        size_t slots_left_in_stack = EG(vm_stack_end) - EG(vm_stack_top);
+        if (slots_left_in_stack < arg_locator->extended_max) {
+            arg_locator->extended_max = slots_left_in_stack;
+        }
+    } else {
+        arg_locator->extended_max = 0;
+    }
 }
 
-static zval *arg_locator_get_slot(otel_arg_locator *arg_locator,
-                                  uint32_t index) {
+static zval *arg_locator_get_slot(otel_arg_locator *arg_locator, uint32_t index,
+                                  const char **failure_reason) {
+
     if (index < arg_locator->reserved) {
         return ZEND_CALL_ARG(arg_locator->execute_data, index + 1);
     } else if (index < arg_locator->provided) {
         return ZEND_CALL_ARG(arg_locator->execute_data,
                              index + arg_locator->auxiliary_slots + 1);
     }
+
+    uint32_t extended_index = index - arg_locator->extended_start;
+
+    if (extended_index < arg_locator->extended_max) {
+        uint32_t extended_index = index - arg_locator->extended_start;
+        if (extended_index >= arg_locator->extended_used) {
+            arg_locator->extended_used = extended_index + 1;
+        }
+
+        return &arg_locator->extended_slots[extended_index];
+    }
+
+    if (failure_reason != NULL) {
+        // Having a hardcoded upper limit allows performing stack
+        // extension as one step in the end, rather than moving slots around in
+        // the stack each time a new argument is discovered
+        if (extended_index >= STACK_EXTENSION_LIMIT) {
+            *failure_reason = "exceeds built-in stack extension limit";
+        } else if (!OTEL_G(allow_stack_extension)) {
+            *failure_reason = "stack extension must be enabled with "
+                              "opentelemetry.allow_stack_extension option";
+        } else {
+            *failure_reason = "not enough room left in stack page";
+        }
+    }
+
     return NULL;
+}
+
+static void arg_locator_store_extended(otel_arg_locator *arg_locator) {
+    if (arg_locator->extended_used == 0) {
+        return;
+    }
+
+    // This is safe because extended_max is adjusted to not exceed current stack
+    // page end
+    EG(vm_stack_top) += arg_locator->extended_used;
+
+    if (arg_locator->execute_data->func->type == ZEND_INTERNAL_FUNCTION) {
+        // For internal functions, the additional arguments need to go before
+        // the auxiliary slots, therefore the auxiliary slots need to be moved
+        // ahead
+        zval *target =
+            ZEND_CALL_ARG(arg_locator->execute_data, arg_locator->provided + 1);
+        zval *aux_target = target + arg_locator->extended_used;
+
+        memmove(aux_target, target,
+                sizeof(*aux_target) * arg_locator->auxiliary_slots);
+        memcpy(target, arg_locator->extended_slots,
+               sizeof(*target) * arg_locator->extended_used);
+    } else {
+        // For PHP functions, the additional arguments go to the end of the
+        // frame, so nothing else needs to be moved around
+        zval *target = ZEND_CALL_ARG(arg_locator->execute_data,
+                                     arg_locator->extended_start +
+                                         arg_locator->auxiliary_slots + 1);
+        memcpy(target, arg_locator->extended_slots,
+               sizeof(*target) * arg_locator->extended_used);
+    }
 }
 
 static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
@@ -402,6 +483,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                 uint32_t args_initialized = arg_locator.provided;
 
                 ZEND_HASH_FOREACH_KEY_VAL(Z_ARR(ret), idx, str_idx, val) {
+                    const char *failure_reason = "";
+
                     if (str_idx != NULL) {
                         idx = func_get_arg_index_by_name(execute_data, str_idx);
 
@@ -416,7 +499,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         }
                     }
 
-                    zval *target = arg_locator_get_slot(&arg_locator, idx);
+                    zval *target = arg_locator_get_slot(&arg_locator, idx,
+                                                        &failure_reason);
 
                     if (target == NULL) {
                         if (invalid_arg_warned) {
@@ -426,8 +510,9 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         php_error_docref(NULL, E_CORE_WARNING,
                                          "OpenTelemetry: pre hook invalid "
                                          "argument index " ZEND_ULONG_FMT
-                                         ", class=%s function=%s",
-                                         idx, zval_get_chars(&params[2]),
+                                         " - %s, class=%s function=%s",
+                                         idx, failure_reason,
+                                         zval_get_chars(&params[2]),
                                          zval_get_chars(&params[3]));
                         invalid_arg_warned = true;
                         continue;
@@ -438,7 +523,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                         // all slots between current and the last initialized
                         // one
                         for (uint32_t i = args_initialized; i < idx; i++) {
-                            ZVAL_UNDEF(arg_locator_get_slot(&arg_locator, i));
+                            ZVAL_UNDEF(
+                                arg_locator_get_slot(&arg_locator, i, NULL));
                             ZEND_ADD_CALL_FLAG(execute_data,
                                                ZEND_CALL_MAY_HAVE_UNDEF);
                         }
@@ -471,6 +557,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                     }
                 }
                 ZEND_HASH_FOREACH_END();
+
+                arg_locator_store_extended(&arg_locator);
 
                 // Update provided argument count if begin hook added arguments
                 // that were not provided originally

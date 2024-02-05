@@ -56,6 +56,10 @@
         <file name="disable_hook_function_validation.phpt" role="test"/>
         <file name="disabled_with_conflicting_extension.phpt" role="test"/>
         <file name="expand_params.phpt" role="test"/>
+        <file name="expand_params_extend.phpt" role="test"/>
+        <file name="expand_params_extend_internal.phpt" role="test"/>
+        <file name="expand_params_extend_internal_long.phpt" role="test"/>
+        <file name="expand_params_extend_limit.phpt" role="test"/>
         <file name="expand_params_extra.phpt" role="test"/>
         <file name="expand_params_internal.phpt" role="test"/>
         <file name="function_closure.phpt" role="test"/>

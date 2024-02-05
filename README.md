@@ -96,6 +96,16 @@ hook functions to ensure they are compatible. If not, the hook will not be execu
 
 This feature can be disabled by setting the `opentelemetry.validate_hook_functions` ini value to `Off`;
 
+### Increasing function argument count
+
+By default, increasing the number of arguments provided to a function in the pre hook is allowed only if that does
+not require the stack frame of the function call to be extended in size. For internal functions, adding arguments
+not provided at the callsite always requires stack extension. For PHP functions, it is required only if the
+argument is not included in the function definition.
+
+Extending stack frame automatically can be enabled by setting `opentelemetry.allow_stack_extension` ini value to `On`.
+This enables extending the stack frame by up to another 16 arguments.
+
 ## Usage
 
 *Warning* Be aware that trivial functions are candidates for optimizations.
