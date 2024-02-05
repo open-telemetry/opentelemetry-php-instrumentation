@@ -120,7 +120,7 @@
         <api>stable</api>
       </stability>
       <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-      <notes>* See https://github.com/open-telemetry/opentelemetry-php and https://github.com/open-telemetry/opentelemetry-php-instrumentation</notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta2</notes>
     </release>
     <release>
       <date>2023-04-01</date>
@@ -134,24 +134,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0beta3
-
-        * rename extension from otel_instrumentation to opentelemetry (#49)
-        * display extension version in phpinfo (#48)
-        * Fix #46 add doc, license and tests to pecl package (#47)
-        * changes to allow build/upload to pecl (#44)
-        * update package.xml and docs in preparation for pecl release (#43)
-        * store scope in the context (#42)
-        * moving bin directory to contrib (#39)
-        * fixing script names (#38)
-        * get list of auto packages through packagist api (#37)
-        * adding new symfony and laravel auto instrumentation packages (#36)
-        * execute composer require in non-interactive mode (#35)
-        * deny plugins for php-http/discovery by default (#34)
-        * windows is not supported yet due to configure script code generation error (#33)
-        * install and setup auto-instrumentation with one command (#29)
-        * docs: update/sync(opentelemetry.io) installation description (#27)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta3</notes>
     </release>
     <release>
       <date>2023-04-19</date>
@@ -165,10 +148,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0beta4
-        * Consistent source code formatting  (#52)
-        * segfault during exception in post hook (#51)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta4</notes>
     </release>
     <release>
       <date>2023-05-10</date>
@@ -182,10 +162,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0beta5
-        * calling die or exit directly lead to segfault (#55)
-        * adding phpdoc to stubs (#54)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta5</notes>
     </release>
     <release>
       <date>2023-06-14</date>
@@ -199,9 +176,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0beta6
-        * handle UnwindExit (#62)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta6</notes>
     </release>
     <release>
       <date>2023-09-04</date>
@@ -215,21 +190,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0beta7
-        * adding more tests (#82)
-        * disabling expanding args for internal functions (#84)
-        * check for invalid hook function signatures (#79)
-        * adding checks for conflicting extensions (#83)
-        * adding notes and minor code improvements for issue 68 (#75)
-        * fixing crash + docs (#76)
-        * fixing clang-format install (#78)
-        * adding valgrind (#73)
-        * fixing segfault when returning params from pre callback (#72)
-        * adding failing tests for pre-hook params (#71)
-        * moving docs back to root (#70)
-        * add failing test for expand params with post callback (#69)
-        * moving extension to subdirectory (#65)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0beta7</notes>
     </release>
     <release>
       <date>2023-09-12</date>
@@ -243,8 +204,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0RC1
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0RC1</notes>
     </release>
     <release>
       <date>2023-10-17</date>
@@ -258,14 +218,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0RC2
-        * documentation updates (#100)
-        * Change segfault method! (#97)
-        * adding windows build action (#93)
-        * adding test and doc for hooking static method (#94)
-        * Update opentelemetry.stub.php (#92)
-        * For WINDOWS build! (#88)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0RC2</notes>
     </release>
     <release>
       <date>2023-10-19</date>
@@ -279,11 +232,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0RC3
-        * re-enable blackfire (#103)
-        * Check observer_class_lookup for NULL in observer callback (#102)
-        * gitsplit extension dir (#98)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0RC3</notes>
     </release>
     <release>
       <date>2023-10-25</date>
@@ -297,8 +246,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.0
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.0</notes>
     </release>
     <release>
       <date>2024-01-24</date>
@@ -312,21 +260,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.1beta1
-        * Fix modifying extra parameters, limit parameter expansion (#120)
-        * Fix crash by unregistering INI in MSHUTDOWN instead of RSHUTDOWN (#122)
-        * Support modifying named params (#121)
-        * adding test for post hook type error (#119)
-        * Isolate exception state for hooks (#118)
-        * Update README.md to point issues to the main repository (#117)
-        * Include PHP 8.3 in build matrix (#112)
-        * Build images whenever the actions definition changes (#115)
-        * adding php 8.3 dev image (#113)
-        * document SourceGuardian incompatibility (#111)
-        * create draft release on tag, publish windows and pecl builds (#109)
-        * adding test for post hooks after die/exit (#110)
-        * add pear to build (#108)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.1beta1</notes>
     </release>
     <release>
       <date>2024-01-27</date>
@@ -340,11 +274,7 @@
         <api>stable</api>
       </stability>
       <license>Apache 2.0</license>
-      <notes>opentelemetry 1.0.1beta2
-        * Fix exception raised by `php_error_docref` that hangs the process in hook (#127)
-        * clang format (#126)
-        * Fix build warnings (#125)
-      </notes>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.1beta2</notes>
     </release>
   </changelog>
 </package>
