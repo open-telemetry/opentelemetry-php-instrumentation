@@ -90,5 +90,5 @@ if test "$PHP_OPENTELEMETRY" != "no"; then
   dnl In case of no dependencies
   AC_DEFINE(HAVE_OPENTELEMETRY, 1, [ Have opentelemetry support ])
 
-  PHP_NEW_EXTENSION(opentelemetry, opentelemetry.c otel_observer.c, $ext_shared)
+  PHP_NEW_EXTENSION(opentelemetry, opentelemetry.c otel_observer.c, $ext_shared,, "-Wall -Wextra -Werror -Wno-unused-parameter")
 fi
