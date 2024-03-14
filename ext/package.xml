@@ -82,6 +82,7 @@
         <file name="multiple_hooks_modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
         <file name="post_hook_return_ignored_without_type.phpt" role="test"/>
+        <file name="post_hook_returns_cloned_modified_object.phpt" role="test"/>
         <file name="post_hook_throws_exception.phpt" role="test"/>
         <file name="post_hook_type_error.phpt" role="test"/>
         <file name="reimplemented_interface.phpt" role="test"/>

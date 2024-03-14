@@ -28,13 +28,13 @@ class Foo
 });
 
 function getFoo(): Foo {
-    return new Foo('a'); //providing a constructor arg or not sometimes changes error to a reported memory leak
+    return new Foo('a');
 }
 
 var_dump(getFoo());
 ?>
---EXPECT--
-object(Foo)#2 (1) {
+--EXPECTF--
+object(Foo)#%d (1) {
   ["a"]=>
   string(1) "b"
 }
