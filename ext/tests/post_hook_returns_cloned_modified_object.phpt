@@ -23,7 +23,7 @@ class Foo
     }
 }
 
-\OpenTelemetry\Instrumentation\hook(null, 'getFoo', null, function(null $obj, array $params, Foo $foo): Foo {
+\OpenTelemetry\Instrumentation\hook(null, 'getFoo', null, function($obj, array $params, Foo $foo): Foo {
     return $foo->modify('b');
 });
 
