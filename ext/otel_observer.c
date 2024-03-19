@@ -282,7 +282,15 @@ static zend_object *exception_isolation_end(otel_exception_state *save_state) {
 
     zend_execute_data *execute_data = EG(current_execute_data);
     if (execute_data != NULL && save_state->has_opline) {
+#if (defined __GNUC__) && (__GNUC__ == 10)
+        // see https://github.com/open-telemetry/opentelemetry-php/issues/1260
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
         execute_data->opline = save_state->opline;
+#if (defined __GNUC__) && (__GNUC__ == 10)
+        #pragma GCC diagnostic pop
+#endif
     }
 
     return suppressed;
