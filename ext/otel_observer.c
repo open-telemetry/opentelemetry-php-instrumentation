@@ -264,6 +264,7 @@ static void exception_isolation_start(otel_exception_state *save_state) {
         save_state->opline = execute_data->opline;
     } else {
         save_state->has_opline = false;
+        save_state->opline = NULL;
     }
 }
 
