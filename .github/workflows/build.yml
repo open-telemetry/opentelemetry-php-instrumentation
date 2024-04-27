@@ -32,6 +32,26 @@ jobs:
             TEST_PHP_ARGS: "-q" #do not try to submit failures
           run: make test TESTS=--show-diff
 
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+
+      - name: build
+        run: |
+          phpize
+          ./configure
+          make
+
+      - name: test
+        env:
+          TEST_PHP_ARGS: "-q" #do not try to submit failures
+        run: make test TESTS=--show-diff
+
   pecl-package:
     runs-on: ubuntu-latest
     container:
