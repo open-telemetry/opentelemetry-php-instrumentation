@@ -108,10 +108,6 @@ This enables extending the stack frame by up to another 16 arguments.
 
 ## Usage
 
-*Warning* Be aware that trivial functions are candidates for optimizations.
-Optimizer can optimize them out and replace user function call with more optimal set of instructions (inlining).
-In this case hooks will not be invoked as there will be no function.
-
 The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
 
 ```php
@@ -143,6 +139,14 @@ There are more examples in the [tests directory](ext/tests/)
 ### Static methods
 
 Note that if hooking a static class method, the first parameter to `pre` and `post` callbacks is a `string` containing the method's class name.
+
+### Caveats
+
+- Be aware that trivial functions are candidates for optimizations.
+Optimizer can optimize them out and replace user function call with more optimal set of instructions (inlining).
+In this case hooks will not be invoked as there will be no function.
+- Hooks must be registered _before_ a function is first executed. You may encounter race conditions where
+the composer autoloader runs code that uses functions you wish to hook prior to the hooks being registered.
 
 # Modifying parameters, exceptions and return values of the observed function
 
@@ -206,7 +210,8 @@ gives output:
 int(2)
 ```
 
-*Important*: the post method _must_ provide a return type-hint, otherwise the return value will be ignored.
+*Important*: the post method _must_ provide a return type-hint, otherwise the return value will be ignored. The return type
+hint in the example above is `: int`.
 
 ## Exceptions
 
