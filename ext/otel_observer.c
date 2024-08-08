@@ -1044,5 +1044,5 @@ void opentelemetry_attribute_init() {
     ZVAL_LONG(&attr_val, ZEND_ATTRIBUTE_TARGET_ALL);
     ZVAL_COPY_VALUE(&withSpan->args[0].value, &attr_val);
 
-    zend_mark_internal_attribute(class_entry);
+    zend_internal_attribute_register(class_entry, ZEND_ATTRIBUTE_TARGET_ALL);
 }
