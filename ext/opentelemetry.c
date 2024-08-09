@@ -128,7 +128,7 @@ PHP_MINIT_FUNCTION(opentelemetry) {
 
     if (!OTEL_G(disabled)) {
         opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
-        opentelemetry_attribute_init();
+        opentelemetry_attributes_init();
     }
 
     return SUCCESS;

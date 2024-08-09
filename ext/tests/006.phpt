@@ -13,7 +13,7 @@ function helloWorld(string $a) {
 helloWorld('a');
 ?>
 --EXPECTF--
-array(7) {
+array(8) {
   [0]=>
   NULL
   [1]=>
@@ -30,6 +30,9 @@ array(7) {
   [5]=>
   int(4)
   [6]=>
+  array(0) {
+  }
+  [7]=>
   array(0) {
   }
 }

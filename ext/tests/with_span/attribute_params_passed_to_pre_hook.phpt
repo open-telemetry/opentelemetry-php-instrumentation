@@ -12,9 +12,7 @@ class Handler
 {
     public static function pre(): void
     {
-        //var_dump(func_get_args());
         $args = func_get_args();
-        var_dump(count($args));
         var_dump($args[6] ?? null);
     }
     public static function post(): void
@@ -35,7 +33,6 @@ class Foo
 (new Foo())->foo();
 ?>
 --EXPECT--
-int(7)
 array(3) {
   ["name"]=>
   string(6) "param1"

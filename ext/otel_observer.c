@@ -11,6 +11,8 @@
 static int op_array_extension = -1;
 
 static char *with_span_fqn = "OpenTelemetry\\Instrumentation\\WithSpan";
+static char *span_attribute_fqn =
+    "OpenTelemetry\\Instrumentation\\SpanAttribute";
 // static char *with_span_fqn_lc = "opentelemetry\\instrumentation\\withspan";
 
 static char *attribute_args_keys[] = {"name", "span_kind", "attributes"};
@@ -66,10 +68,18 @@ static inline void func_get_function_name(zval *zv, zend_execute_data *ex) {
     ZVAL_STR_COPY(zv, ex->func->op_array.function_name);
 }
 
-static void func_get_args(zval *zv, zend_execute_data *ex) {
+// get function args (invo zv) and any args with the
+// SpanAttributes attribute applied (into zv_attrs)
+static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
+                          bool check_for_attributes) {
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
+    HashTable *ht; // attributes from SpanAttribute
+    if (check_for_attributes) {
+        ALLOC_HASHTABLE(ht);
+        zend_hash_init(ht, 0, NULL, ZVAL_PTR_DTOR, 0);
+    }
 
     // @see
     // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
@@ -104,6 +114,27 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
+                if (check_for_attributes &&
+                    ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                    zend_string *arg_name = ex->func->op_array.vars[i];
+                    zend_attribute *attribute =
+                        zend_get_parameter_attribute_str(
+                            ex->func->common.attributes,
+                            "opentelemetry\\instrumentation\\spanattribute",
+                            sizeof("opentelemetry\\instrumentation\\spanattribu"
+                                   "te") -
+                                1,
+                            i);
+                    bool has_span_attribute = attribute != NULL;
+                    if (has_span_attribute) {
+                        if (attribute->argc) {
+                            zval key = attribute->args[0].value;
+                            zend_hash_add(ht, Z_STR(key), p);
+                        } else {
+                            zend_hash_add(ht, arg_name, p);
+                        }
+                    }
+                }
                 q = p;
                 if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
                     ZVAL_DEREF(q);
@@ -123,6 +154,9 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
         Z_ARRVAL_P(zv)->nNumOfElements = arg_count;
     } else {
         ZVAL_EMPTY_ARRAY(zv);
+    }
+    if (zv_attrs) {
+        ZVAL_ARR(zv_attrs, ht);
     }
 }
 
@@ -222,7 +256,7 @@ static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
             key = zend_string_init(attribute_args_keys[i],
                                    strlen(attribute_args_keys[i]), 0);
             zend_hash_add(ht, key, &arg.value);
-            zend_string_release(key);
+            zend_string_release(key); // todo move to end?
         }
     }
 
@@ -469,11 +503,11 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         return;
     }
 
-    zval params[7];
-    uint32_t param_count = 7;
+    zval params[8];
+    uint32_t param_count = 8;
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], execute_data);
+    func_get_args(&params[1], &params[7], execute_data, true);
     func_get_declaring_scope(&params[2], execute_data);
     func_get_function_name(&params[3], execute_data);
     func_get_filename(&params[4], execute_data);
@@ -646,7 +680,7 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
     uint32_t param_count = 8;
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], execute_data);
+    func_get_args(&params[1], NULL, execute_data, false);
     func_get_retval(&params[2], retval);
     func_get_exception(&params[3]);
     func_get_declaring_scope(&params[4], execute_data);
@@ -1025,24 +1059,30 @@ void opentelemetry_observer_init(INIT_FUNC_ARGS) {
     }
 }
 
-void opentelemetry_attribute_init() {
-    zend_function_entry withspan_methods[] = {PHP_FE_END};
+void attribute_init(char *fqn, uint32_t flags) {
+    zend_function_entry attr_methods[] = {PHP_FE_END};
     zend_class_entry ce, *class_entry;
 
-    INIT_CLASS_ENTRY(ce, with_span_fqn, withspan_methods);
+    INIT_CLASS_ENTRY(ce, fqn, attr_methods);
     class_entry = zend_register_internal_class_ex(&ce, NULL);
-    class_entry->ce_flags |= ZEND_ACC_FINAL;
-    class_entry->ce_flags |= ZEND_ATTRIBUTE_TARGET_METHOD;
-    class_entry->ce_flags |= ZEND_ATTRIBUTE_TARGET_FUNCTION;
+    class_entry->ce_flags |= flags;
 
     zend_string *attribute_name =
         zend_string_init_interned("Attribute", sizeof("Attribute") - 1, 1);
-    zend_attribute *withSpan =
+    zend_attribute *attr =
         zend_add_class_attribute(class_entry, attribute_name, 1);
     zend_string_release(attribute_name);
     zval attr_val;
     ZVAL_LONG(&attr_val, ZEND_ATTRIBUTE_TARGET_ALL);
-    ZVAL_COPY_VALUE(&withSpan->args[0].value, &attr_val);
+    ZVAL_COPY_VALUE(&attr->args[0].value, &attr_val);
 
     zend_internal_attribute_register(class_entry, ZEND_ATTRIBUTE_TARGET_ALL);
+}
+
+void opentelemetry_attributes_init() {
+    attribute_init(with_span_fqn, ZEND_ACC_FINAL |
+                                      ZEND_ATTRIBUTE_TARGET_METHOD |
+                                      ZEND_ATTRIBUTE_TARGET_FUNCTION);
+    attribute_init(span_attribute_fqn,
+                   ZEND_ACC_FINAL | ZEND_ATTRIBUTE_TARGET_PARAMETER);
 }
