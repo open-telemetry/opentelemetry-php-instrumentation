@@ -4,7 +4,7 @@ Check if custom attribute can be applied to a method
 opentelemetry
 --FILE--
 <?php
-namespace OpenTelemetry\Instrumentation;
+namespace OpenTelemetry\API\Instrumentation;
 
 use OpenTelemetry\Instrumentation\WithSpan;
 

@@ -892,9 +892,9 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
             // it has a WithSpan attribute. Add our generic pre/post handlers
             // as new observers.
             zval pre = create_attribute_observer_handler(
-                "OpenTelemetry\\Instrumentation\\Handler::pre");
+                OTEL_G(pre_handler_function_fqn));
             zval post = create_attribute_observer_handler(
-                "OpenTelemetry\\Instrumentation\\Handler::post");
+                OTEL_G(post_handler_function_fqn));
             add_observer(fbc->op_array.scope ? fbc->op_array.scope->name : NULL,
                          fbc->common.function_name, &pre, &post);
             zval_ptr_dtor(&pre);

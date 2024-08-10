@@ -4,7 +4,7 @@ Check if method params can be passed via SpanAttribute
 opentelemetry
 --FILE--
 <?php
-namespace OpenTelemetry\Instrumentation;
+namespace OpenTelemetry\API\Instrumentation;
 
 use OpenTelemetry\Instrumentation\WithSpan;
 use OpenTelemetry\Instrumentation\SpanAttribute;

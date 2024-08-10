@@ -4,7 +4,7 @@ Check if named attribute parameters are passed to pre hook
 opentelemetry
 --FILE--
 <?php
-namespace OpenTelemetry\Instrumentation;
+namespace OpenTelemetry\API\Instrumentation;
 
 use OpenTelemetry\Instrumentation\WithSpan;
 
