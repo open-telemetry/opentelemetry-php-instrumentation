@@ -852,6 +852,15 @@ static zval create_attribute_observer_handler(char *fn) {
     return callable;
 }
 
+static zend_attribute *find_withspan_attribute(zend_function *func) {
+    zend_attribute *attr;
+    attr = zend_get_attribute_str(
+        func->common.attributes, "opentelemetry\\instrumentation\\withspan",
+        sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+
+    return attr;
+}
+
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     zend_function *fbc = execute_data->func;
     if (!fbc->common.function_name) {
@@ -859,11 +868,8 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     }
     bool has_withspan_attribute = false;
 
-    if (fbc->common.attributes != NULL) {
-        zend_attribute *attr;
-        attr = zend_get_attribute_str(
-            fbc->common.attributes, "opentelemetry\\instrumentation\\withspan",
-            sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+    if(OTEL_G(attr_hooks_enabled) && fbc->common.attributes != NULL) {
+        zend_attribute * attr = find_withspan_attribute(fbc);
         has_withspan_attribute = (attr != NULL);
     }
 
