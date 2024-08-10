@@ -114,7 +114,7 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
-                if (check_for_attributes &&
+                if (check_for_attributes && OTEL_G(attr_hooks_enabled) &&
                     ex->func->type != ZEND_INTERNAL_FUNCTION) {
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
@@ -887,7 +887,7 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
 
     if (!zend_llist_count(&observer_instance.pre_hooks) &&
         !zend_llist_count(&observer_instance.post_hooks)) {
-        if (has_withspan_attribute) {
+        if (OTEL_G(attr_hooks_enabled) && has_withspan_attribute) {
             // there are no observers registered for this function/method, but
             // it has a WithSpan attribute. Add our generic pre/post handlers
             // as new observers.
