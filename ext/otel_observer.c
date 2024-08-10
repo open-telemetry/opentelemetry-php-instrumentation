@@ -10,6 +10,9 @@
 
 static int op_array_extension = -1;
 
+const char *withspan_fqn_lc = "opentelemetry\\instrumentation\\withspan";
+const char *spanattribute_fqn_lc =
+    "opentelemetry\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind",
                                                 "attributes"};
 
@@ -115,12 +118,8 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
                         zend_get_parameter_attribute_str(
-                            ex->func->common.attributes,
-                            "opentelemetry\\instrumentation\\spanattribute",
-                            sizeof("opentelemetry\\instrumentation\\spanattribu"
-                                   "te") -
-                                1,
-                            i);
+                            ex->func->common.attributes, spanattribute_fqn_lc,
+                            strlen(spanattribute_fqn_lc), i);
                     bool has_span_attribute = attribute != NULL;
                     if (has_span_attribute) {
                         if (attribute->argc) {
@@ -230,9 +229,8 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
 
 static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
     zend_attribute *attr;
-    attr = zend_get_attribute_str(
-        ex->func->common.attributes, "opentelemetry\\instrumentation\\withspan",
-        sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+    attr = zend_get_attribute_str(ex->func->common.attributes, withspan_fqn_lc,
+                                  strlen(withspan_fqn_lc));
     if (attr == NULL || attr->argc == 0) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
@@ -866,10 +864,8 @@ static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
 // find WithSpan in attributes, or in interface method attributes
 static zend_attribute *find_withspan_attribute(zend_function *func) {
     zend_attribute *attr;
-    // const char *s = "opentelemetry\\instrumentation\\withspan";
-    attr = zend_get_attribute_str(
-        func->common.attributes, "opentelemetry\\instrumentation\\withspan",
-        sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+    attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
+                                  strlen(withspan_fqn_lc));
     if (attr != NULL) {
         return attr;
     }
@@ -885,10 +881,9 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
                     find_function(interface_ce, func->common.function_name);
                 if (iface_func) {
                     // Method found in the interface, now check for attributes
-                    attr = zend_get_attribute_str(
-                        iface_func->common.attributes,
-                        "opentelemetry\\instrumentation\\withspan",
-                        sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+                    attr = zend_get_attribute_str(iface_func->common.attributes,
+                                                  withspan_fqn_lc,
+                                                  strlen(withspan_fqn_lc));
                     if (attr) {
                         return attr;
                     }
