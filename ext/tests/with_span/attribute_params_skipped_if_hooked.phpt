@@ -1,5 +1,5 @@
 --TEST--
-Check if hooking a method takes priority over attribute
+Check if hooking a method takes priority over WithSpan
 ----DESCRIPTION--
 Attribute-based hooks are only applied if no other hooks are registered on a function or method.
 --EXTENSIONS--

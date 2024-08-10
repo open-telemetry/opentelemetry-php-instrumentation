@@ -1,5 +1,5 @@
 --TEST--
-Check if attribute parameters are passed to pre hook
+Check if WithSpan parameters are passed to pre hook
 --EXTENSIONS--
 opentelemetry
 --FILE--

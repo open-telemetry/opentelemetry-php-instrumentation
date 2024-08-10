@@ -1,5 +1,5 @@
 --TEST--
-Check if custom attribute handlers can be changed via config
+Check if WithSpan handlers can be changed via config
 --EXTENSIONS--
 opentelemetry
 --INI--

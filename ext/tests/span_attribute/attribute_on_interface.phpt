@@ -1,7 +1,9 @@
 --TEST--
-Check if WithSpan can be applied to a method
+Check if SpanAttribute can be applied to interface
 --EXTENSIONS--
 opentelemetry
+--XFAIL--
+Not implemented
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;
@@ -13,6 +15,7 @@ class Handler
     public static function pre(): void
     {
         var_dump('pre');
+        var_dump(func_get_args()[7]);
     }
     public static function post(): void
     {
@@ -20,23 +23,29 @@ class Handler
     }
 }
 
-class TestClass
+interface TestInterface
 {
     #[WithSpan]
-    function sayFoo(): void
+    function foo(
+        #[SpanAttribute('renamed')] string $one,
+    ): void;
+}
+
+class TestClass implements TestInterface
+{
+    function foo(string $one): void
     {
         var_dump('foo');
     }
 }
 
-$reflection = new \ReflectionMethod(TestClass::class, 'sayFoo');
-var_dump($reflection->getAttributes()[0]->getName() == WithSpan::class);
-
-$c = new TestClass();
-$c->sayFoo();
+(new TestClass())->foo('one');
 ?>
 --EXPECT--
-bool(true)
 string(3) "pre"
+array(1) {
+  ["renamed"]=>
+  string(3) "one"
+}
 string(3) "foo"
 string(4) "post"

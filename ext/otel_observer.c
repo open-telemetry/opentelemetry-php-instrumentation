@@ -852,13 +852,51 @@ static zval create_attribute_observer_handler(char *fn) {
     return callable;
 }
 
+static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
+    zend_function *func;
+    ZEND_HASH_FOREACH_PTR(&ce->function_table, func) {
+        if (zend_string_equals(func->common.function_name, name)) {
+            return func;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+    return NULL;
+}
+
+// find WithSpan in attributes, or in interface method attributes
 static zend_attribute *find_withspan_attribute(zend_function *func) {
     zend_attribute *attr;
+    // const char *s = "opentelemetry\\instrumentation\\withspan";
     attr = zend_get_attribute_str(
         func->common.attributes, "opentelemetry\\instrumentation\\withspan",
         sizeof("opentelemetry\\instrumentation\\withspan") - 1);
-
-    return attr;
+    if (attr != NULL) {
+        return attr;
+    }
+    zend_class_entry *ce = func->common.scope;
+    // if a method, check interfaces
+    if (ce && ce->num_interfaces > 0) {
+        zend_class_entry *interface_ce;
+        // zend_attribute *attr;
+        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
+            interface_ce = ce->interfaces[i];
+            if (interface_ce != NULL) {
+                zend_function *iface_func =
+                    find_function(interface_ce, func->common.function_name);
+                if (iface_func) {
+                    // Method found in the interface, now check for attributes
+                    attr = zend_get_attribute_str(
+                        iface_func->common.attributes,
+                        "opentelemetry\\instrumentation\\withspan",
+                        sizeof("opentelemetry\\instrumentation\\withspan") - 1);
+                    if (attr) {
+                        return attr;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
@@ -868,8 +906,8 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     }
     bool has_withspan_attribute = false;
 
-    if(OTEL_G(attr_hooks_enabled) && fbc->common.attributes != NULL) {
-        zend_attribute * attr = find_withspan_attribute(fbc);
+    if (OTEL_G(attr_hooks_enabled)) {
+        zend_attribute *attr = find_withspan_attribute(fbc);
         has_withspan_attribute = (attr != NULL);
     }
 

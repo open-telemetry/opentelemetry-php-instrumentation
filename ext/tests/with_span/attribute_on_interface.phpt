@@ -1,7 +1,5 @@
 --TEST--
 Check if custom attribute can be applied to an interface
---XFAIL--
-Not implemented
 --EXTENSIONS--
 opentelemetry
 --FILE--
@@ -25,20 +23,35 @@ class Handler
 interface TestInterface
 {
     #[WithSpan]
-    function sayFoo(): void;
+    public function sayFoo(): void;
 }
 
-class TestClass implements TestInterface
+interface OtherInterface
 {
-    function sayFoo(): void
+    #[WithSpan]
+    public function sayBar(): void;
+}
+
+class TestClass implements TestInterface, OtherInterface
+{
+    public function sayFoo(): void
     {
         var_dump('foo');
     }
+    public function sayBar(): void
+    {
+        var_dump('bar');
+    }
 }
 
-(new TestClass())->sayFoo();
+$c = new TestClass();
+$c->sayFoo();
+$c->sayBar();
 ?>
 --EXPECT--
 string(3) "pre"
 string(3) "foo"
+string(4) "post"
+string(3) "pre"
+string(3) "bar"
 string(4) "post"
