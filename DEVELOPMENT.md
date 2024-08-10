@@ -178,6 +178,32 @@ Basic usage is in the `tests/` directory.
 
 A more advanced example: https://github.com/open-telemetry/opentelemetry-php-contrib/pull/78/files
 
+# `opentelemetry.stub.php` and `opentelemetry_argoinfo.h`
+
+The build system will generate `opentelemetry_arginfo.h` from `opentelemetry.stub.php`, but it seems
+to generate an invalid output. Until that starts working as expected:
+
+Manually fix:
+
+```diff
+-ZEND_FUNCTION(OpenTelemetry_Instrumentation_hook);
++ZEND_FUNCTION(hook);
+```
+
+```diff
+-ZEND_NS_FALIAS("OpenTelemetry\\Instrumentation", hook, OpenTelemetry_Instrumentation_hook, arginfo_OpenTelemetry_Instrumentation_hook)
++ZEND_NS_FE("OpenTelemetry\\Instrumentation", hook, arginfo_OpenTelemetry_Instrumentation_hook)
+```
+
+Also note that the `#[Attribute]` attribute is not added to the classes in the stub file, as that could 
+not be handled by `gen_stub.php`. Constructors are also not added due to not building cleanly, but might
+be fixable (TODO).
+
+You can regenerate the output by `php build/gen_stub.php`, or `make` (if the stub file has been changed).
+
+`opentelemetry.ide.stub.php` represents what the stub wile (probably) should be, and this file can
+be used in IDEs for type-hinting.
+
 # Further reading
 
 * https://www.phpinternalsbook.com/php7/build_system/building_extensions.html

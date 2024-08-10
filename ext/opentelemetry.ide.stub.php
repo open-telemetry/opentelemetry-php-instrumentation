@@ -1,7 +1,5 @@
 <?php
 
-/** @generate-class-entries */
-
 namespace OpenTelemetry\Instrumentation;
 
 /**
@@ -22,10 +20,20 @@ function hook(
     ?\Closure $post = null,
 ): bool {}
 
+#[\Attribute(\Attribute::TARGET_FUNCTION|\Attribute::TARGET_METHOD)]
 final class WithSpan
 {
+    public function __construct(
+        ?string $span_name = null,
+        ?int $span_type = null,
+        array $attributes = [],
+    ){}
 }
 
+#[\Attribute(\Attribute::TARGET_PROPERTY)]
 final class SpanAttribute
 {
+    public function __construct(
+        public ?string $name = null,
+    ){}
 }

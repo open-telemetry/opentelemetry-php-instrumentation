@@ -10,6 +10,7 @@
 #include "otel_observer.h"
 #include "stdlib.h"
 #include "string.h"
+#include "zend_attributes.h"
 #include "zend_closures.h"
 
 static int check_conflict(HashTable *registry, const char *extension_name) {
@@ -140,7 +141,16 @@ PHP_MINIT_FUNCTION(opentelemetry) {
 
     if (!OTEL_G(disabled)) {
         opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
-        opentelemetry_attributes_init();
+        zend_class_entry *ce_with_span =
+            register_class_OpenTelemetry_Instrumentation_WithSpan();
+        zend_class_entry *ce_span_attribute =
+            register_class_OpenTelemetry_Instrumentation_SpanAttribute();
+        // todo: gen_stubs.php should do this
+        zend_internal_attribute_register(ce_with_span,
+                                         ZEND_ATTRIBUTE_TARGET_METHOD |
+                                             ZEND_ATTRIBUTE_TARGET_FUNCTION);
+        zend_internal_attribute_register(ce_span_attribute,
+                                         ZEND_ATTRIBUTE_TARGET_PARAMETER);
     }
 
     return SUCCESS;

@@ -241,5 +241,86 @@ string(3) "new"
 string(8) "original"
 ```
 
+## Attribute-based hooking
+
+By applying attributes to source code, the OpenTelemetry extension can add hooks at runtime.
+
+By default, the following pre/post hooks will be invoked: `OpenTelemetry\API\Instrumentation\Handler::pre` and `::post`.
+
+## Restrictions
+
+Attribute-based hooks can only be applied to a function/method that does not already have
+hooks applied.
+Only one hook can be applied to a function/method, including via interfaces.
+
+Since the attributes are evaluated at runtime, the extension checks whether a hook already
+exists to decide whether it should apply a new runtime hook.
+
+### Configuration
+
+This feature can be configured via `.ini` by modifying the following entries:
+
+- `opentelemetry.attr_hooks_enabled` - boolean, default On
+- `opentelemetry.attr_pre_handler_function` - FQN of pre method/function
+- `opentelemetry.attr_post_handler_function` - FQN of post method/function
+
+## `WithSpan` attribute
+
+This attribute can be applied to a function or class method.
+You can also provide optional parameters to the attribute, which control:
+- span name
+- span kind
+- attributes
+
+```php
+use OpenTelemetry\Instrumentation\WithSpan
+
+class MyClass
+{
+    #[WithSpan]
+    public function trace_me(): void
+    {
+        /* ... */
+    }
+
+    #[WithSpan('custom_span_name', SpanKind::KIND_INTERNAL, ['my-attr' => 'value'])]
+    public function trace_me_with_customization(): void
+    {
+        /* ... */
+    }
+}
+
+#[WithSpan]
+function my_function(): void
+{
+    /* ... */
+}
+```
+
+## `SpanAttribute` attribute
+
+This attribute should be used in conjunction with `WithSpan`. It is applied to function/method
+parameters, and causes those parameters and values to be passed through to the `pre` hook function
+where they can be added as trace attributes.
+There is one optional parameter, which controls the attribute key. If not set, the parameter name
+is used.
+
+```php
+use OpenTelemetry\Instrumentation\WithSpan
+use OpenTelemetry\Instrumentation\SpanAttribute
+
+class MyClass
+{
+    #[WithSpan]
+    public function add_user(
+        #[SpanAttribute] string $username,
+        string $password,
+        #[SpanAttribute('a_better_attribute_name')] string $foo_bar_baz,
+    ): void
+    {
+        /* ... */
+    }
+```
+
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md

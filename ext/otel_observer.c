@@ -10,12 +10,8 @@
 
 static int op_array_extension = -1;
 
-static char *with_span_fqn = "OpenTelemetry\\Instrumentation\\WithSpan";
-static char *span_attribute_fqn =
-    "OpenTelemetry\\Instrumentation\\SpanAttribute";
-// static char *with_span_fqn_lc = "opentelemetry\\instrumentation\\withspan";
-
-static char *attribute_args_keys[] = {"name", "span_kind", "attributes"};
+static char *with_span_attribute_args_keys[] = {"name", "span_kind",
+                                                "attributes"};
 
 typedef struct otel_observer {
     zend_llist pre_hooks;
@@ -253,8 +249,8 @@ static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
         if (arg.name != NULL) {
             zend_hash_add(ht, arg.name, &arg.value);
         } else {
-            key = zend_string_init(attribute_args_keys[i],
-                                   strlen(attribute_args_keys[i]), 0);
+            key = zend_string_init(with_span_attribute_args_keys[i],
+                                   strlen(with_span_attribute_args_keys[i]), 0);
             zend_hash_add(ht, key, &arg.value);
             zend_string_release(key); // todo move to end?
         }
@@ -1057,32 +1053,4 @@ void opentelemetry_observer_init(INIT_FUNC_ARGS) {
         op_array_extension =
             zend_get_op_array_extension_handle("opentelemetry");
     }
-}
-
-void attribute_init(char *fqn, uint32_t flags) {
-    zend_function_entry attr_methods[] = {PHP_FE_END};
-    zend_class_entry ce, *class_entry;
-
-    INIT_CLASS_ENTRY(ce, fqn, attr_methods);
-    class_entry = zend_register_internal_class_ex(&ce, NULL);
-    class_entry->ce_flags |= flags;
-
-    zend_string *attribute_name =
-        zend_string_init_interned("Attribute", sizeof("Attribute") - 1, 1);
-    zend_attribute *attr =
-        zend_add_class_attribute(class_entry, attribute_name, 1);
-    zend_string_release(attribute_name);
-    zval attr_val;
-    ZVAL_LONG(&attr_val, ZEND_ATTRIBUTE_TARGET_ALL);
-    ZVAL_COPY_VALUE(&attr->args[0].value, &attr_val);
-
-    zend_internal_attribute_register(class_entry, ZEND_ATTRIBUTE_TARGET_ALL);
-}
-
-void opentelemetry_attributes_init() {
-    attribute_init(with_span_fqn, ZEND_ACC_FINAL |
-                                      ZEND_ATTRIBUTE_TARGET_METHOD |
-                                      ZEND_ATTRIBUTE_TARGET_FUNCTION);
-    attribute_init(span_attribute_fqn,
-                   ZEND_ACC_FINAL | ZEND_ATTRIBUTE_TARGET_PARAMETER);
 }
