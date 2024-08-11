@@ -2,8 +2,6 @@
 Check if WithSpan can be applied to an interface with attribute args
 --EXTENSIONS--
 opentelemetry
---XFAIL--
-Not implemented
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;
@@ -15,7 +13,7 @@ class Handler
     public static function pre(): void
     {
         var_dump('pre');
-        var_dump(func_get_args()[7]);
+        var_dump(func_get_args()[6]);
     }
     public static function post(): void
     {

@@ -67,10 +67,54 @@ static inline void func_get_function_name(zval *zv, zend_execute_data *ex) {
     ZVAL_STR_COPY(zv, ex->func->op_array.function_name);
 }
 
+static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
+    zend_function *func;
+    ZEND_HASH_FOREACH_PTR(&ce->function_table, func) {
+        if (zend_string_equals(func->common.function_name, name)) {
+            return func;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+    return NULL;
+}
+
+// find WithSpan in attributes, or in interface method attributes
+static zend_attribute *find_withspan_attribute(zend_function *func) {
+    zend_attribute *attr;
+    attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
+                                  strlen(withspan_fqn_lc));
+    if (attr != NULL) {
+        return attr;
+    }
+    zend_class_entry *ce = func->common.scope;
+    // if a method, check interfaces
+    if (ce && ce->num_interfaces > 0) {
+        zend_class_entry *interface_ce;
+        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
+            interface_ce = ce->interfaces[i];
+            if (interface_ce != NULL) {
+                zend_function *iface_func =
+                    find_function(interface_ce, func->common.function_name);
+                if (iface_func) {
+                    // Method found in the interface, now check for attributes
+                    attr = zend_get_attribute_str(iface_func->common.attributes,
+                                                  withspan_fqn_lc,
+                                                  strlen(withspan_fqn_lc));
+                    if (attr) {
+                        return attr;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
 // get function args (invo zv) and any args with the
 // SpanAttributes attribute applied (into zv_attrs)
 static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
-                          bool check_for_attributes) {
+                          bool is_pre_hook) {
+    bool check_for_attributes = is_pre_hook && OTEL_G(attr_hooks_enabled);
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
@@ -113,7 +157,7 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
-                if (check_for_attributes && OTEL_G(attr_hooks_enabled) &&
+                if (check_for_attributes &&
                     ex->func->type != ZEND_INTERNAL_FUNCTION) {
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
@@ -228,9 +272,11 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
 }
 
 static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
-    zend_attribute *attr;
-    attr = zend_get_attribute_str(ex->func->common.attributes, withspan_fqn_lc,
-                                  strlen(withspan_fqn_lc));
+    if (!OTEL_G(attr_hooks_enabled)) {
+        ZVAL_EMPTY_ARRAY(zv);
+        return;
+    }
+    zend_attribute *attr = find_withspan_attribute(ex->func);
     if (attr == NULL || attr->argc == 0) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
@@ -250,7 +296,7 @@ static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
             key = zend_string_init(with_span_attribute_args_keys[i],
                                    strlen(with_span_attribute_args_keys[i]), 0);
             zend_hash_add(ht, key, &arg.value);
-            zend_string_release(key); // todo move to end?
+            zend_string_release(key);
         }
     }
 
@@ -848,50 +894,6 @@ static zval create_attribute_observer_handler(char *fn) {
     ZVAL_STRING(&callable, fn);
 
     return callable;
-}
-
-static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
-    zend_function *func;
-    ZEND_HASH_FOREACH_PTR(&ce->function_table, func) {
-        if (zend_string_equals(func->common.function_name, name)) {
-            return func;
-        }
-    }
-    ZEND_HASH_FOREACH_END();
-    return NULL;
-}
-
-// find WithSpan in attributes, or in interface method attributes
-static zend_attribute *find_withspan_attribute(zend_function *func) {
-    zend_attribute *attr;
-    attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
-                                  strlen(withspan_fqn_lc));
-    if (attr != NULL) {
-        return attr;
-    }
-    zend_class_entry *ce = func->common.scope;
-    // if a method, check interfaces
-    if (ce && ce->num_interfaces > 0) {
-        zend_class_entry *interface_ce;
-        // zend_attribute *attr;
-        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
-            interface_ce = ce->interfaces[i];
-            if (interface_ce != NULL) {
-                zend_function *iface_func =
-                    find_function(interface_ce, func->common.function_name);
-                if (iface_func) {
-                    // Method found in the interface, now check for attributes
-                    attr = zend_get_attribute_str(iface_func->common.attributes,
-                                                  withspan_fqn_lc,
-                                                  strlen(withspan_fqn_lc));
-                    if (attr) {
-                        return attr;
-                    }
-                }
-            }
-        }
-    }
-    return NULL;
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
