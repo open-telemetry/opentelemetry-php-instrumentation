@@ -78,6 +78,42 @@ static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
     return NULL;
 }
 
+// find SpanAttribute attribute on a parameter, or on a parameter of
+// an interface
+static zend_attribute *find_spanattribute_attribute(zend_function *func,
+                                                    uint32_t i) {
+    zend_attribute *attr = zend_get_parameter_attribute_str(
+        func->common.attributes, spanattribute_fqn_lc,
+        strlen(spanattribute_fqn_lc), i);
+
+    if (attr != NULL) {
+        return attr;
+    }
+    zend_class_entry *ce = func->common.scope;
+    if (ce && ce->num_interfaces > 0) {
+        zend_class_entry *interface_ce;
+        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
+            interface_ce = ce->interfaces[i];
+            if (interface_ce != NULL) {
+                // does the interface have the function we are looking for?
+                zend_function *iface_func =
+                    find_function(interface_ce, func->common.function_name);
+                if (iface_func != NULL) {
+                    // method found, check positional arg for attribute
+                    attr = zend_get_parameter_attribute_str(
+                        iface_func->common.attributes, spanattribute_fqn_lc,
+                        strlen(spanattribute_fqn_lc), i);
+                    if (attr != NULL) {
+                        return attr;
+                    }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
 // find WithSpan in attributes, or in interface method attributes
 static zend_attribute *find_withspan_attribute(zend_function *func) {
     zend_attribute *attr;
@@ -93,9 +129,10 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
         for (uint32_t i = 0; i < ce->num_interfaces; i++) {
             interface_ce = ce->interfaces[i];
             if (interface_ce != NULL) {
+                // does the interface have the function we are looking for?
                 zend_function *iface_func =
                     find_function(interface_ce, func->common.function_name);
-                if (iface_func) {
+                if (iface_func != NULL) {
                     // Method found in the interface, now check for attributes
                     attr = zend_get_attribute_str(iface_func->common.attributes,
                                                   withspan_fqn_lc,
@@ -161,9 +198,7 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
                     ex->func->type != ZEND_INTERNAL_FUNCTION) {
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
-                        zend_get_parameter_attribute_str(
-                            ex->func->common.attributes, spanattribute_fqn_lc,
-                            strlen(spanattribute_fqn_lc), i);
+                        find_spanattribute_attribute(ex->func, i);
                     bool has_span_attribute = attribute != NULL;
                     if (has_span_attribute) {
                         if (attribute->argc) {
