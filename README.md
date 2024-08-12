@@ -13,7 +13,10 @@ Issues have been disabled for this repo in order to help maintain consistency be
 This is a PHP extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
-The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry.
+The extension allows:
+
+- creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry
+- adding attributes to functions and methods to enable observers at runtime
 
 In PHP 8.2+, internal/built-in PHP functions can also be observed.
 

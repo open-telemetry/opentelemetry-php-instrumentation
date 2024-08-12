@@ -146,8 +146,8 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
     return NULL;
 }
 
-// get function args (invo zv) and any args with the
-// SpanAttributes attribute applied (into zv_attrs)
+// get function args. any args with the
+// SpanAttributes attribute are added to the attributes HashTable
 static void func_get_args(zval *zv, HashTable *attributes,
                           zend_execute_data *ex, bool is_pre_hook) {
     bool check_for_attributes = is_pre_hook && OTEL_G(attr_hooks_enabled);
@@ -970,8 +970,8 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
         !zend_llist_count(&observer_instance.post_hooks)) {
         if (OTEL_G(attr_hooks_enabled) && has_withspan_attribute) {
             // there are no observers registered for this function/method, but
-            // it has a WithSpan attribute. Add our generic pre/post handlers
-            // as new observers.
+            // it has a WithSpan attribute. Add configured attribute-based
+            // pre/post handlers as new observers.
             zval pre = create_attribute_observer_handler(
                 OTEL_G(pre_handler_function_fqn));
             zval post = create_attribute_observer_handler(
