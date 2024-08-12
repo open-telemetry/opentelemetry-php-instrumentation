@@ -1,5 +1,5 @@
 --TEST--
-Check if WithSpan can be applied to an interface with attribute args
+Check if attributes from SpanAttribute replace attributes with same name from WithSpan
 --EXTENSIONS--
 opentelemetry
 --FILE--
@@ -7,13 +7,13 @@ opentelemetry
 namespace OpenTelemetry\API\Instrumentation;
 
 use OpenTelemetry\Instrumentation\WithSpan;
+use OpenTelemetry\Instrumentation\SpanAttribute;
 
 class Handler
 {
     public static function pre(): void
     {
         var_dump('pre');
-        var_dump(func_get_args()[6]);
         var_dump(func_get_args()[7]);
     }
     public static function post(): void
@@ -22,33 +22,27 @@ class Handler
     }
 }
 
-interface TestInterface
+class TestClass
 {
-    #[WithSpan('one', 99, ['foo' => 'bar'])]
-    function sayFoo(): void;
-}
-
-class TestClass implements TestInterface
-{
-    function sayFoo(): void
+    #[WithSpan(attributes: ['one' => 'one_from_withspan', 'two' => 'two_from_withspan'])]
+    function foo(
+        #[SpanAttribute] string $one,
+    ): void
     {
         var_dump('foo');
     }
 }
 
-(new TestClass())->sayFoo();
+$c = new TestClass();
+$c->foo('one');
 ?>
 --EXPECT--
 string(3) "pre"
 array(2) {
-  ["name"]=>
+  ["two"]=>
+  string(17) "two_from_withspan"
+  ["one"]=>
   string(3) "one"
-  ["span_kind"]=>
-  int(99)
-}
-array(1) {
-  ["foo"]=>
-  string(3) "bar"
 }
 string(3) "foo"
 string(4) "post"

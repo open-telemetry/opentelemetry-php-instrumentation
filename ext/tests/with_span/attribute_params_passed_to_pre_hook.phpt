@@ -14,6 +14,7 @@ class Handler
     {
         $args = func_get_args();
         var_dump($args[6] ?? null);
+        var_dump($args[7] ?? null);
     }
     public static function post(): void
     {
@@ -33,18 +34,17 @@ class Foo
 (new Foo())->foo();
 ?>
 --EXPECT--
-array(3) {
+array(2) {
   ["name"]=>
   string(6) "param1"
   ["span_kind"]=>
   int(99)
-  ["attributes"]=>
-  array(2) {
-    ["attr1"]=>
-    string(6) "value1"
-    ["attr2"]=>
-    float(3.14)
-  }
+}
+array(2) {
+  ["attr1"]=>
+  string(6) "value1"
+  ["attr2"]=>
+  float(3.14)
 }
 string(3) "foo"
 string(4) "post"

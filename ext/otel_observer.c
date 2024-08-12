@@ -13,8 +13,7 @@ static int op_array_extension = -1;
 const char *withspan_fqn_lc = "opentelemetry\\instrumentation\\withspan";
 const char *spanattribute_fqn_lc =
     "opentelemetry\\instrumentation\\spanattribute";
-static char *with_span_attribute_args_keys[] = {"name", "span_kind",
-                                                "attributes"};
+static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
 
 typedef struct otel_observer {
     zend_llist pre_hooks;
@@ -149,17 +148,12 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
 
 // get function args (invo zv) and any args with the
 // SpanAttributes attribute applied (into zv_attrs)
-static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
-                          bool is_pre_hook) {
+static void func_get_args(zval *zv, HashTable *attributes,
+                          zend_execute_data *ex, bool is_pre_hook) {
     bool check_for_attributes = is_pre_hook && OTEL_G(attr_hooks_enabled);
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
-    HashTable *ht; // attributes from SpanAttribute
-    if (check_for_attributes) {
-        ALLOC_HASHTABLE(ht);
-        zend_hash_init(ht, 0, NULL, ZVAL_PTR_DTOR, 0);
-    }
 
     // @see
     // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
@@ -199,13 +193,14 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
                         find_spanattribute_attribute(ex->func, i);
-                    bool has_span_attribute = attribute != NULL;
-                    if (has_span_attribute) {
+                    if (attribute != NULL) {
                         if (attribute->argc) {
-                            zval key = attribute->args[0].value;
-                            zend_hash_add(ht, Z_STR(key), p);
+                            zend_string *key = Z_STR(attribute->args[0].value);
+                            zend_hash_del(attributes, key);
+                            zend_hash_add(attributes, key, p);
                         } else {
-                            zend_hash_add(ht, arg_name, p);
+                            zend_hash_del(attributes, arg_name);
+                            zend_hash_add(attributes, arg_name, p);
                         }
                     }
                 }
@@ -228,9 +223,6 @@ static void func_get_args(zval *zv, zval *zv_attrs, zend_execute_data *ex,
         Z_ARRVAL_P(zv)->nNumOfElements = arg_count;
     } else {
         ZVAL_EMPTY_ARRAY(zv);
-    }
-    if (zv_attrs) {
-        ZVAL_ARR(zv_attrs, ht);
     }
 }
 
@@ -306,7 +298,8 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
     }
 }
 
-static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
+static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
+                                           zend_execute_data *ex) {
     if (!OTEL_G(attr_hooks_enabled)) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
@@ -325,13 +318,24 @@ static inline void func_get_attribute_args(zval *zv, zend_execute_data *ex) {
 
     for (uint32_t i = 0; i < attr->argc; i++) {
         arg = attr->args[i];
-        if (arg.name != NULL) {
-            zend_hash_add(ht, arg.name, &arg.value);
+        if (i == 2 ||
+            (arg.name && zend_string_equals_literal(arg.name, "attributes"))) {
+            // attributes, append to a separate HashTable
+            if (Z_TYPE(arg.value) == IS_ARRAY) {
+                zend_hash_clean(attributes); // should already be empty
+                HashTable *array_ht = Z_ARRVAL_P(&arg.value);
+                zend_hash_copy(attributes, array_ht, zval_add_ref);
+            }
         } else {
-            key = zend_string_init(with_span_attribute_args_keys[i],
-                                   strlen(with_span_attribute_args_keys[i]), 0);
-            zend_hash_add(ht, key, &arg.value);
-            zend_string_release(key);
+            if (arg.name != NULL) {
+                zend_hash_add(ht, arg.name, &arg.value);
+            } else {
+                key = zend_string_init(with_span_attribute_args_keys[i],
+                                       strlen(with_span_attribute_args_keys[i]),
+                                       0);
+                zend_hash_add(ht, key, &arg.value);
+                zend_string_release(key);
+            }
         }
     }
 
@@ -580,14 +584,19 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
 
     zval params[8];
     uint32_t param_count = 8;
+    HashTable *attributes;
+    ALLOC_HASHTABLE(attributes);
+    zend_hash_init(attributes, 0, NULL, ZVAL_PTR_DTOR, 0);
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], &params[7], execute_data, true);
+    func_get_attribute_args(&params[6], attributes, execute_data);
+    func_get_args(&params[1], attributes, execute_data, true);
     func_get_declaring_scope(&params[2], execute_data);
     func_get_function_name(&params[3], execute_data);
     func_get_filename(&params[4], execute_data);
     func_get_lineno(&params[5], execute_data);
-    func_get_attribute_args(&params[6], execute_data);
+
+    ZVAL_ARR(&params[7], attributes);
 
     for (zend_llist_element *element = hooks->head; element;
          element = element->next) {
