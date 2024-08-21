@@ -6,11 +6,11 @@ Attribute-based hooks are only applied if no other hooks are registered on a fun
 opentelemetry
 --FILE--
 <?php
-namespace OpenTelemetry\Instrumentation;
+namespace OpenTelemetryAPI\Instrumentation;
 
 use OpenTelemetry\Instrumentation\WithSpan;
 
-class Handler
+class WithSpanHandler
 {
     public static function pre(): void
     {

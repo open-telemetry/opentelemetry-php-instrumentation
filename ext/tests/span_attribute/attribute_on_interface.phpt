@@ -9,7 +9,7 @@ namespace OpenTelemetry\API\Instrumentation;
 use OpenTelemetry\Instrumentation\WithSpan;
 use OpenTelemetry\Instrumentation\SpanAttribute;
 
-class Handler
+class WithSpanHandler
 {
     public static function pre(): void
     {
