@@ -146,11 +146,16 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
     return NULL;
 }
 
+static bool func_has_withspan_attribute(zend_execute_data *ex) {
+    zend_attribute *attr = find_withspan_attribute(ex->func);
+
+    return attr != NULL;
+}
+
 // get function args. any args with the
 // SpanAttributes attribute are added to the attributes HashTable
 static void func_get_args(zval *zv, HashTable *attributes,
-                          zend_execute_data *ex, bool is_pre_hook) {
-    bool check_for_attributes = is_pre_hook && OTEL_G(attr_hooks_enabled);
+                          zend_execute_data *ex, bool check_for_attributes) {
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
@@ -587,10 +592,12 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     HashTable *attributes;
     ALLOC_HASHTABLE(attributes);
     zend_hash_init(attributes, 0, NULL, ZVAL_PTR_DTOR, 0);
+    bool check_for_attributes =
+        OTEL_G(attr_hooks_enabled) && func_has_withspan_attribute(execute_data);
 
     func_get_this_or_called_scope(&params[0], execute_data);
     func_get_attribute_args(&params[6], attributes, execute_data);
-    func_get_args(&params[1], attributes, execute_data, true);
+    func_get_args(&params[1], attributes, execute_data, check_for_attributes);
     func_get_declaring_scope(&params[2], execute_data);
     func_get_function_name(&params[3], execute_data);
     func_get_filename(&params[4], execute_data);
@@ -945,11 +952,12 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     if (!fbc->common.function_name) {
         return NULL;
     }
-    bool has_withspan_attribute = false;
+    bool has_withspan_attribute = func_has_withspan_attribute(execute_data);
 
-    if (OTEL_G(attr_hooks_enabled)) {
-        zend_attribute *attr = find_withspan_attribute(fbc);
-        has_withspan_attribute = (attr != NULL);
+    if (OTEL_G(attr_hooks_enabled) == false && has_withspan_attribute) {
+        php_error_docref(NULL, E_CORE_WARNING,
+                         "OpenTelemetry: WithSpan attribute found but "
+                         "attribute hooks disabled");
     }
 
     otel_observer observer_instance;

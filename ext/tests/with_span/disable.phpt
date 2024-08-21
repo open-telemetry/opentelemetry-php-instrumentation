@@ -30,5 +30,6 @@ function otel_attr_test(): void
 
 otel_attr_test();
 ?>
---EXPECT--
+--EXPECTF--
+Warning: %s: OpenTelemetry: WithSpan attribute found but attribute hooks disabled in Unknown on line %d
 string(4) "test"
