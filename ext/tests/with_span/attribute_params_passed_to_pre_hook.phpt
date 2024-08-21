@@ -2,6 +2,8 @@
 Check if WithSpan parameters are passed to pre hook
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

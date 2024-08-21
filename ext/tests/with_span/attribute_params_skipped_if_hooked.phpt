@@ -4,6 +4,8 @@ Check if hooking a method takes priority over WithSpan
 Attribute-based hooks are only applied if no other hooks are registered on a function or method.
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetryAPI\Instrumentation;

@@ -2,6 +2,8 @@
 Check if attributes from SpanAttribute replace attributes with same name from WithSpan
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

@@ -2,6 +2,8 @@
 Check if method params can be passed via SpanAttribute
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

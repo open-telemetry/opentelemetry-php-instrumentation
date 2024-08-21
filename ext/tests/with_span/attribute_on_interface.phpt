@@ -2,6 +2,8 @@
 Check if custom attribute can be applied to an interface
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

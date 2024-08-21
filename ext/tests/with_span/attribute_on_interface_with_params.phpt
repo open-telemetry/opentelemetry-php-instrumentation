@@ -2,6 +2,8 @@
 Check if WithSpan can be applied to an interface with attribute args
 --EXTENSIONS--
 opentelemetry
+--INI--
+opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

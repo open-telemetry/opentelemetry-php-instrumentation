@@ -3,6 +3,7 @@ Check if WithSpan handlers can be changed via config
 --EXTENSIONS--
 opentelemetry
 --INI--
+opentelemetry.attr_hooks_enabled = On
 opentelemetry.attr_pre_handler_function = custom_pre
 opentelemetry.attr_post_handler_function = custom_post
 --FILE--

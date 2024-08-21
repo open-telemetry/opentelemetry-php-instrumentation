@@ -3,6 +3,7 @@ Invalid callback is ignored
 --EXTENSIONS--
 opentelemetry
 --INI--
+opentelemetry.attr_hooks_enabled = On
 opentelemetry.attr_pre_handler_function = "Invalid::pre"
 opentelemetry.attr_post_handler_function = "Also\Invalid::post"
 --FILE--
