@@ -29,7 +29,7 @@ function foo(
     #[SpanAttribute] array $one,
     #[SpanAttribute] object $two,
     #[SpanAttribute] callable $three,
-    #[SpanAttribute] null $four,
+    #[SpanAttribute] $four,
 ): void
 {
     var_dump('foo');
