@@ -1,5 +1,7 @@
 --TEST--
 Check if WithSpan can be applied to an interface with attribute args
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--

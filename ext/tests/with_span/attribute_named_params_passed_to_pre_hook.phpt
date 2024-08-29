@@ -1,5 +1,7 @@
 --TEST--
 Check if named attribute parameters are passed to pre hook
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--

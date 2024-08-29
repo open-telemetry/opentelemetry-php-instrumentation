@@ -1,5 +1,7 @@
 --TEST--
 Check if function params can be passed via SpanAttribute
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--

@@ -1,5 +1,7 @@
 --TEST--
 Check if SpanAttribute can be applied to interface
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--

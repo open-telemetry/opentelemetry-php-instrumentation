@@ -1,5 +1,7 @@
 --TEST--
 Check if function non-simple types can be passed as function params
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--
