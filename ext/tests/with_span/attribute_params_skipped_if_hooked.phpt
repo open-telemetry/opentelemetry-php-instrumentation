@@ -2,7 +2,7 @@
 Check if hooking a method takes priority over WithSpan
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
-----DESCRIPTION--
+--DESCRIPTION--
 Attribute-based hooks are only applied if no other hooks are registered on a function or method.
 --EXTENSIONS--
 opentelemetry
