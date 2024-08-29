@@ -73,29 +73,30 @@ jobs:
           pear package
           cp opentelemetry-*.tgz binaries/
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: opentelemetry-pecl
           path: ext/binaries/*.tgz
           if-no-files-found: error
 
   windows:
-    runs-on: windows-2019
+    runs-on: windows-2022
     continue-on-error: false
     strategy:
       fail-fast: false
       matrix:
         php: ['8.0', '8.1', '8.2', '8.3']
+        ts: ['ts', 'nts']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install PHP ${{ matrix.php }}
+      - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
         id: setup-php-sdk
-        uses: php/setup-php-sdk@v0.8
+        uses: php/setup-php-sdk@v0.9
         with:
           version: ${{ matrix.php }}
           arch: x64
-          ts: nts
+          ts: ${{ matrix.ts }}
       - name: Install dependencies
         uses: ilammy/msvc-dev-cmd@v1
         with:
@@ -112,15 +113,16 @@ jobs:
         run: nmake test TESTS=--show-diff
       - name: Copy binaries
         env:
-          BUILD_NAME: "opentelemetry-${{matrix.php}}-windows-x64-nts}}"
+          BUILD_NAME: "opentelemetry-${{matrix.php}}-windows-x64-${{matrix.ts}}"
         run: |
           md binaries\$BUILD_NAME
-          copy x64\Release\php_opentelemetry.dll binaries\$BUILD_NAME\php_opentelemetry.dll
+          $file = Get-ChildItem -Path x64 -Recurse -Filter php_opentelemetry.dll
+          Copy-Item -Path $file.FullName -Destination binaries\$BUILD_NAME
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: opentelemetry-${{matrix.php}}-windows-x64-nts
-          path: ext\x64\Release\php_opentelemetry.dll
+          name: opentelemetry-${{matrix.php}}-windows-x64-${{matrix.ts}}
+          path: ext\x64\**\php_opentelemetry.dll
           if-no-files-found: error
 
   release-if-tag:
