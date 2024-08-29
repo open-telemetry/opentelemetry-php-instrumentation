@@ -5,9 +5,15 @@
 #include "zend_execute.h"
 #include "zend_extensions.h"
 #include "zend_exceptions.h"
+#include "zend_attributes.h"
 #include "php_opentelemetry.h"
 
 static int op_array_extension = -1;
+
+const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
+const char *spanattribute_fqn_lc =
+    "opentelemetry\\api\\instrumentation\\spanattribute";
+static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
 
 typedef struct otel_observer {
     zend_llist pre_hooks;
@@ -60,7 +66,96 @@ static inline void func_get_function_name(zval *zv, zend_execute_data *ex) {
     ZVAL_STR_COPY(zv, ex->func->op_array.function_name);
 }
 
-static void func_get_args(zval *zv, zend_execute_data *ex) {
+static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
+    zend_function *func;
+    ZEND_HASH_FOREACH_PTR(&ce->function_table, func) {
+        if (zend_string_equals(func->common.function_name, name)) {
+            return func;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+    return NULL;
+}
+
+// find SpanAttribute attribute on a parameter, or on a parameter of
+// an interface
+static zend_attribute *find_spanattribute_attribute(zend_function *func,
+                                                    uint32_t i) {
+    zend_attribute *attr = zend_get_parameter_attribute_str(
+        func->common.attributes, spanattribute_fqn_lc,
+        strlen(spanattribute_fqn_lc), i);
+
+    if (attr != NULL) {
+        return attr;
+    }
+    zend_class_entry *ce = func->common.scope;
+    if (ce && ce->num_interfaces > 0) {
+        zend_class_entry *interface_ce;
+        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
+            interface_ce = ce->interfaces[i];
+            if (interface_ce != NULL) {
+                // does the interface have the function we are looking for?
+                zend_function *iface_func =
+                    find_function(interface_ce, func->common.function_name);
+                if (iface_func != NULL) {
+                    // method found, check positional arg for attribute
+                    attr = zend_get_parameter_attribute_str(
+                        iface_func->common.attributes, spanattribute_fqn_lc,
+                        strlen(spanattribute_fqn_lc), i);
+                    if (attr != NULL) {
+                        return attr;
+                    }
+                }
+            }
+        }
+    }
+
+    return NULL;
+}
+
+// find WithSpan in attributes, or in interface method attributes
+static zend_attribute *find_withspan_attribute(zend_function *func) {
+    zend_attribute *attr;
+    attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
+                                  strlen(withspan_fqn_lc));
+    if (attr != NULL) {
+        return attr;
+    }
+    zend_class_entry *ce = func->common.scope;
+    // if a method, check interfaces
+    if (ce && ce->num_interfaces > 0) {
+        zend_class_entry *interface_ce;
+        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
+            interface_ce = ce->interfaces[i];
+            if (interface_ce != NULL) {
+                // does the interface have the function we are looking for?
+                zend_function *iface_func =
+                    find_function(interface_ce, func->common.function_name);
+                if (iface_func != NULL) {
+                    // Method found in the interface, now check for attributes
+                    attr = zend_get_attribute_str(iface_func->common.attributes,
+                                                  withspan_fqn_lc,
+                                                  strlen(withspan_fqn_lc));
+                    if (attr) {
+                        return attr;
+                    }
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+static bool func_has_withspan_attribute(zend_execute_data *ex) {
+    zend_attribute *attr = find_withspan_attribute(ex->func);
+
+    return attr != NULL;
+}
+
+// get function args. any args with the
+// SpanAttributes attribute are added to the attributes HashTable
+static void func_get_args(zval *zv, HashTable *attributes,
+                          zend_execute_data *ex, bool check_for_attributes) {
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
@@ -98,6 +193,22 @@ static void func_get_args(zval *zv, zend_execute_data *ex) {
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
+                if (check_for_attributes &&
+                    ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                    zend_string *arg_name = ex->func->op_array.vars[i];
+                    zend_attribute *attribute =
+                        find_spanattribute_attribute(ex->func, i);
+                    if (attribute != NULL) {
+                        if (attribute->argc) {
+                            zend_string *key = Z_STR(attribute->args[0].value);
+                            zend_hash_del(attributes, key);
+                            zend_hash_add(attributes, key, p);
+                        } else {
+                            zend_hash_del(attributes, arg_name);
+                            zend_hash_add(attributes, arg_name, p);
+                        }
+                    }
+                }
                 q = p;
                 if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
                     ZVAL_DEREF(q);
@@ -190,6 +301,50 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
     } else {
         ZVAL_NULL(zv);
     }
+}
+
+static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
+                                           zend_execute_data *ex) {
+    if (!OTEL_G(attr_hooks_enabled)) {
+        ZVAL_EMPTY_ARRAY(zv);
+        return;
+    }
+    zend_attribute *attr = find_withspan_attribute(ex->func);
+    if (attr == NULL || attr->argc == 0) {
+        ZVAL_EMPTY_ARRAY(zv);
+        return;
+    }
+
+    HashTable *ht;
+    ALLOC_HASHTABLE(ht);
+    zend_hash_init(ht, attr->argc, NULL, ZVAL_PTR_DTOR, 0);
+    zend_attribute_arg arg;
+    zend_string *key;
+
+    for (uint32_t i = 0; i < attr->argc; i++) {
+        arg = attr->args[i];
+        if (i == 2 ||
+            (arg.name && zend_string_equals_literal(arg.name, "attributes"))) {
+            // attributes, append to a separate HashTable
+            if (Z_TYPE(arg.value) == IS_ARRAY) {
+                zend_hash_clean(attributes); // should already be empty
+                HashTable *array_ht = Z_ARRVAL_P(&arg.value);
+                zend_hash_copy(attributes, array_ht, zval_add_ref);
+            }
+        } else {
+            if (arg.name != NULL) {
+                zend_hash_add(ht, arg.name, &arg.value);
+            } else {
+                key = zend_string_init(with_span_attribute_args_keys[i],
+                                       strlen(with_span_attribute_args_keys[i]),
+                                       0);
+                zend_hash_add(ht, key, &arg.value);
+                zend_string_release(key);
+            }
+        }
+    }
+
+    ZVAL_ARR(zv, ht);
 }
 
 /**
@@ -432,15 +587,23 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         return;
     }
 
-    zval params[6];
-    uint32_t param_count = 6;
+    zval params[8];
+    uint32_t param_count = 8;
+    HashTable *attributes;
+    ALLOC_HASHTABLE(attributes);
+    zend_hash_init(attributes, 0, NULL, ZVAL_PTR_DTOR, 0);
+    bool check_for_attributes =
+        OTEL_G(attr_hooks_enabled) && func_has_withspan_attribute(execute_data);
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], execute_data);
+    func_get_attribute_args(&params[6], attributes, execute_data);
+    func_get_args(&params[1], attributes, execute_data, check_for_attributes);
     func_get_declaring_scope(&params[2], execute_data);
     func_get_function_name(&params[3], execute_data);
     func_get_filename(&params[4], execute_data);
     func_get_lineno(&params[5], execute_data);
+
+    ZVAL_ARR(&params[7], attributes);
 
     for (zend_llist_element *element = hooks->head; element;
          element = element->next) {
@@ -608,7 +771,7 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
     uint32_t param_count = 8;
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], execute_data);
+    func_get_args(&params[1], NULL, execute_data, false);
     func_get_retval(&params[2], retval);
     func_get_exception(&params[3]);
     func_get_declaring_scope(&params[4], execute_data);
@@ -759,15 +922,29 @@ static void find_class_observers(HashTable *ht, HashTable *type_visited_lookup,
     }
 }
 
-static void find_method_observers(HashTable *ht, HashTable *type_visited_lookup,
-                                  zend_class_entry *ce, zend_string *fn,
-                                  zend_llist *pre_hooks,
+static void find_method_observers(HashTable *ht, zend_class_entry *ce,
+                                  zend_string *fn, zend_llist *pre_hooks,
                                   zend_llist *post_hooks) {
+    // Below hashtable stores information
+    // whether type was already visited
+    // This information is used to prevent
+    // adding hooks more than once in the case
+    // of extensive class hierarchy
+    HashTable type_visited_lookup;
+    zend_hash_init(&type_visited_lookup, 8, NULL, NULL, 0);
     HashTable *lookup = zend_hash_find_ptr_lc(ht, fn);
     if (lookup) {
-        find_class_observers(lookup, type_visited_lookup, ce, pre_hooks,
+        find_class_observers(lookup, &type_visited_lookup, ce, pre_hooks,
                              post_hooks);
     }
+    zend_hash_destroy(&type_visited_lookup);
+}
+
+static zval create_attribute_observer_handler(char *fn) {
+    zval callable;
+    ZVAL_STRING(&callable, fn);
+
+    return callable;
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
@@ -775,23 +952,22 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     if (!fbc->common.function_name) {
         return NULL;
     }
+    bool has_withspan_attribute = func_has_withspan_attribute(execute_data);
+
+    if (OTEL_G(attr_hooks_enabled) == false && has_withspan_attribute) {
+        php_error_docref(NULL, E_CORE_WARNING,
+                         "OpenTelemetry: WithSpan attribute found but "
+                         "attribute hooks disabled");
+    }
 
     otel_observer observer_instance;
     init_observer(&observer_instance);
 
     if (fbc->op_array.scope) {
-        // Below hashtable stores information
-        // whether type was already visited
-        // This information is used to prevent
-        // adding hooks more than once in the case
-        // of extensive class hierarchy
-        HashTable type_visited_lookup;
-        zend_hash_init(&type_visited_lookup, 8, NULL, NULL, 0);
-        find_method_observers(
-            OTEL_G(observer_class_lookup), &type_visited_lookup,
-            fbc->op_array.scope, fbc->common.function_name,
-            &observer_instance.pre_hooks, &observer_instance.post_hooks);
-        zend_hash_destroy(&type_visited_lookup);
+        find_method_observers(OTEL_G(observer_class_lookup),
+                              fbc->op_array.scope, fbc->common.function_name,
+                              &observer_instance.pre_hooks,
+                              &observer_instance.post_hooks);
     } else {
         find_observers(OTEL_G(observer_function_lookup),
                        fbc->common.function_name, &observer_instance.pre_hooks,
@@ -800,7 +976,39 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
 
     if (!zend_llist_count(&observer_instance.pre_hooks) &&
         !zend_llist_count(&observer_instance.post_hooks)) {
-        return NULL;
+        if (OTEL_G(attr_hooks_enabled) && has_withspan_attribute) {
+            // there are no observers registered for this function/method, but
+            // it has a WithSpan attribute. Add configured attribute-based
+            // pre/post handlers as new observers.
+            zval pre = create_attribute_observer_handler(
+                OTEL_G(pre_handler_function_fqn));
+            zval post = create_attribute_observer_handler(
+                OTEL_G(post_handler_function_fqn));
+            add_observer(fbc->op_array.scope ? fbc->op_array.scope->name : NULL,
+                         fbc->common.function_name, &pre, &post);
+            zval_ptr_dtor(&pre);
+            zval_ptr_dtor(&post);
+            // re-find to update pre/post hooks
+            if (fbc->op_array.scope) {
+                find_method_observers(
+                    OTEL_G(observer_class_lookup), fbc->op_array.scope,
+                    fbc->common.function_name, &observer_instance.pre_hooks,
+                    &observer_instance.post_hooks);
+            } else {
+                find_observers(OTEL_G(observer_function_lookup),
+                               fbc->common.function_name,
+                               &observer_instance.pre_hooks,
+                               &observer_instance.post_hooks);
+            }
+
+            if (!zend_llist_count(&observer_instance.pre_hooks) &&
+                !zend_llist_count(&observer_instance.post_hooks)) {
+                // failed to add hooks?
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
     }
     otel_observer *observer = create_observer();
     copy_observer(&observer_instance, observer);

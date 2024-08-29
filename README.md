@@ -13,7 +13,10 @@ Issues have been disabled for this repo in order to help maintain consistency be
 This is a PHP extension for OpenTelemetry, to enable auto-instrumentation.
 It is based on [zend_observer](https://www.datadoghq.com/blog/engineering/php-8-observability-baked-right-in/) and requires php8+
 
-The extension allows creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry.
+The extension allows:
+
+- creating `pre` and `post` hook functions to arbitrary PHP functions and methods, which allows those methods to be wrapped with telemetry
+- adding attributes to functions and methods to enable observers at runtime
 
 In PHP 8.2+, internal/built-in PHP functions can also be observed.
 
@@ -239,6 +242,91 @@ gives output:
 ```php
 string(3) "new"
 string(8) "original"
+```
+
+## Attribute-based hooking
+
+By applying attributes to source code, the OpenTelemetry extension can add hooks at runtime.
+
+Default pre and post hook methods are provided by the OpenTelemetry API: `OpenTelemetry\API\Instrumentation\Handler::pre`
+and `::post`.
+
+This feature is disabled by default, but can be enabled by setting `opentelemetry.attr_hooks_enabled = On` in php.ini
+
+## Restrictions
+
+Attribute-based hooks can only be applied to a function/method that does not already have
+hooks applied.
+Only one hook can be applied to a function/method, including via interfaces.
+
+Since the attributes are evaluated at runtime, the extension checks whether a hook already
+exists to decide whether it should apply a new runtime hook.
+
+## Configuration
+
+This feature can be configured via `.ini` by modifying the following entries:
+
+- `opentelemetry.attr_hooks_enabled` - boolean, default Off
+- `opentelemetry.attr_pre_handler_function` - FQN of pre method/function
+- `opentelemetry.attr_post_handler_function` - FQN of post method/function
+
+## `OpenTelemetry\API\Instrumentation\WithSpan` attribute
+
+This attribute is provided by the OpenTelemetry API can be applied to a function or class method.
+
+You can also provide optional parameters to the attribute, which control:
+- span name
+- span kind
+- attributes
+
+```php
+use OpenTelemetry\API\Instrumentation\WithSpan
+
+class MyClass
+{
+    #[WithSpan]
+    public function trace_me(): void
+    {
+        /* ... */
+    }
+
+    #[WithSpan('custom_span_name', SpanKind::KIND_INTERNAL, ['my-attr' => 'value'])]
+    public function trace_me_with_customization(): void
+    {
+        /* ... */
+    }
+}
+
+#[WithSpan]
+function my_function(): void
+{
+    /* ... */
+}
+```
+
+## `OpenTelemetry\API\Instrumentation\SpanAttribute` attribute
+
+This attribute should be used in conjunction with `WithSpan`. It is applied to function/method
+parameters, and causes those parameters and values to be passed through to the `pre` hook function
+where they can be added as trace attributes.
+There is one optional parameter, which controls the attribute key. If not set, the parameter name
+is used.
+
+```php
+use OpenTelemetry\API\Instrumentation\WithSpan
+use OpenTelemetry\API\Instrumentation\SpanAttribute
+
+class MyClass
+{
+    #[WithSpan]
+    public function add_user(
+        #[SpanAttribute] string $username,
+        string $password,
+        #[SpanAttribute('a_better_attribute_name')] string $foo_bar_baz,
+    ): void
+    {
+        /* ... */
+    }
 ```
 
 ## Contributing
