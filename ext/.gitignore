@@ -37,6 +37,7 @@ run-tests.php
 tests/**/*.diff
 tests/**/*.out
 tests/**/*.php
+!tests/mocks/*.php
 tests/**/*.exp
 tests/**/*.log
 tests/**/*.sh
