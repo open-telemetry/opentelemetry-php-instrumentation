@@ -3,7 +3,6 @@
 #define OPENTELEMETRY_OBSERVER_H
 
 void opentelemetry_observer_init(INIT_FUNC_ARGS);
-void opentelemetry_attributes_init();
 void observer_globals_init(void);
 void observer_globals_cleanup(void);
 
