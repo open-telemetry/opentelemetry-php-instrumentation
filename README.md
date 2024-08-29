@@ -248,7 +248,10 @@ string(8) "original"
 
 By applying attributes to source code, the OpenTelemetry extension can add hooks at runtime.
 
-By default, the following pre/post hooks will be invoked: `OpenTelemetry\API\Instrumentation\Handler::pre` and `::post`.
+Default pre and post hook methods are provided by the OpenTelemetry API: `OpenTelemetry\API\Instrumentation\Handler::pre`
+and `::post`.
+
+This feature is disabled by default, but can be enabled by setting `opentelemetry.attr_hooks_enabled = On` in php.ini
 
 ## Restrictions
 
@@ -259,24 +262,25 @@ Only one hook can be applied to a function/method, including via interfaces.
 Since the attributes are evaluated at runtime, the extension checks whether a hook already
 exists to decide whether it should apply a new runtime hook.
 
-### Configuration
+## Configuration
 
 This feature can be configured via `.ini` by modifying the following entries:
 
-- `opentelemetry.attr_hooks_enabled` - boolean, default On
+- `opentelemetry.attr_hooks_enabled` - boolean, default Off
 - `opentelemetry.attr_pre_handler_function` - FQN of pre method/function
 - `opentelemetry.attr_post_handler_function` - FQN of post method/function
 
-## `WithSpan` attribute
+## `OpenTelemetry\API\Instrumentation\WithSpan` attribute
 
-This attribute can be applied to a function or class method.
+This attribute is provided by the OpenTelemetry API can be applied to a function or class method.
+
 You can also provide optional parameters to the attribute, which control:
 - span name
 - span kind
 - attributes
 
 ```php
-use OpenTelemetry\Instrumentation\WithSpan
+use OpenTelemetry\API\Instrumentation\WithSpan
 
 class MyClass
 {
@@ -300,7 +304,7 @@ function my_function(): void
 }
 ```
 
-## `SpanAttribute` attribute
+## `OpenTelemetry\API\Instrumentation\SpanAttribute` attribute
 
 This attribute should be used in conjunction with `WithSpan`. It is applied to function/method
 parameters, and causes those parameters and values to be passed through to the `pre` hook function
@@ -309,8 +313,8 @@ There is one optional parameter, which controls the attribute key. If not set, t
 is used.
 
 ```php
-use OpenTelemetry\Instrumentation\WithSpan
-use OpenTelemetry\Instrumentation\SpanAttribute
+use OpenTelemetry\API\Instrumentation\WithSpan
+use OpenTelemetry\API\Instrumentation\SpanAttribute
 
 class MyClass
 {
