@@ -9,10 +9,10 @@ ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_OpenTelemetry_Instrumentation_ho
 ZEND_END_ARG_INFO()
 
 
-ZEND_FUNCTION(hook);
+ZEND_FUNCTION(OpenTelemetry_Instrumentation_hook);
 
 
 static const zend_function_entry ext_functions[] = {
-        ZEND_NS_FE("OpenTelemetry\\Instrumentation", hook, arginfo_OpenTelemetry_Instrumentation_hook)
+	ZEND_NS_FALIAS("OpenTelemetry\\Instrumentation", hook, OpenTelemetry_Instrumentation_hook, arginfo_OpenTelemetry_Instrumentation_hook)
 	ZEND_FE_END
 };

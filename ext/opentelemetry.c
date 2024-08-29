@@ -101,7 +101,7 @@ STD_PHP_INI_ENTRY("opentelemetry.attr_post_handler_function",
                   zend_opentelemetry_globals, opentelemetry_globals)
 PHP_INI_END()
 
-PHP_FUNCTION(hook) {
+PHP_FUNCTION(OpenTelemetry_Instrumentation_hook) {
     zend_string *class_name;
     zend_string *function_name;
     zval *pre = NULL;
