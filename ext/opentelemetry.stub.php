@@ -21,11 +21,3 @@ function hook(
     ?\Closure $pre = null,
     ?\Closure $post = null,
 ): bool {}
-
-final class WithSpan
-{
-}
-
-final class SpanAttribute
-{
-}

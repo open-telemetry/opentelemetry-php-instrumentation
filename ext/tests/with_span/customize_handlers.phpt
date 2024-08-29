@@ -8,7 +8,8 @@ opentelemetry.attr_pre_handler_function = custom_pre
 opentelemetry.attr_post_handler_function = custom_post
 --FILE--
 <?php
-use OpenTelemetry\Instrumentation\WithSpan;
+include dirname(__DIR__) . '/mocks/WithSpan.php';
+use OpenTelemetry\API\Instrumentation\WithSpan;
 
 function custom_pre(): void
 {

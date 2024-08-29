@@ -8,7 +8,9 @@ opentelemetry.attr_hooks_enabled = Off
 <?php
 namespace OpenTelemetry\API\Instrumentation;
 
-use OpenTelemetry\Instrumentation\WithSpan;
+include dirname(__DIR__) . '/mocks/WithSpan.php';
+
+use OpenTelemetry\API\Instrumentation\WithSpan;
 
 class WithSpanHandler
 {

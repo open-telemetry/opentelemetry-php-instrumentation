@@ -10,9 +10,9 @@
 
 static int op_array_extension = -1;
 
-const char *withspan_fqn_lc = "opentelemetry\\instrumentation\\withspan";
+const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
 const char *spanattribute_fqn_lc =
-    "opentelemetry\\instrumentation\\spanattribute";
+    "opentelemetry\\api\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
 
 typedef struct otel_observer {
