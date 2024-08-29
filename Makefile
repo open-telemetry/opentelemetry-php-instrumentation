@@ -1,4 +1,4 @@
-PHP_VERSION ?= 8.3.0
+PHP_VERSION ?= 8.3.10
 DISTRO ?= debian
 
 .DEFAULT_GOAL : help
@@ -21,4 +21,6 @@ build: ## Build extension
 	docker compose run $(DISTRO) ./build.sh
 test: ## Run tests
 	docker compose run $(DISTRO) make test
+remove-orphans: ## Remove orphaned containers
+	docker compose down --remove-orphans
 .PHONY: clean build test git-clean
