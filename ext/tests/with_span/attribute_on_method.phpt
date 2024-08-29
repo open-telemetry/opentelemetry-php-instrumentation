@@ -11,19 +11,8 @@ opentelemetry.attr_hooks_enabled = On
 namespace OpenTelemetry\API\Instrumentation;
 
 include dirname(__DIR__) . '/mocks/WithSpan.php';
+include dirname(__DIR__) . '/mocks/WithSpanHandler.php';
 use OpenTelemetry\API\Instrumentation\WithSpan;
-
-class WithSpanHandler
-{
-    public static function pre(): void
-    {
-        var_dump('pre');
-    }
-    public static function post(): void
-    {
-        var_dump('post');
-    }
-}
 
 class TestClass
 {
