@@ -16,18 +16,18 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2024-05-04</date>
-  <time>00:03:28</time>
+  <date>2024-08-29</date>
+  <time>23:46:59</time>
   <version>
-    <release>1.0.3</release>
+    <release>1.1.0beta1</release>
     <api>1.0</api>
   </version>
   <stability>
-    <release>stable</release>
+    <release>beta</release>
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.3</notes>
+  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.0beta1</notes>
   <contents>
     <dir baseinstalldir="/" name="/">
       <file baseinstalldir="/" name=".clang-format" role="src"/>
@@ -93,6 +93,31 @@
         <file name="return_reduced_params.phpt" role="test"/>
         <file name="static_method.phpt" role="test"/>
         <file name="unwind_exit.phpt" role="test"/>
+        <dir name="mocks">
+          <file name="SpanAttribute.php" role="test"/>
+          <file name="WithSpanHandlerDumpAttributes.php" role="test"/>
+          <file name="WithSpanHandler.php" role="test"/>
+          <file name="WithSpan.php" role="test"/>
+        </dir>
+        <dir name="with_span">
+          <file name="attribute_named_params_passed_to_pre_hook.phpt" role="test"/>
+          <file name="attribute_on_method.phpt" role="test"/>
+          <file name="attribute_on_interface.phpt" role="test"/>
+          <file name="attribute_params_skipped_if_hooked.phpt" role="test"/>
+          <file name="disable.phpt" role="test"/>
+          <file name="attribute_on_function.phpt" role="test"/>
+          <file name="attribute_on_interface_with_params.phpt" role="test"/>
+          <file name="attribute_params_passed_to_pre_hook.phpt" role="test"/>
+          <file name="customize_handlers.phpt" role="test"/>
+          <file name="invalid_callback.phpt" role="test"/>
+        </dir>
+        <dir name="span_attribute">
+          <file name="attribute_on_interface.phpt" role="test"/>
+          <file name="function_params_non_simple.phpt" role="test"/>
+          <file name="function_params.phpt" role="test"/>
+          <file name="method_params.phpt" role="test"/>
+          <file name="span_attribute_attribute_priority.phpt" role="test"/>
+        </dir>
       </dir>
     </dir>
   </contents>
@@ -360,6 +385,20 @@
       </stability>
       <license>Apache 2.0</license>
       <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.3beta1</notes>
+    </release>
+    <release>
+      <date>2024-05-04</date>
+      <time>00:03:28</time>
+      <version>
+        <release>1.0.3</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>stable</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.0.3</notes>
     </release>
   </changelog>
 </package>
