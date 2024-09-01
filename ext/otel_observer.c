@@ -611,6 +611,8 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         zend_fcall_info_cache fcc = empty_fcall_info_cache;
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
+            php_error_docref(NULL, E_WARNING,
+                             "Failed to initialize pre hook callable");
             continue;
         }
 
@@ -785,6 +787,8 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         zend_fcall_info_cache fcc = empty_fcall_info_cache;
         if (UNEXPECTED(zend_fcall_info_init((zval *)element->data, 0, &fci,
                                             &fcc, NULL, NULL) != SUCCESS)) {
+            php_error_docref(NULL, E_WARNING,
+                             "Failed to initialize post hook callable");
             continue;
         }
 
