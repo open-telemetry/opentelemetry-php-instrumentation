@@ -132,18 +132,18 @@ jobs:
     continue-on-error: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: mkdir
-        run: mkdir binaries
+        uses: actions/checkout@v3
       - name: download-artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          path: ext/binaries
+          path: ext/artifacts
       - name: zip
-        run: find ./binaries/* -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
+        run: |
+          cd artifacts
+          find . -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           draft: true
-          files: "**/binaries/*.zip"
+          files: "ext/artifacts/*.zip"
