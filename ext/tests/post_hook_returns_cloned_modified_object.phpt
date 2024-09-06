@@ -10,7 +10,7 @@ opentelemetry
 class Foo
 {
     public ?string $a = null;
-    public function __construct(string $a = null)
+    public function __construct(string|null $a = null)
     {
         $this->a = $a;
     }
