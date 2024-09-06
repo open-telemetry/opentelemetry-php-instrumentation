@@ -1,0 +1,31 @@
+name: Build and test against PHP nightly
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '37 5 * * *'
+
+defaults:
+  run:
+    working-directory: ext
+
+jobs:
+  nightly:
+    if: github.repository == 'open-telemetry/opentelemetry-php-instrumentation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+      - name: Build
+        run: |
+          phpize
+          ./configure
+          make
+      - name: Test
+        env:
+          TEST_PHP_ARGS: "-q"
+        run:  make test TESTS=--show-diff
