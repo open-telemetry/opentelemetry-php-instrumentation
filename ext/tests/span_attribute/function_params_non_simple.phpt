@@ -34,7 +34,7 @@ foo(
     null,
 );
 ?>
---EXPECT--
+--EXPECTF--
 string(3) "pre"
 array(4) {
   ["one"]=>
@@ -46,7 +46,7 @@ array(4) {
   object(stdClass)#1 (0) {
   }
   ["three"]=>
-  object(Closure)#2 (0) {
+  object(Closure)#2 (%d) {%A
   }
   ["four"]=>
   NULL
