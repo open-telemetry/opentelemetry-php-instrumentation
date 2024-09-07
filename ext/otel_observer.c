@@ -9,7 +9,6 @@
 #include "php_opentelemetry.h"
 
 static int op_array_extension = -1;
-static int internal_function_extension = -1;
 
 const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
 const char *spanattribute_fqn_lc =
@@ -1150,7 +1149,8 @@ void opentelemetry_observer_init(INIT_FUNC_ARGS) {
         zend_observer_fcall_register(observer_fcall_init);
         op_array_extension =
             zend_get_op_array_extension_handle("opentelemetry");
-        internal_function_extension =
-            zend_get_internal_function_extension_handle("opentelemetry");
+        #if PHP_VERSION_ID >= 80400
+        zend_get_internal_function_extension_handle("opentelemetry");
+        #endif
     }
 }
