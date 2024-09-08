@@ -152,6 +152,23 @@ static bool func_has_withspan_attribute(zend_execute_data *ex) {
     return attr != NULL;
 }
 
+/*
+ * OpenTelemetry attribute values may only be of limited types
+ */
+static bool is_valid_attribute_value(zval *val) {
+    switch (Z_TYPE_P(val)) {
+        case IS_STRING:
+        case IS_LONG:   // Numeric (integer)
+        case IS_DOUBLE: // Numeric (floating point)
+        case IS_TRUE:
+        case IS_FALSE:  // Boolean
+        case IS_ARRAY:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // get function args. any args with the
 // SpanAttributes attribute are added to the attributes HashTable
 static void func_get_args(zval *zv, HashTable *attributes,
@@ -198,7 +215,7 @@ static void func_get_args(zval *zv, HashTable *attributes,
                     zend_string *arg_name = ex->func->op_array.vars[i];
                     zend_attribute *attribute =
                         find_spanattribute_attribute(ex->func, i);
-                    if (attribute != NULL) {
+                    if (attribute != NULL && is_valid_attribute_value(p)) {
                         if (attribute->argc) {
                             zend_string *key = Z_STR(attribute->args[0].value);
                             zend_hash_del(attributes, key);
