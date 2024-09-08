@@ -157,15 +157,15 @@ static bool func_has_withspan_attribute(zend_execute_data *ex) {
  */
 static bool is_valid_attribute_value(zval *val) {
     switch (Z_TYPE_P(val)) {
-        case IS_STRING:
-        case IS_LONG:   // Numeric (integer)
-        case IS_DOUBLE: // Numeric (floating point)
-        case IS_TRUE:
-        case IS_FALSE:  // Boolean
-        case IS_ARRAY:
-            return true;
-        default:
-            return false;
+    case IS_STRING:
+    case IS_LONG:   // Numeric (integer)
+    case IS_DOUBLE: // Numeric (floating point)
+    case IS_TRUE:
+    case IS_FALSE: // Boolean
+    case IS_ARRAY:
+        return true;
+    default:
+        return false;
     }
 }
 
