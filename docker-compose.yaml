@@ -19,3 +19,14 @@ services:
       - ./ext:/usr/src/myapp
     environment:
       TEST_PHP_ARGS: "-q"
+  32bit:
+    build:
+      context: docker
+      dockerfile: Dockerfile.alpine
+      args:
+        ALPINE_VERSION: i386/alpine
+        PHP_VERSION: ${PHP_VERSION:-8.4.0beta4}
+    volumes:
+      - ./ext:/usr/src/myapp
+    environment:
+      TEST_PHP_ARGS: "-q"

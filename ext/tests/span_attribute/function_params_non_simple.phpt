@@ -1,5 +1,5 @@
 --TEST--
-Check if function non-simple types can be passed as function params
+Check if function non-simple types are ignored
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
@@ -28,28 +28,20 @@ function foo(
 }
 
 foo(
-    ['foo' => 'bar'],
-    new \stdClass(),
-    function(){return 'fn';},
-    null,
+    one: ['foo' => 'bar'],
+    two: new \stdClass(),
+    three: function(){return 'fn';},
+    four: null,
 );
 ?>
 --EXPECTF--
 string(3) "pre"
-array(4) {
+array(1) {
   ["one"]=>
   array(1) {
     ["foo"]=>
     string(3) "bar"
   }
-  ["two"]=>
-  object(stdClass)#1 (0) {
-  }
-  ["three"]=>
-  object(Closure)#2 (%d) {%A
-  }
-  ["four"]=>
-  NULL
 }
 string(3) "foo"
 string(4) "post"
