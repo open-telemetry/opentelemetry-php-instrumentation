@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2024-09-04</date>
-  <time>00:06:19</time>
+  <date>2024-09-09</date>
+  <time>12:14:40</time>
   <version>
-    <release>1.1.0beta2</release>
+    <release>1.1.0beta3</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,7 +27,7 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.0beta2</notes>
+  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.0beta3</notes>
   <contents>
     <dir baseinstalldir="/" name="/">
       <file baseinstalldir="/" name=".clang-format" role="src"/>
@@ -413,6 +413,20 @@
       </stability>
       <license>Apache 2.0</license>
       <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.0beta1</notes>
+    </release>
+    <release>
+      <date>2024-09-04</date>
+      <time>00:06:19</time>
+      <version>
+        <release>1.1.0beta2</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>beta</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.0beta2</notes>
     </release>
   </changelog>
 </package>
