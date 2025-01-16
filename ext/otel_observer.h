@@ -8,5 +8,6 @@ void observer_globals_cleanup(void);
 
 bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook,
                   zval *post_hook);
+bool add_wildcard_observer(zval *pre_hook, zval *post_hook);
 
 #endif // OPENTELEMETRY_OBSERVER_H
