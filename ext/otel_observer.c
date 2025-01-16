@@ -967,6 +967,26 @@ static zval create_attribute_observer_handler(char *fn) {
     return callable;
 }
 
+static void copy_observer_deep(otel_observer *source, otel_observer *destination) {
+    // Initialize new lists
+    zend_llist_init(&destination->pre_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
+    zend_llist_init(&destination->post_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
+
+    // Deep copy pre hooks with proper reference counting
+    for (zend_llist_element *element = source->pre_hooks.head; element; element = element->next) {
+        zval tmp;
+        ZVAL_COPY(&tmp, (zval *)element->data);
+        zend_llist_add_element(&destination->pre_hooks, &tmp);
+    }
+
+    // Deep copy post hooks with proper reference counting
+    for (zend_llist_element *element = source->post_hooks.head; element; element = element->next) {
+        zval tmp;
+        ZVAL_COPY(&tmp, (zval *)element->data);
+        zend_llist_add_element(&destination->post_hooks, &tmp);
+    }
+}
+
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     // Skip if we're currently executing a hook
     if (OTEL_G(in_hook)) {
@@ -979,7 +999,7 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
          zend_llist_count(&OTEL_G(wildcard_observer)->post_hooks))) {
 
         otel_observer *observer = create_observer();
-        copy_observer(OTEL_G(wildcard_observer), observer);
+        copy_observer_deep(OTEL_G(wildcard_observer), observer);
         zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
         return observer;
     }
