@@ -863,7 +863,9 @@ static void observer_begin_handler(zend_execute_data *execute_data) {
         return;
     }
 
+    OTEL_G(in_hook) = true;
     observer_begin(execute_data, &observer->pre_hooks);
+    OTEL_G(in_hook) = false;
 }
 
 static void observer_end_handler(zend_execute_data *execute_data,
@@ -874,7 +876,9 @@ static void observer_end_handler(zend_execute_data *execute_data,
         return;
     }
 
+    OTEL_G(in_hook) = true;
     observer_end(execute_data, retval, &observer->post_hooks);
+    OTEL_G(in_hook) = false;
 }
 
 static void free_observer(otel_observer *observer) {
@@ -964,6 +968,11 @@ static zval create_attribute_observer_handler(char *fn) {
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
+    // Skip if we're currently executing a hook
+    if (OTEL_G(in_hook)) {
+        return NULL;
+    }
+
     // Check for wildcard observer first
     if (OTEL_G(wildcard_observer) &&
         (zend_llist_count(&OTEL_G(wildcard_observer)->pre_hooks) ||
@@ -1174,6 +1183,8 @@ void observer_globals_init(void) {
         zend_hash_init(OTEL_G(observer_aggregates), 8, NULL,
                        destroy_observer_lookup, 0);
     }
+
+    OTEL_G(in_hook) = false;
 }
 
 void observer_globals_cleanup(void) {
