@@ -15,11 +15,6 @@ const char *spanattribute_fqn_lc =
     "opentelemetry\\api\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
 
-typedef struct otel_observer {
-    zend_llist pre_hooks;
-    zend_llist post_hooks;
-} otel_observer;
-
 typedef struct otel_exception_state {
     zend_object *exception;
     zend_object *prev_exception;
@@ -969,6 +964,17 @@ static zval create_attribute_observer_handler(char *fn) {
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
+    // Check for wildcard observer first
+    if (OTEL_G(wildcard_observer) &&
+        (zend_llist_count(&OTEL_G(wildcard_observer)->pre_hooks) ||
+         zend_llist_count(&OTEL_G(wildcard_observer)->post_hooks))) {
+
+        otel_observer *observer = create_observer();
+        copy_observer(OTEL_G(wildcard_observer), observer);
+        zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
+        return observer;
+    }
+
     zend_function *fbc = execute_data->func;
     if (!fbc->common.function_name) {
         return NULL;
@@ -1125,6 +1131,33 @@ bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook,
     return true;
 }
 
+bool add_wildcard_observer(zval *pre_hook, zval *post_hook) {
+    if (op_array_extension == -1) {
+        return false;
+    }
+
+    // Return false if neither hook is provided
+    if (!pre_hook && !post_hook) {
+        return false;
+    }
+
+    if (!OTEL_G(wildcard_observer)) {
+        OTEL_G(wildcard_observer) = create_observer();
+    }
+
+    if (pre_hook) {
+        zval_add_ref(pre_hook);
+        zend_llist_add_element(&OTEL_G(wildcard_observer)->pre_hooks, pre_hook);
+    }
+
+    if (post_hook) {
+        zval_add_ref(post_hook);
+        zend_llist_add_element(&OTEL_G(wildcard_observer)->post_hooks, post_hook);
+    }
+
+    return true;
+}
+
 void observer_globals_init(void) {
     if (!OTEL_G(observer_class_lookup)) {
         ALLOC_HASHTABLE(OTEL_G(observer_class_lookup));
@@ -1158,6 +1191,11 @@ void observer_globals_cleanup(void) {
         zend_hash_destroy(OTEL_G(observer_aggregates));
         FREE_HASHTABLE(OTEL_G(observer_aggregates));
         OTEL_G(observer_aggregates) = NULL;
+    }
+
+    if (OTEL_G(wildcard_observer)) {
+        free_observer(OTEL_G(wildcard_observer));
+        OTEL_G(wildcard_observer) = NULL;
     }
 }
 

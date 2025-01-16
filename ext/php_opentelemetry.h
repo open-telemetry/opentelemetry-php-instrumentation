@@ -5,10 +5,16 @@
 extern zend_module_entry opentelemetry_module_entry;
 #define phpext_opentelemetry_ptr &opentelemetry_module_entry
 
+typedef struct otel_observer {
+    zend_llist pre_hooks;
+    zend_llist post_hooks;
+} otel_observer;
+
 ZEND_BEGIN_MODULE_GLOBALS(opentelemetry)
     HashTable *observer_class_lookup;
     HashTable *observer_function_lookup;
     HashTable *observer_aggregates;
+    otel_observer *wildcard_observer;
     int validate_hook_functions;
     char *conflicts;
     int disabled; // module disabled? (eg due to conflicting extension loaded)

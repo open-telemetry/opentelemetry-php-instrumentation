@@ -21,3 +21,17 @@ function hook(
     ?\Closure $pre = null,
     ?\Closure $post = null,
 ): bool {}
+
+/**
+ * @param \Closure|null $pre function($class, array $params, ?string $class, string $function, ?string $filename, ?int $lineno, ?array $span_args, ?array $span_attributes): $params
+ *        You may optionally return modified parameters.
+ * @param \Closure|null $post function($class, array $params, $returnValue, ?Throwable $exception): $returnValue
+ *        You may optionally return modified return value.
+ * @return bool Whether the observer was successfully added
+ *
+ * @see https://github.com/open-telemetry/opentelemetry-php-instrumentation
+ */
+function observeAll(
+    ?\Closure $pre = null,
+    ?\Closure $post = null,
+): bool {}

@@ -118,6 +118,20 @@ PHP_FUNCTION(OpenTelemetry_Instrumentation_hook) {
     RETURN_BOOL(add_observer(class_name, function_name, pre, post));
 }
 
+// Main implementation
+PHP_FUNCTION(OpenTelemetry_Instrumentation_observeAll) {
+    zval *pre = NULL;
+    zval *post = NULL;
+
+    ZEND_PARSE_PARAMETERS_START(0, 2)
+        Z_PARAM_OPTIONAL
+        Z_PARAM_OBJECT_OF_CLASS_OR_NULL(pre, zend_ce_closure)
+        Z_PARAM_OBJECT_OF_CLASS_OR_NULL(post, zend_ce_closure)
+    ZEND_PARSE_PARAMETERS_END();
+
+    RETURN_BOOL(add_wildcard_observer(pre, post));
+}
+
 PHP_RINIT_FUNCTION(opentelemetry) {
 #if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
     ZEND_TSRMLS_CACHE_UPDATE();
