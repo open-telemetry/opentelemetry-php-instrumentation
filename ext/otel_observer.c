@@ -1000,7 +1000,6 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
 
         otel_observer *observer = create_observer();
         copy_observer_deep(OTEL_G(wildcard_observer), observer);
-        zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
         return observer;
     }
 
@@ -1068,7 +1067,6 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     }
     otel_observer *observer = create_observer();
     copy_observer(&observer_instance, observer);
-    zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
 
     return observer;
 }
@@ -1092,6 +1090,8 @@ observer_fcall_init(zend_execute_data *execute_data) {
     if (!observer) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
+
+    zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
 
     ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension) =
         observer;
