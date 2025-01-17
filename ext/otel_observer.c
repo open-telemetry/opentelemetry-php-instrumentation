@@ -988,11 +988,6 @@ static void copy_observer_deep(otel_observer *source, otel_observer *destination
 }
 
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
-    // Skip if we're currently executing a hook
-    if (OTEL_G(in_hook)) {
-        return NULL;
-    }
-
     // Check for wildcard observer first
     if (OTEL_G(wildcard_observer) &&
         (zend_llist_count(&OTEL_G(wildcard_observer)->pre_hooks) ||
@@ -1079,6 +1074,11 @@ observer_fcall_init(zend_execute_data *execute_data) {
     // can happen if a header callback is set or when another extension invokes
     // PHP functions in their RSHUTDOWN.
     if (OTEL_G(observer_class_lookup) == NULL) {
+        return (zend_observer_fcall_handlers){NULL, NULL};
+    }
+
+    // Skip if we're currently executing a hook
+    if (OTEL_G(in_hook)) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
 
