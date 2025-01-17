@@ -1,5 +1,5 @@
 --TEST--
-Check wildcard observer single instance behavior
+Check wildcard observer multi instance behavior
 --EXTENSIONS--
 opentelemetry
 --FILE--
@@ -36,7 +36,7 @@ var_dump($calls);
 // Reset calls array
 $calls = [];
 
-// Disable observer should succeed
+// Disable all observers should succeed
 $result3 = \OpenTelemetry\Instrumentation\observeAll();
 var_dump($result3);
 
@@ -64,10 +64,12 @@ var_dump($calls);
 ?>
 --EXPECT--
 bool(true)
-bool(false)
-array(1) {
+bool(true)
+array(2) {
   [0]=>
   string(15) "observer1:test1"
+  [1]=>
+  string(15) "observer2:test1"
 }
 bool(true)
 array(0) {
