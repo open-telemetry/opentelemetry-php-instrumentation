@@ -967,26 +967,6 @@ static zval create_attribute_observer_handler(char *fn) {
     return callable;
 }
 
-static void copy_observer_deep(otel_observer *source, otel_observer *destination) {
-    // Initialize new lists
-    zend_llist_init(&destination->pre_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
-    zend_llist_init(&destination->post_hooks, sizeof(zval), (llist_dtor_func_t)zval_ptr_dtor, 0);
-
-    // Deep copy pre hooks with proper reference counting
-    for (zend_llist_element *element = source->pre_hooks.head; element; element = element->next) {
-        zval tmp;
-        ZVAL_COPY(&tmp, (zval *)element->data);
-        zend_llist_add_element(&destination->pre_hooks, &tmp);
-    }
-
-    // Deep copy post hooks with proper reference counting
-    for (zend_llist_element *element = source->post_hooks.head; element; element = element->next) {
-        zval tmp;
-        ZVAL_COPY(&tmp, (zval *)element->data);
-        zend_llist_add_element(&destination->post_hooks, &tmp);
-    }
-}
-
 static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     zend_function *fbc = execute_data->func;
     if (!fbc->common.function_name) {
@@ -1082,22 +1062,18 @@ observer_fcall_init(zend_execute_data *execute_data) {
     if (OTEL_G(wildcard_observer) &&
         (zend_llist_count(&OTEL_G(wildcard_observer)->pre_hooks) ||
          zend_llist_count(&OTEL_G(wildcard_observer)->post_hooks))) {
-        if (observer) {
-            // Merge wildcard hooks into existing observer
-            for (zend_llist_element *element = OTEL_G(wildcard_observer)->pre_hooks.head; element; element = element->next) {
-                zval tmp;
-                ZVAL_COPY(&tmp, (zval *)element->data);
-                zend_llist_add_element(&observer->pre_hooks, &tmp);
-            }
-            for (zend_llist_element *element = OTEL_G(wildcard_observer)->post_hooks.head; element; element = element->next) {
-                zval tmp;
-                ZVAL_COPY(&tmp, (zval *)element->data);
-                zend_llist_add_element(&observer->post_hooks, &tmp);
-            }
-        } else {
-            // Create new observer from wildcard
+        if (!observer) {
             observer = create_observer();
-            copy_observer_deep(OTEL_G(wildcard_observer), observer);
+        }
+
+        // Merge wildcard hooks into observer
+        for (zend_llist_element *element = OTEL_G(wildcard_observer)->pre_hooks.head; element; element = element->next) {
+            zval_add_ref((zval *)&element->data);
+            zend_llist_add_element(&observer->pre_hooks, &element->data);
+        }
+        for (zend_llist_element *element = OTEL_G(wildcard_observer)->post_hooks.head; element; element = element->next) {
+            zval_add_ref((zval *)&element->data);
+            zend_llist_add_element(&observer->post_hooks, &element->data);
         }
     }
 
