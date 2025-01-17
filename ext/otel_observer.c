@@ -1155,18 +1155,13 @@ bool add_wildcard_observer(zval *pre_hook, zval *post_hook) {
         return false;
     }
 
-    // If both hooks are NULL, disable the wildcard observer
+    // If both hooks are NULL, disable all wildcard observers.
     if (!pre_hook && !post_hook) {
         if (OTEL_G(wildcard_observer)) {
             free_observer(OTEL_G(wildcard_observer));
             OTEL_G(wildcard_observer) = NULL;
         }
         return true;
-    }
-
-    // Return false if a observer has already been created.
-    if (OTEL_G(wildcard_observer)) {
-        return false;
     }
 
     if (!OTEL_G(wildcard_observer)) {
