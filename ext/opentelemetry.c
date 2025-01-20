@@ -91,6 +91,9 @@ STD_PHP_INI_ENTRY_EX("opentelemetry.attr_hooks_enabled", "Off", PHP_INI_ALL,
                      OnUpdateBool, attr_hooks_enabled,
                      zend_opentelemetry_globals, opentelemetry_globals,
                      zend_ini_boolean_displayer_cb)
+STD_PHP_INI_ENTRY_EX("opentelemetry.display_warnings", "Off", PHP_INI_ALL,
+                     OnUpdateBool, display_warnings, zend_opentelemetry_globals,
+                     opentelemetry_globals, zend_ini_boolean_displayer_cb)
 STD_PHP_INI_ENTRY("opentelemetry.attr_pre_handler_function",
                   "OpenTelemetry\\API\\Instrumentation\\WithSpanHandler::pre",
                   PHP_INI_ALL, OnUpdateString, pre_handler_function_fqn,

@@ -6,6 +6,7 @@ Check if attribute hooks can be disabled by config
 opentelemetry
 --INI--
 opentelemetry.attr_hooks_enabled = Off
+opentelemetry.display_warnings = On
 --FILE--
 <?php
 namespace OpenTelemetry\API\Instrumentation;

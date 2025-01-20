@@ -14,6 +14,7 @@ ZEND_BEGIN_MODULE_GLOBALS(opentelemetry)
     int disabled; // module disabled? (eg due to conflicting extension loaded)
     int allow_stack_extension;
     int attr_hooks_enabled; // attribute hooking enabled?
+    int display_warnings;
     char *pre_handler_function_fqn;
     char *post_handler_function_fqn;
 ZEND_END_MODULE_GLOBALS(opentelemetry)
