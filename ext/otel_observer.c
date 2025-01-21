@@ -976,7 +976,7 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     bool has_withspan_attribute = func_has_withspan_attribute(execute_data);
 
     if (OTEL_G(attr_hooks_enabled) == false && has_withspan_attribute &&
-        OTEL_G(display_warnings) == true) {
+        OTEL_G(display_warnings)) {
         php_error_docref(NULL, E_CORE_WARNING,
                          "OpenTelemetry: WithSpan attribute found but "
                          "attribute hooks disabled");
