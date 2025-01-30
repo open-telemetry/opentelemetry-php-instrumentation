@@ -1,0 +1,20 @@
+{
+  "name": "open-telemetry/ext-opentelemetry",
+  "description": "Auto-instrumentation extension for OpenTelemetry",
+  "type": "php-ext",
+  "minimum-stability": "stable",
+  "license": "Apache-2.0",
+  "php-ext": {
+    "extension-name": "opentelemetry",
+    "build-path": "ext"
+  },
+  "require": {
+    "php": "^8.0"
+  },
+  "authors": [
+    {
+      "name": "opentelemetry-php contributors",
+      "homepage": "https://github.com/open-telemetry/opentelemetry-php-instrumentation/graphs/contributors"
+    }
+  ]
+}
