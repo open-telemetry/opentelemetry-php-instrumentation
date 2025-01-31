@@ -122,7 +122,8 @@ jobs:
             *) echo "Unknown MSVC version: $VisualStudioVersion"; exit 1;;
           esac
           echo "Detected Compiler: $COMPILER"
-          BUILD_NAME="php_opentelemetry-${{github.ref_name}}-${{matrix.php}}-${{matrix.ts}}-$COMPILER-x64"
+          SAFE_REF_NAME="${GITHUB_REF_NAME//\//-}"
+          BUILD_NAME="php_opentelemetry-${SAFE_REF_NAME}-${{matrix.php}}-${{matrix.ts}}-$COMPILER-x64"
           echo "Build Name: $BUILD_NAME"
           echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
 
