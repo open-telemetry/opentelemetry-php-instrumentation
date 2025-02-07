@@ -138,6 +138,10 @@ PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
 }
 
 PHP_MINIT_FUNCTION(opentelemetry) {
+#if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
     REGISTER_INI_ENTRIES();
 
     check_conflicts();
@@ -166,9 +170,6 @@ PHP_MINFO_FUNCTION(opentelemetry) {
 }
 
 PHP_GINIT_FUNCTION(opentelemetry) {
-#if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
-    ZEND_TSRMLS_CACHE_UPDATE();
-#endif
     ZEND_SECURE_ZERO(opentelemetry_globals, sizeof(*opentelemetry_globals));
 }
 
