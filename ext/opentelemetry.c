@@ -138,6 +138,10 @@ PHP_RSHUTDOWN_FUNCTION(opentelemetry) {
 }
 
 PHP_MINIT_FUNCTION(opentelemetry) {
+#if defined(ZTS) && defined(COMPILE_DL_OPENTELEMETRY)
+    ZEND_TSRMLS_CACHE_UPDATE();
+#endif
+
     REGISTER_INI_ENTRIES();
 
     check_conflicts();
