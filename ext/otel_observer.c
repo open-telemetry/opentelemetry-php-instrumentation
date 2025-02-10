@@ -15,11 +15,6 @@ const char *spanattribute_fqn_lc =
     "opentelemetry\\api\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
 
-typedef struct otel_observer {
-    zend_llist pre_hooks;
-    zend_llist post_hooks;
-} otel_observer;
-
 typedef struct otel_exception_state {
     zend_object *exception;
     zend_object *prev_exception;
@@ -868,7 +863,9 @@ static void observer_begin_handler(zend_execute_data *execute_data) {
         return;
     }
 
+    OTEL_G(in_hook) = true;
     observer_begin(execute_data, &observer->pre_hooks);
+    OTEL_G(in_hook) = false;
 }
 
 static void observer_end_handler(zend_execute_data *execute_data,
@@ -879,7 +876,9 @@ static void observer_end_handler(zend_execute_data *execute_data,
         return;
     }
 
+    OTEL_G(in_hook) = true;
     observer_end(execute_data, retval, &observer->post_hooks);
+    OTEL_G(in_hook) = false;
 }
 
 static void free_observer(otel_observer *observer) {
@@ -1034,7 +1033,6 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     }
     otel_observer *observer = create_observer();
     copy_observer(&observer_instance, observer);
-    zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
 
     return observer;
 }
@@ -1050,14 +1048,41 @@ observer_fcall_init(zend_execute_data *execute_data) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
 
+    // Skip if we're currently executing a hook
+    if (OTEL_G(in_hook)) {
+        return (zend_observer_fcall_handlers){NULL, NULL};
+    }
+
     if (op_array_extension == -1) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
 
     otel_observer *observer = resolve_observer(execute_data);
+
+    // Check for wildcard observer
+    if (OTEL_G(wildcard_observer) &&
+        (zend_llist_count(&OTEL_G(wildcard_observer)->pre_hooks) ||
+         zend_llist_count(&OTEL_G(wildcard_observer)->post_hooks))) {
+        if (!observer) {
+            observer = create_observer();
+        }
+
+        // Merge wildcard hooks into observer
+        for (zend_llist_element *element = OTEL_G(wildcard_observer)->pre_hooks.head; element; element = element->next) {
+            zval_add_ref((zval *)&element->data);
+            zend_llist_add_element(&observer->pre_hooks, &element->data);
+        }
+        for (zend_llist_element *element = OTEL_G(wildcard_observer)->post_hooks.head; element; element = element->next) {
+            zval_add_ref((zval *)&element->data);
+            zend_llist_add_element(&observer->post_hooks, &element->data);
+        }
+    }
+
     if (!observer) {
         return (zend_observer_fcall_handlers){NULL, NULL};
     }
+
+    zend_hash_next_index_insert_ptr(OTEL_G(observer_aggregates), observer);
 
     ZEND_OP_ARRAY_EXTENSION(&execute_data->func->op_array, op_array_extension) =
         observer;
@@ -1126,6 +1151,37 @@ bool add_observer(zend_string *cn, zend_string *fn, zval *pre_hook,
     return true;
 }
 
+bool add_wildcard_observer(zval *pre_hook, zval *post_hook) {
+    if (op_array_extension == -1) {
+        return false;
+    }
+
+    // If both hooks are NULL, disable all wildcard observers.
+    if (!pre_hook && !post_hook) {
+        if (OTEL_G(wildcard_observer)) {
+            free_observer(OTEL_G(wildcard_observer));
+            OTEL_G(wildcard_observer) = NULL;
+        }
+        return true;
+    }
+
+    if (!OTEL_G(wildcard_observer)) {
+        OTEL_G(wildcard_observer) = create_observer();
+    }
+
+    if (pre_hook) {
+        zval_add_ref(pre_hook);
+        zend_llist_add_element(&OTEL_G(wildcard_observer)->pre_hooks, pre_hook);
+    }
+
+    if (post_hook) {
+        zval_add_ref(post_hook);
+        zend_llist_add_element(&OTEL_G(wildcard_observer)->post_hooks, post_hook);
+    }
+
+    return true;
+}
+
 void observer_globals_init(void) {
     if (!OTEL_G(observer_class_lookup)) {
         ALLOC_HASHTABLE(OTEL_G(observer_class_lookup));
@@ -1142,6 +1198,8 @@ void observer_globals_init(void) {
         zend_hash_init(OTEL_G(observer_aggregates), 8, NULL,
                        destroy_observer_lookup, 0);
     }
+
+    OTEL_G(in_hook) = false;
 }
 
 void observer_globals_cleanup(void) {
@@ -1160,6 +1218,13 @@ void observer_globals_cleanup(void) {
         FREE_HASHTABLE(OTEL_G(observer_aggregates));
         OTEL_G(observer_aggregates) = NULL;
     }
+
+    if (OTEL_G(wildcard_observer)) {
+        free_observer(OTEL_G(wildcard_observer));
+        OTEL_G(wildcard_observer) = NULL;
+    }
+
+    OTEL_G(in_hook) = false;
 }
 
 void opentelemetry_observer_init(INIT_FUNC_ARGS) {
