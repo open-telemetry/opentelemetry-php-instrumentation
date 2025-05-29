@@ -149,7 +149,7 @@ jobs:
     continue-on-error: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: download-artifacts
         uses: actions/download-artifact@v4
         with:
