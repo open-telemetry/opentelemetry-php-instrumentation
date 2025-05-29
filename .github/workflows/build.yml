@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
         id: setup-php-sdk
-        uses: php/setup-php-sdk@v0.9
+        uses: php/setup-php-sdk@v0.10
         with:
           version: ${{ matrix.php }}
           arch: x64
