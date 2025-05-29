@@ -1,18 +1,8 @@
 ARG ALPINE_VERSION=alpine:3.20
-FROM ${ALPINE_VERSION} as builder
+FROM ${ALPINE_VERSION} AS builder
 WORKDIR /usr/src
 
-ENV PHPIZE_DEPS \
-    autoconf \
-    dpkg-dev \
-    dpkg \
-    file \
-    g++ \
-    gcc \
-    libc-dev \
-    make \
-    pkgconf \
-    re2c
+ENV PHPIZE_DEPS="autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c"
 
 RUN apk add --no-cache \
     ${PHPIZE_DEPS} \
