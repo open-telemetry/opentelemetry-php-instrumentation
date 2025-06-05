@@ -16,16 +16,7 @@ RUN apt-get update \
     gdbserver \
     valgrind
 
-ENV PHPIZE_DEPS \
-		autoconf \
-		dpkg-dev \
-		file \
-		g++ \
-		gcc \
-		libc-dev \
-		make \
-		pkg-config \
-		re2c
+ENV PHPIZE_DEPS="autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c"
 
 RUN apt-get update -y \
   && apt-get install -y \
