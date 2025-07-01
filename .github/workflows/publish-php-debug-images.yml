@@ -6,6 +6,8 @@ on:
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   push_to_registry:
     if: github.repository_owner == 'open-telemetry' #do not run in forks
