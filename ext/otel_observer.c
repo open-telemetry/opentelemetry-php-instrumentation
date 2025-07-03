@@ -443,6 +443,12 @@ static void exception_isolation_start(otel_exception_state *save_state) {
 static zend_object *exception_isolation_end(otel_exception_state *save_state) {
     zend_object *suppressed = EG(exception);
     if (UNEXPECTED(suppressed && zend_is_unwind_exit(suppressed))) {
+        if (save_state->exception) {
+            OBJ_RELEASE(save_state->exception);
+        }
+        if (save_state->prev_exception) {
+            OBJ_RELEASE(save_state->prev_exception);
+        }
         return NULL;
     }
     // NULL this before call to zend_clear_exception, as it would try to jump
