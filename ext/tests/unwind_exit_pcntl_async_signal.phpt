@@ -1,11 +1,5 @@
 --TEST--
 Test UnwindExit caused by async pcntl handler is not suppressed
---SKIPIF--
-<?php
-if (PHP_OS_FAMILY === 'Windows' && PHP_VERSION_ID < 80100) {
-    die("skip Required extension missing: pcntl"); // EXTENSIONS check not working properly on Windows 8.0 runner
-}
-?>
 --EXTENSIONS--
 opentelemetry
 pcntl
