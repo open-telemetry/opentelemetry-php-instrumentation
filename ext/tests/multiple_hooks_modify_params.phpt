@@ -11,7 +11,7 @@ function helloWorld($a) {
     var_dump($a);
 }
 
-helloWorld('a');
+helloWorld(1);
 ?>
 --EXPECT--
-string(1) "c"
+int(3)
