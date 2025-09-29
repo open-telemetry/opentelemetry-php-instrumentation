@@ -1,3 +1,4 @@
+
 #include "php.h"
 #include "otel_observer.h"
 #include "zend_observer.h"
@@ -44,20 +45,6 @@ typedef struct otel_arg_locator {
     uint32_t extended_used;
     zval extended_slots[STACK_EXTENSION_LIMIT];
 } otel_arg_locator;
-
-static inline zend_string *normalize_fq_func_name(zend_string *fn) {
-    if (ZSTR_VAL(fn)[0] != '\\') {
-        // Prepend backslash
-        size_t len = ZSTR_LEN(fn);
-        zend_string *fqn = zend_string_alloc(len + 1, 0);
-        ZSTR_VAL(fqn)[0] = '\\';
-        memcpy(ZSTR_VAL(fqn) + 1, ZSTR_VAL(fn), len);
-        ZSTR_VAL(fqn)[len + 1] = '\0';
-        return fqn;
-    } else {
-        return fn;
-    }
-}
 
 static inline void
 func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
@@ -930,9 +917,7 @@ static void copy_observer(otel_observer *source, otel_observer *destination) {
 
 static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
                            zend_llist *post_hooks) {
-    zend_string *normalized = normalize_fq_func_name(n);
-    otel_observer *observer = zend_hash_find_ptr(ht, normalized);
-    zend_string_release(normalized);
+    otel_observer *observer = zend_hash_find_ptr_lc(ht, n);
     if (observer) {
         for (zend_llist_element *element = observer->pre_hooks.head; element;
              element = element->next) {
@@ -1101,13 +1086,22 @@ static void destroy_observer_class_lookup(zval *zv) {
 
 static void add_function_observer(HashTable *ht, zend_string *fn,
                                   zval *pre_hook, zval *post_hook) {
-    zend_string *normalized = normalize_fq_func_name(fn);
-    otel_observer *observer = zend_hash_find_ptr(ht, normalized);
+    // Strip leading slash if present
+    zend_string *normalized_fn;
+    if (ZSTR_LEN(fn) > 0 && ZSTR_VAL(fn)[0] == '\\') {
+        normalized_fn = zend_string_init(ZSTR_VAL(fn) + 1, ZSTR_LEN(fn) - 1, 0);
+    } else {
+        normalized_fn = zend_string_copy(fn);
+    }
+    zend_string *lc = zend_string_tolower(normalized_fn);
+    zend_string_release(normalized_fn);
+
+    otel_observer *observer = zend_hash_find_ptr(ht, lc);
     if (!observer) {
         observer = create_observer();
-        zend_hash_update_ptr(ht, normalized, observer);
+        zend_hash_update_ptr(ht, lc, observer);
     }
-    zend_string_release(normalized);
+    zend_string_release(lc);
 
     if (pre_hook) {
         zval_add_ref(pre_hook);
