@@ -41,7 +41,7 @@ array(8) {
   [3]=>
   string(25) "Some\Namespace\helloWorld"
   [4]=>
-  string(%d) "%s/011.php"
+  string(%d) "%s011.php"
   [5]=>
   int(21)
   [6]=>
@@ -62,7 +62,7 @@ array(8) {
   [3]=>
   string(25) "Some\Namespace\helloWorld"
   [4]=>
-  string(%d) "%s/011.php"
+  string(%d) "%s011.php"
   [5]=>
   int(21)
   [6]=>
