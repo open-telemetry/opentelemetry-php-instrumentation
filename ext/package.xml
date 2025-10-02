@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2025-07-08</date>
-  <time>00:05:00</time>
+  <date>2025-10-02</date>
+  <time>04:17:53</time>
   <version>
-    <release>1.2.0</release>
+    <release>1.2.1</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,7 +27,7 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.2.0</notes>
+  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.2.1</notes>
   <contents>
     <dir baseinstalldir="/" name="/">
       <file baseinstalldir="/" name=".clang-format" role="src"/>
@@ -51,6 +51,8 @@
         <file name="008.phpt" role="test"/>
         <file name="009.phpt" role="test"/>
         <file name="010.phpt" role="test"/>
+        <file name="011.phpt" role="test"/>
+        <file name="012.phpt" role="test"/>
         <file name="calling_die_lead_to_segfault.phpt" role="test"/>
         <file name="disable_does_nothing_with_bad_data.phpt" role="test"/>
         <file name="disable_hook_function_validation.phpt" role="test"/>
@@ -503,6 +505,20 @@
       </stability>
       <license>Apache 2.0</license>
       <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.1.3</notes>
+    </release>
+    <release>
+      <date>2025-07-08</date>
+      <time>00:05:00</time>
+      <version>
+        <release>1.2.0</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>stable</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.2.0</notes>
     </release>
   </changelog>
 </package>
