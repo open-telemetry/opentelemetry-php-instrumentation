@@ -1086,7 +1086,16 @@ static void destroy_observer_class_lookup(zval *zv) {
 
 static void add_function_observer(HashTable *ht, zend_string *fn,
                                   zval *pre_hook, zval *post_hook) {
-    zend_string *lc = zend_string_tolower(fn);
+    // Strip leading slash if present
+    zend_string *normalized_fn;
+    if (ZSTR_LEN(fn) > 0 && ZSTR_VAL(fn)[0] == '\\') {
+        normalized_fn = zend_string_init(ZSTR_VAL(fn) + 1, ZSTR_LEN(fn) - 1, 0);
+    } else {
+        normalized_fn = zend_string_copy(fn);
+    }
+    zend_string *lc = zend_string_tolower(normalized_fn);
+    zend_string_release(normalized_fn);
+
     otel_observer *observer = zend_hash_find_ptr(ht, lc);
     if (!observer) {
         observer = create_observer();
