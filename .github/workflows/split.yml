@@ -9,11 +9,16 @@ on:
   create:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   gitsplit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # required for pushing changes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Split repositories

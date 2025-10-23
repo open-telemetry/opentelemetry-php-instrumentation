@@ -442,6 +442,15 @@ static void exception_isolation_start(otel_exception_state *save_state) {
 
 static zend_object *exception_isolation_end(otel_exception_state *save_state) {
     zend_object *suppressed = EG(exception);
+    if (UNEXPECTED(suppressed && zend_is_unwind_exit(suppressed))) {
+        if (save_state->exception) {
+            OBJ_RELEASE(save_state->exception);
+        }
+        if (save_state->prev_exception) {
+            OBJ_RELEASE(save_state->prev_exception);
+        }
+        return NULL;
+    }
     // NULL this before call to zend_clear_exception, as it would try to jump
     // to exception handler then.
     EG(exception) = NULL;
@@ -1077,7 +1086,16 @@ static void destroy_observer_class_lookup(zval *zv) {
 
 static void add_function_observer(HashTable *ht, zend_string *fn,
                                   zval *pre_hook, zval *post_hook) {
-    zend_string *lc = zend_string_tolower(fn);
+    // Strip leading slash if present
+    zend_string *normalized_fn;
+    if (ZSTR_LEN(fn) > 0 && ZSTR_VAL(fn)[0] == '\\') {
+        normalized_fn = zend_string_init(ZSTR_VAL(fn) + 1, ZSTR_LEN(fn) - 1, 0);
+    } else {
+        normalized_fn = zend_string_copy(fn);
+    }
+    zend_string *lc = zend_string_tolower(normalized_fn);
+    zend_string_release(normalized_fn);
+
     otel_observer *observer = zend_hash_find_ptr(ht, lc);
     if (!observer) {
         observer = create_observer();

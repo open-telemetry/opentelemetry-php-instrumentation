@@ -331,3 +331,15 @@ class MyClass
 
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
+
+### Maintainers
+
+- [OpenTelemetry PHP Maintainers](https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md#maintainers)
+
+For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
+
+### Approvers
+
+- [OpenTelemetry PHP Approvers](https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md#approvers)
+
+For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
