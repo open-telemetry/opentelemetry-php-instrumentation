@@ -22,9 +22,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2
         with:
           php-version: ${{ matrix.php }}
       - name: Build
@@ -46,10 +46,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2
         with:
           php-version: ${{ matrix.php }}
 
@@ -67,9 +67,9 @@ jobs:
   pecl-package:
     runs-on: ubuntu-latest
     container:
-      image: php:8.3-cli
+      image: php:8.3-cli@sha256:a599bc74b464f3e31b5ad0b45839e2ac8ba689d8c92372e38f9e9a5a734c9a2c
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Package and copy
         run: |
@@ -78,7 +78,7 @@ jobs:
           pear package
           cp opentelemetry-*.tgz binaries/
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: opentelemetry-pecl
           path: ext/binaries/*.tgz
@@ -94,16 +94,16 @@ jobs:
         ts: ['ts', 'nts']
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
         id: setup-php-sdk
-        uses: php/setup-php-sdk@v0.11
+        uses: php/setup-php-sdk@474d4e386703a8bf269c41661c6b934a751a61bf # v0.11
         with:
           version: ${{ matrix.php }}
           arch: x64
           ts: ${{ matrix.ts }}
       - name: Install dependencies
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
         with:
           arch: x64
           toolset: ${{ steps.setup-php-sdk.outputs.toolset }}
@@ -139,7 +139,7 @@ jobs:
         run: |
           Get-ChildItem -Path binaries -Recurse -Force | ForEach-Object { $_.FullName }
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{env.BUILD_NAME}}
           path: ext\binaries\${{env.BUILD_NAME}}\${{env.BUILD_NAME}}.dll
@@ -154,9 +154,9 @@ jobs:
     continue-on-error: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
       - name: download-artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           path: ext/artifacts
       - name: zip
@@ -164,7 +164,7 @@ jobs:
           cd artifacts
           find . -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
         with:
           generate_release_notes: true
           draft: true

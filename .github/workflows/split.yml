@@ -18,11 +18,11 @@ jobs:
     permissions:
       contents: write # required for pushing changes
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           fetch-depth: 0
       - name: Split repositories
-        uses: docker://jderusse/gitsplit:latest
+        uses: docker://jderusse/gitsplit:latest@sha256:ca619e08d0608d7ab8067be02db13409ec63a0e241c6308be42593f0c0ac705d
         with:
           args: gitsplit
         env:
