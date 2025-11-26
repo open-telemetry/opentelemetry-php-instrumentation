@@ -43,7 +43,7 @@ jobs:
           echo "Latest version in ${{ matrix.php-version }} is ${PHP_VERSION}"
 
       - name: Build and push ${{ env.PHP_VERSION }} as ${{ matrix.php-version }}-${{ matrix.os }} to ghcr.io
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           push: true
           file: docker/Dockerfile.${{ matrix.os }}
