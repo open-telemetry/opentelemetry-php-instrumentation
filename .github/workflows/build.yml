@@ -78,7 +78,7 @@ jobs:
           pear package
           cp opentelemetry-*.tgz binaries/
       - name: Upload artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: opentelemetry-pecl
           path: ext/binaries/*.tgz
@@ -139,7 +139,7 @@ jobs:
         run: |
           Get-ChildItem -Path binaries -Recurse -Force | ForEach-Object { $_.FullName }
       - name: Upload artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{env.BUILD_NAME}}
           path: ext\binaries\${{env.BUILD_NAME}}\${{env.BUILD_NAME}}.dll
