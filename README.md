@@ -248,7 +248,7 @@ string(8) "original"
 
 By applying attributes to source code, the OpenTelemetry extension can add hooks at runtime.
 
-Default pre and post hook methods are provided by the OpenTelemetry API: `OpenTelemetry\API\Instrumentation\Handler::pre`
+Default pre and post hook methods are provided by the OpenTelemetry API: `OpenTelemetry\API\Instrumentation\WithSpanHandler::pre`
 and `::post`.
 
 This feature is disabled by default, but can be enabled by setting `opentelemetry.attr_hooks_enabled = On` in php.ini
