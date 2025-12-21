@@ -67,7 +67,7 @@ jobs:
   pecl-package:
     runs-on: ubuntu-latest
     container:
-      image: php:8.3-cli@sha256:46d22cd3429bec9085aaf1f243ab71481f8f3e359115b4c5ea5ef35cbb4a43ea
+      image: php:8.3-cli@sha256:bd268e0e68ce3fadcc0cb5dbbe5363f3d5315a88049d86e676d939482add17a9
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
