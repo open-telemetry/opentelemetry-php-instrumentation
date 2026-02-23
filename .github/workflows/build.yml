@@ -85,7 +85,7 @@ jobs:
           if-no-files-found: error
 
   windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     continue-on-error: false
     strategy:
       fail-fast: false
