@@ -164,7 +164,7 @@ jobs:
           cd artifacts
           find . -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
       - name: Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           generate_release_notes: true
           draft: true
