@@ -97,7 +97,7 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
         id: setup-php-sdk
-        uses: php/setup-php-sdk@474d4e386703a8bf269c41661c6b934a751a61bf # v0.11
+        uses: php/setup-php-sdk@e2ce1c294f272ed93e8083f14649f5adadf93788 # v0.12
         with:
           version: ${{ matrix.php }}
           arch: x64
