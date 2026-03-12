@@ -126,7 +126,7 @@ jobs:
           esac
           echo "Detected Compiler: $COMPILER"
           SAFE_REF_NAME="${GITHUB_REF_NAME//\//-}"
-          BUILD_NAME="php_opentelemetry-${SAFE_REF_NAME}-${{matrix.php}}-${{matrix.ts}}-$COMPILER-x64"
+          BUILD_NAME="php_opentelemetry-${SAFE_REF_NAME}-${{matrix.php}}-${{matrix.ts}}-$COMPILER-x86_64"
           echo "Build Name: $BUILD_NAME"
           echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
 
