@@ -118,6 +118,7 @@
           <file name="disable.phpt" role="test"/>
           <file name="handler_not_found.phpt" role="test"/>
           <file name="invalid_callback.phpt" role="test"/>
+          <file name="span_kind_const.phpt" role="test"/>
         </dir>
         <dir name="span_attribute">
           <file name="attribute_on_interface.phpt" role="test"/>
