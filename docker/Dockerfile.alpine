@@ -3,6 +3,7 @@ FROM ${ALPINE_VERSION} AS builder
 WORKDIR /usr/src
 
 ENV PHPIZE_DEPS="autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c"
+ENV CFLAGS="-Wno-error=incompatible-pointer-types"
 
 RUN apk add --no-cache \
     ${PHPIZE_DEPS} \
