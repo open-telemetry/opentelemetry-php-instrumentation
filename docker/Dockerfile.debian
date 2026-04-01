@@ -38,6 +38,7 @@ RUN echo "$PHP_URL" \
 ARG PHP_CONFIG_OPTS="--enable-debug --with-pear --with-zlib"
 RUN cd php-${PHP_VERSION} \
   && ./buildconf \
+  && if echo "${PHP_VERSION}" | grep -q '^8\.1'; then export CFLAGS="${CFLAGS} -Wno-error=incompatible-pointer-types"; fi \
   && ./configure ${PHP_CONFIG_OPTS} \
   && make -j $(nproc) \
   && make install

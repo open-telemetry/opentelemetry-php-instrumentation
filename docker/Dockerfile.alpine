@@ -3,7 +3,6 @@ FROM ${ALPINE_VERSION} AS builder
 WORKDIR /usr/src
 
 ENV PHPIZE_DEPS="autoconf dpkg-dev dpkg file g++ gcc libc-dev make pkgconf re2c"
-ENV CFLAGS="-Wno-error=incompatible-pointer-types"
 
 RUN apk add --no-cache \
     ${PHPIZE_DEPS} \
@@ -33,6 +32,7 @@ RUN echo "$PHP_URL" && curl -fsSL -o php.tar.gz "$PHP_URL" \
   && tar -xzf php.tar.gz -C php-src --strip-components=1 \
   && cd php-src \
   && ./buildconf --force \
+  && if echo "${PHP_VERSION}" | grep -q '^8\.1'; then export CFLAGS="-Wno-error=incompatible-pointer-types"; fi \
   && ./configure ${PHP_CONFIG_OPTS} \
   && make -j $(nproc) \
   && make install
