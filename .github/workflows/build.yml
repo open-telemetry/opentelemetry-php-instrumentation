@@ -122,6 +122,7 @@ jobs:
           case "$VisualStudioVersion" in
             16.*) COMPILER="vs16";;
             17.*) COMPILER="vs17";;
+            18.*) COMPILER="vs18";;
             *) echo "Unknown MSVC version: $VisualStudioVersion"; exit 1;;
           esac
           echo "Detected Compiler: $COMPILER"
