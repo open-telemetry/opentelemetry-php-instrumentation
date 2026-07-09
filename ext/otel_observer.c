@@ -349,6 +349,10 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
                 zend_hash_copy(attributes, array_ht, zval_add_ref);
             }
         } else {
+            // arg.value is borrowed from the op_array's cached zend_attribute,
+            // so ref it to balance ht's ZVAL_PTR_DTOR teardown - same as the
+            // zval_add_ref used for the attributes copy above.
+            Z_TRY_ADDREF(arg.value);
             if (arg.name != NULL) {
                 zend_hash_add(ht, arg.name, &arg.value);
             } else {
