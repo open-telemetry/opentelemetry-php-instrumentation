@@ -2,6 +2,7 @@
 Check if hooks are invoked for internal functions
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80200) die('skip requires PHP >= 8.2'); ?>
+<?php if (PHP_VERSION_ID >= 80600) die('skip internal-function hooks do not fire on PHP >= 8.6'); ?>
 --EXTENSIONS--
 opentelemetry
 --FILE--

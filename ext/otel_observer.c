@@ -22,7 +22,9 @@ typedef struct otel_observer {
 
 typedef struct otel_exception_state {
     zend_object *exception;
+#if PHP_VERSION_ID < 80600
     zend_object *prev_exception;
+#endif
     const zend_op *opline_before_exception;
     bool has_opline;
     const zend_op *opline;
@@ -264,6 +266,14 @@ static uint32_t func_get_arg_index_by_name(zend_execute_data *execute_data,
         }
     } else {
         for (uint32_t i = 0; i < num_args; i++) {
+#if PHP_VERSION_ID >= 80600
+            // PHP 8.6 unified arg_info types; internal arg names are now
+            // interned zend_string just like user functions.
+            zend_arg_info *arg_info = &fbc->internal_function.arg_info[i];
+            if (zend_string_equals(arg_name, arg_info->name)) {
+                return i;
+            }
+#else
             zend_internal_arg_info *arg_info =
                 &fbc->internal_function.arg_info[i];
             size_t len = strlen(arg_info->name);
@@ -271,6 +281,7 @@ static uint32_t func_get_arg_index_by_name(zend_execute_data *execute_data,
                 !memcmp(arg_info->name, ZSTR_VAL(arg_name), len)) {
                 return i;
             }
+#endif
         }
     }
 
@@ -423,11 +434,15 @@ static inline bool is_valid_signature(zend_fcall_info fci,
 
 static void exception_isolation_start(otel_exception_state *save_state) {
     save_state->exception = EG(exception);
+#if PHP_VERSION_ID < 80600
     save_state->prev_exception = EG(prev_exception);
+#endif
     save_state->opline_before_exception = EG(opline_before_exception);
 
     EG(exception) = NULL;
+#if PHP_VERSION_ID < 80600
     EG(prev_exception) = NULL;
+#endif
     EG(opline_before_exception) = NULL;
 
     // If the hook handler throws an exception, the execute_data of the outer
@@ -450,9 +465,11 @@ static zend_object *exception_isolation_end(otel_exception_state *save_state) {
         if (save_state->exception) {
             OBJ_RELEASE(save_state->exception);
         }
+#if PHP_VERSION_ID < 80600
         if (save_state->prev_exception) {
             OBJ_RELEASE(save_state->prev_exception);
         }
+#endif
         return NULL;
     }
     // NULL this before call to zend_clear_exception, as it would try to jump
@@ -463,7 +480,9 @@ static zend_object *exception_isolation_end(otel_exception_state *save_state) {
     zend_clear_exception();
 
     EG(exception) = save_state->exception;
+#if PHP_VERSION_ID < 80600
     EG(prev_exception) = save_state->prev_exception;
+#endif
     EG(opline_before_exception) = save_state->opline_before_exception;
 
     zend_execute_data *execute_data = EG(current_execute_data);
@@ -729,7 +748,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
                     } else {
                         // This slot was already initialized, need to
                         // decrement refcount before overwriting
-                        zval_dtor(target);
+                        zval_ptr_dtor_nogc(target);
                     }
 
                     if (idx >= arg_locator.reserved && Z_REFCOUNTED_P(val)) {
@@ -768,7 +787,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         exception_isolation_handle_exception(suppressed, &params[2], &params[3],
                                              "pre hook");
 
-        zval_dtor(&ret);
+        zval_ptr_dtor_nogc(&ret);
     }
 
     if (UNEXPECTED(ZEND_CALL_INFO(execute_data) & ZEND_CALL_MAY_HAVE_UNDEF)) {
@@ -789,7 +808,7 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
     }
 
     for (size_t i = 0; i < param_count; i++) {
-        zval_dtor(&params[i]);
+        zval_ptr_dtor_nogc(&params[i]);
     }
 }
 
@@ -866,11 +885,11 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
         exception_isolation_handle_exception(suppressed, &params[4], &params[5],
                                              "post hook");
 
-        zval_dtor(&ret);
+        zval_ptr_dtor_nogc(&ret);
     }
 
     for (size_t i = 0; i < param_count; i++) {
-        zval_dtor(&params[i]);
+        zval_ptr_dtor_nogc(&params[i]);
     }
 }
 
