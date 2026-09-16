@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          persist-credentials: false
           fetch-depth: 0
       - name: Split repositories
         uses: docker://jderusse/gitsplit:latest@sha256:ca619e08d0608d7ab8067be02db13409ec63a0e241c6308be42593f0c0ac705d

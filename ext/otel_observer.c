@@ -218,13 +218,16 @@ static void func_get_args(zval *zv, HashTable *attributes,
                     zend_attribute *attribute =
                         find_spanattribute_attribute(ex->func, i);
                     if (attribute != NULL && is_valid_attribute_value(p)) {
-                        if (attribute->argc) {
-                            zend_string *key = Z_STR(attribute->args[0].value);
-                            zend_hash_del(attributes, key);
-                            zend_hash_add(attributes, key, p);
-                        } else {
-                            zend_hash_del(attributes, arg_name);
-                            zend_hash_add(attributes, arg_name, p);
+                        zend_string *key = attribute->argc
+                                               ? Z_STR(attribute->args[0].value)
+                                               : arg_name;
+                        zend_hash_del(attributes, key);
+                        // p is borrowed from the caller's frame, so ref it to
+                        // balance the attributes HashTable's ZVAL_PTR_DTOR
+                        // teardown - same as func_get_attribute_args() does for
+                        // the values cached on the WithSpan attribute.
+                        if (zend_hash_add(attributes, key, p) != NULL) {
+                            Z_TRY_ADDREF_P(p);
                         }
                     }
                 }

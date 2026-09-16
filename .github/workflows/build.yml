@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Setup PHP
         uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # 2.37.1
         with:
@@ -47,6 +49,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # 2.37.1
@@ -70,6 +74,8 @@ jobs:
       image: php:8.5-cli@sha256:e2b5f2495f2a268082fbb88d8045511bd770390e062b21c35110be78e082d1a3
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Package and copy
         run: |
@@ -95,6 +101,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
         id: setup-php-sdk
         uses: php/setup-php-sdk@e2ce1c294f272ed93e8083f14649f5adadf93788 # v0.12
@@ -108,9 +116,11 @@ jobs:
           arch: x64
           toolset: ${{ steps.setup-php-sdk.outputs.toolset }}
       - name: Build
+        env:
+          PHP_SDK_PREFIX: ${{ steps.setup-php-sdk.outputs.prefix }}
         run: |
           phpize
-          ./configure --enable-opentelemetry --with-prefix=${{ steps.setup-php-sdk.outputs.prefix }}
+          ./configure --enable-opentelemetry --with-prefix=$env:PHP_SDK_PREFIX
           nmake
       - name: Test
         env:
@@ -133,9 +143,9 @@ jobs:
 
       - name: Rename and copy binaries
         run: |
-          md binaries\${{env.BUILD_NAME}}
+          md "binaries\$($env:BUILD_NAME)"
           $file = Get-ChildItem -Path x64 -Recurse -Filter php_opentelemetry.dll
-          Copy-Item -Path $file.FullName -Destination "binaries\${{env.BUILD_NAME}}\${{env.BUILD_NAME}}.dll"
+          Copy-Item -Path $file.FullName -Destination "binaries\$($env:BUILD_NAME)\$($env:BUILD_NAME).dll"
       - name: Find
         run: |
           Get-ChildItem -Path binaries -Recurse -Force | ForEach-Object { $_.FullName }
@@ -156,6 +166,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       - name: download-artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -165,7 +177,9 @@ jobs:
           cd artifacts
           find . -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
       - name: Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        # `gh release` cannot replicate this action's create-or-update behaviour
+        # on re-run, and rewriting release automation is out of scope here.
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # zizmor: ignore[superfluous-actions] v3.0.0
         with:
           generate_release_notes: true
           draft: true
