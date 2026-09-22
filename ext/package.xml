@@ -16,10 +16,10 @@
     <email>pdelewski@example.com</email>
     <active>yes</active>
   </lead>
-  <date>2026-09-09</date>
-  <time>23:39:51</time>
+  <date>2026-09-22</date>
+  <time>10:32:16</time>
   <version>
-    <release>1.4.1</release>
+    <release>1.4.2</release>
     <api>1.0</api>
   </version>
   <stability>
@@ -27,7 +27,7 @@
     <api>stable</api>
   </stability>
   <license uri="https://opensource.org/license/apache-2-0/" filesource="LICENSE">Apache 2.0</license>
-  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.4.1</notes>
+  <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.4.2</notes>
   <contents>
     <dir baseinstalldir="/" name="/">
       <file baseinstalldir="/" name=".clang-format" role="src"/>
@@ -84,6 +84,7 @@
         <file name="multiple_hooks_modify_params.phpt" role="test"/>
         <file name="multiple_hooks_modify_returnvalue.phpt" role="test"/>
         <file name="post_hook_return_ignored_without_type.phpt" role="test"/>
+        <file name="post_hook_modify_returnvalue_jit.phpt" role="test"/>
         <file name="post_hook_returns_cloned_modified_object.phpt" role="test"/>
         <file name="post_hook_throws_exception.phpt" role="test"/>
         <file name="post_hook_type_error.phpt" role="test"/>
@@ -561,6 +562,20 @@
       </stability>
       <license>Apache 2.0</license>
       <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.4.0</notes>
+    </release>
+    <release>
+      <date>2026-09-09</date>
+      <time>23:39:51</time>
+      <version>
+        <release>1.4.1</release>
+        <api>1.0</api>
+      </version>
+      <stability>
+        <release>stable</release>
+        <api>stable</api>
+      </stability>
+      <license>Apache 2.0</license>
+      <notes>See https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases/tag/1.4.1</notes>
     </release>
   </changelog>
 </package>
