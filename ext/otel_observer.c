@@ -874,9 +874,9 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
                 !(ZEND_TYPE_PURE_MASK(
                       fcc.function_handler->common.arg_info[-1].type) &
                   MAY_BE_VOID)) {
-                if (execute_data->return_value) {
-                    zval_ptr_dtor(execute_data->return_value);
-                    ZVAL_COPY(execute_data->return_value, &ret);
+                if (retval) {
+                    zval_ptr_dtor(retval);
+                    ZVAL_COPY(retval, &ret);
                     zval_ptr_dtor(&params[2]);
                     ZVAL_COPY_VALUE(&params[2], &ret);
                     ZVAL_UNDEF(&ret);
