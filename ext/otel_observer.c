@@ -54,7 +54,7 @@ func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
         if (execute_data->func->op_array.fn_flags & ZEND_ACC_STATIC) {
             zend_class_entry *called_scope =
                 zend_get_called_scope(execute_data);
-            ZVAL_STR(zv, called_scope->name);
+            ZVAL_STR_COPY(zv, called_scope->name);
         } else {
             zend_object *this = zend_get_this_object(execute_data);
             ZVAL_OBJ_COPY(zv, this);
