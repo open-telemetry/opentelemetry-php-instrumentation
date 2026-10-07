@@ -218,9 +218,27 @@ static void func_get_args(zval *zv, HashTable *attributes,
                     zend_attribute *attribute =
                         find_spanattribute_attribute(ex->func, i);
                     if (attribute != NULL && is_valid_attribute_value(p)) {
-                        zend_string *key = attribute->argc
-                                               ? Z_STR(attribute->args[0].value)
-                                               : arg_name;
+                        // the name arg may be an unevaluated IS_CONSTANT_AST,
+                        // so evaluate it rather than assuming IS_STRING
+                        zend_string *key = arg_name;
+                        zval name_val;
+                        ZVAL_UNDEF(&name_val);
+                        if (attribute->argc) {
+                            if (zend_get_attribute_value(
+                                    &name_val, attribute, 0,
+                                    ex->func->common.scope) == SUCCESS) {
+                                if (Z_TYPE(name_val) == IS_STRING) {
+                                    key = Z_STR(name_val);
+                                }
+                            } else {
+                                // on failure the zval has already been
+                                // released, so clear it before the dtor below
+                                ZVAL_UNDEF(&name_val);
+                                if (EG(exception)) {
+                                    zend_clear_exception();
+                                }
+                            }
+                        }
                         zend_hash_del(attributes, key);
                         // p is borrowed from the caller's frame, so ref it to
                         // balance the attributes HashTable's ZVAL_PTR_DTOR
@@ -229,6 +247,7 @@ static void func_get_args(zval *zv, HashTable *attributes,
                         if (zend_hash_add(attributes, key, p) != NULL) {
                             Z_TRY_ADDREF_P(p);
                         }
+                        zval_ptr_dtor(&name_val);
                     }
                 }
                 q = p;
@@ -354,26 +373,40 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
 
     for (uint32_t i = 0; i < attr->argc; i++) {
         arg = attr->args[i];
+        // Attribute args may be stored as an unevaluated IS_CONSTANT_AST (e.g.
+        // SpanKind::KIND_PRODUCER that could not be const-folded at compile
+        // time). zend_get_attribute_value() evaluates those and hands back an
+        // owned zval, so no extra addref is needed here.
+        zval value;
+        if (zend_get_attribute_value(&value, attr, i, ex->func->common.scope) !=
+            SUCCESS) {
+            // evaluation failed (e.g. undefined constant); skip this arg
+            if (EG(exception)) {
+                zend_clear_exception();
+            }
+            continue;
+        }
         if (i == 2 ||
             (arg.name && zend_string_equals_literal(arg.name, "attributes"))) {
             // attributes, append to a separate HashTable
-            if (Z_TYPE(arg.value) == IS_ARRAY) {
+            if (Z_TYPE(value) == IS_ARRAY) {
                 zend_hash_clean(attributes); // should already be empty
-                HashTable *array_ht = Z_ARRVAL_P(&arg.value);
+                HashTable *array_ht = Z_ARRVAL_P(&value);
                 zend_hash_copy(attributes, array_ht, zval_add_ref);
             }
+            zval_ptr_dtor(&value);
         } else {
-            // arg.value is borrowed from the op_array's cached zend_attribute,
-            // so ref it to balance ht's ZVAL_PTR_DTOR teardown - same as the
-            // zval_add_ref used for the attributes copy above.
-            Z_TRY_ADDREF(arg.value);
             if (arg.name != NULL) {
-                zend_hash_add(ht, arg.name, &arg.value);
+                if (zend_hash_add(ht, arg.name, &value) == NULL) {
+                    zval_ptr_dtor(&value); // duplicate key, we still own it
+                }
             } else {
                 key = zend_string_init(with_span_attribute_args_keys[i],
                                        strlen(with_span_attribute_args_keys[i]),
                                        0);
-                zend_hash_add(ht, key, &arg.value);
+                if (zend_hash_add(ht, key, &value) == NULL) {
+                    zval_ptr_dtor(&value);
+                }
                 zend_string_release(key);
             }
         }
