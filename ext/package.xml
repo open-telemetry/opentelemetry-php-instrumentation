@@ -96,6 +96,7 @@
         <file name="return_params_internal.phpt" role="test"/>
         <file name="return_reduced_params.phpt" role="test"/>
         <file name="static_method.phpt" role="test"/>
+        <file name="static_method_class_name_not_over_freed.phpt" role="test"/>
         <file name="unwind_exit.phpt" role="test"/>
         <file name="unwind_exit_leak.phpt" role="test"/>
         <file name="unwind_exit_pcntl_async_signal.phpt" role="test"/>
