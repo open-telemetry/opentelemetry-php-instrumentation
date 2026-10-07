@@ -14,6 +14,9 @@ const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
 const char *spanattribute_fqn_lc =
     "opentelemetry\\api\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
+#define WITH_SPAN_ATTRIBUTE_ARGS_KEYS_COUNT                                    \
+    (sizeof(with_span_attribute_args_keys) /                                   \
+     sizeof(with_span_attribute_args_keys[0]))
 
 typedef struct otel_observer {
     zend_llist pre_hooks;
@@ -400,7 +403,7 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
                 if (zend_hash_add(ht, arg.name, &value) == NULL) {
                     zval_ptr_dtor(&value); // duplicate key, we still own it
                 }
-            } else {
+            } else if (i < WITH_SPAN_ATTRIBUTE_ARGS_KEYS_COUNT) {
                 key = zend_string_init(with_span_attribute_args_keys[i],
                                        strlen(with_span_attribute_args_keys[i]),
                                        0);
@@ -408,6 +411,10 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
                     zval_ptr_dtor(&value);
                 }
                 zend_string_release(key);
+            } else {
+                // positional arg beyond the keys we know how to name; WithSpan
+                // declares no such parameter, so there is no name to give it
+                zval_ptr_dtor(&value);
             }
         }
     }
