@@ -83,14 +83,22 @@ static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
 }
 
 // find SpanAttribute attribute on a parameter, or on a parameter of
-// an interface
+// an interface.
+// If scope is non-NULL it receives the scope of the function that declares the
+// attribute found, which is what its args must be evaluated against: an
+// attribute inherited from an interface has to resolve self:: in the
+// interface's scope, not the implementation's.
 static zend_attribute *find_spanattribute_attribute(zend_function *func,
-                                                    uint32_t i) {
+                                                    uint32_t i,
+                                                    zend_class_entry **scope) {
     zend_attribute *attr = zend_get_parameter_attribute_str(
         func->common.attributes, spanattribute_fqn_lc,
         strlen(spanattribute_fqn_lc), i);
 
     if (attr != NULL) {
+        if (scope != NULL) {
+            *scope = func->common.scope;
+        }
         return attr;
     }
     zend_class_entry *ce = func->common.scope;
@@ -108,6 +116,9 @@ static zend_attribute *find_spanattribute_attribute(zend_function *func,
                         iface_func->common.attributes, spanattribute_fqn_lc,
                         strlen(spanattribute_fqn_lc), i);
                     if (attr != NULL) {
+                        if (scope != NULL) {
+                            *scope = iface_func->common.scope;
+                        }
                         return attr;
                     }
                 }
@@ -118,12 +129,17 @@ static zend_attribute *find_spanattribute_attribute(zend_function *func,
     return NULL;
 }
 
-// find WithSpan in attributes, or in interface method attributes
-static zend_attribute *find_withspan_attribute(zend_function *func) {
+// find WithSpan in attributes, or in interface method attributes.
+// See find_spanattribute_attribute() for the scope out-param.
+static zend_attribute *find_withspan_attribute(zend_function *func,
+                                               zend_class_entry **scope) {
     zend_attribute *attr;
     attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
                                   strlen(withspan_fqn_lc));
     if (attr != NULL) {
+        if (scope != NULL) {
+            *scope = func->common.scope;
+        }
         return attr;
     }
     zend_class_entry *ce = func->common.scope;
@@ -142,6 +158,9 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
                                                   withspan_fqn_lc,
                                                   strlen(withspan_fqn_lc));
                     if (attr) {
+                        if (scope != NULL) {
+                            *scope = iface_func->common.scope;
+                        }
                         return attr;
                     }
                 }
@@ -152,7 +171,7 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
 }
 
 static bool func_has_withspan_attribute(zend_execute_data *ex) {
-    zend_attribute *attr = find_withspan_attribute(ex->func);
+    zend_attribute *attr = find_withspan_attribute(ex->func, NULL);
 
     return attr != NULL;
 }
@@ -218,8 +237,9 @@ static void func_get_args(zval *zv, HashTable *attributes,
                 if (check_for_attributes &&
                     ex->func->type != ZEND_INTERNAL_FUNCTION) {
                     zend_string *arg_name = ex->func->op_array.vars[i];
+                    zend_class_entry *attr_scope = ex->func->common.scope;
                     zend_attribute *attribute =
-                        find_spanattribute_attribute(ex->func, i);
+                        find_spanattribute_attribute(ex->func, i, &attr_scope);
                     if (attribute != NULL && is_valid_attribute_value(p)) {
                         // the name arg may be an unevaluated IS_CONSTANT_AST,
                         // so evaluate it rather than assuming IS_STRING
@@ -227,9 +247,9 @@ static void func_get_args(zval *zv, HashTable *attributes,
                         zval name_val;
                         ZVAL_UNDEF(&name_val);
                         if (attribute->argc) {
-                            if (zend_get_attribute_value(
-                                    &name_val, attribute, 0,
-                                    ex->func->common.scope) == SUCCESS) {
+                            if (zend_get_attribute_value(&name_val, attribute,
+                                                         0, attr_scope) ==
+                                SUCCESS) {
                                 if (Z_TYPE(name_val) == IS_STRING) {
                                     key = Z_STR(name_val);
                                 }
@@ -362,7 +382,8 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
         ZVAL_EMPTY_ARRAY(zv);
         return;
     }
-    zend_attribute *attr = find_withspan_attribute(ex->func);
+    zend_class_entry *attr_scope = ex->func->common.scope;
+    zend_attribute *attr = find_withspan_attribute(ex->func, &attr_scope);
     if (attr == NULL || attr->argc == 0) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
@@ -381,8 +402,7 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
         // time). zend_get_attribute_value() evaluates those and hands back an
         // owned zval, so no extra addref is needed here.
         zval value;
-        if (zend_get_attribute_value(&value, attr, i, ex->func->common.scope) !=
-            SUCCESS) {
+        if (zend_get_attribute_value(&value, attr, i, attr_scope) != SUCCESS) {
             // evaluation failed (e.g. undefined constant); skip this arg
             if (EG(exception)) {
                 zend_clear_exception();
