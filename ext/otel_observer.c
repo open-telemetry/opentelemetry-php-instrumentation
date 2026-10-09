@@ -897,7 +897,12 @@ static void observer_begin(zend_execute_data *execute_data,
     // the autoloader, a const-expr "new" runs a constructor - either of which
     // can throw or exit(). Isolate as a hook call is isolated, so the exception
     // is reported rather than dropped, and never reaches the observed frame.
-    otel_exception_state attr_save_state;
+    // Zero-initialised only to satisfy -Wmaybe-uninitialized: it is written and
+    // read under the same check_for_attributes, but on PHP >= 8.6 the version
+    // guards in otel_exception_state shrink exception_isolation_start() enough
+    // for gcc to inline it, track the fields separately, and fail to correlate
+    // the two conditions. The zeroed state is never a valid one to restore.
+    otel_exception_state attr_save_state = {0};
     otel_attr_eval attr_eval = {.captured = NULL, .stopped = false};
     if (UNEXPECTED(check_for_attributes)) {
         exception_isolation_start(&attr_save_state);
