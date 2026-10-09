@@ -14,10 +14,17 @@ const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
 const char *spanattribute_fqn_lc =
     "opentelemetry\\api\\instrumentation\\spanattribute";
 static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
+#define WITH_SPAN_ATTRIBUTE_ARGS_KEYS_COUNT                                    \
+    (sizeof(with_span_attribute_args_keys) /                                   \
+     sizeof(with_span_attribute_args_keys[0]))
 
 typedef struct otel_observer {
     zend_llist pre_hooks;
     zend_llist post_hooks;
+    // Args are re-evaluated per call, so a failure in the declaration recurs
+    // on every call: warn once, or a hot function floods the log. Cleared on a
+    // clean call so a transient failure does not silence a later real one.
+    bool attr_eval_warned;
 } otel_observer;
 
 typedef struct otel_exception_state {
@@ -30,7 +37,23 @@ typedef struct otel_exception_state {
     const zend_op *opline;
 } otel_exception_state;
 
+// Threaded through attribute arg evaluation, which can run userland and so
+// can throw or exit().
+typedef struct otel_attr_eval {
+    // First exception seen, owned here and reported once the isolation window
+    // closes; later ones are released as they arrive.
+    zend_object *captured;
+    // An unwind exit was seen: left pending for the isolation window, and no
+    // further arg is evaluated.
+    bool stopped;
+} otel_attr_eval;
+
 #define STACK_EXTENSION_LIMIT 16
+
+// Consecutive throwing exception destructors to absorb while discarding a
+// suppressed exception: each throw is itself an exception whose release can
+// throw again. A longer chain is pathological; the bound matters, not its size.
+#define DESTRUCTOR_UNWIND_LIMIT 8
 
 typedef struct otel_arg_locator {
     zend_execute_data *execute_data;
@@ -80,14 +103,22 @@ static zend_function *find_function(zend_class_entry *ce, zend_string *name) {
 }
 
 // find SpanAttribute attribute on a parameter, or on a parameter of
-// an interface
+// an interface.
+// If scope is non-NULL it receives the scope of the function that declares the
+// attribute found, which is what its args must be evaluated against: an
+// attribute inherited from an interface has to resolve self:: in the
+// interface's scope, not the implementation's.
 static zend_attribute *find_spanattribute_attribute(zend_function *func,
-                                                    uint32_t i) {
+                                                    uint32_t i,
+                                                    zend_class_entry **scope) {
     zend_attribute *attr = zend_get_parameter_attribute_str(
         func->common.attributes, spanattribute_fqn_lc,
         strlen(spanattribute_fqn_lc), i);
 
     if (attr != NULL) {
+        if (scope != NULL) {
+            *scope = func->common.scope;
+        }
         return attr;
     }
     zend_class_entry *ce = func->common.scope;
@@ -105,6 +136,9 @@ static zend_attribute *find_spanattribute_attribute(zend_function *func,
                         iface_func->common.attributes, spanattribute_fqn_lc,
                         strlen(spanattribute_fqn_lc), i);
                     if (attr != NULL) {
+                        if (scope != NULL) {
+                            *scope = iface_func->common.scope;
+                        }
                         return attr;
                     }
                 }
@@ -115,12 +149,17 @@ static zend_attribute *find_spanattribute_attribute(zend_function *func,
     return NULL;
 }
 
-// find WithSpan in attributes, or in interface method attributes
-static zend_attribute *find_withspan_attribute(zend_function *func) {
+// find WithSpan in attributes, or in interface method attributes.
+// See find_spanattribute_attribute() for the scope out-param.
+static zend_attribute *find_withspan_attribute(zend_function *func,
+                                               zend_class_entry **scope) {
     zend_attribute *attr;
     attr = zend_get_attribute_str(func->common.attributes, withspan_fqn_lc,
                                   strlen(withspan_fqn_lc));
     if (attr != NULL) {
+        if (scope != NULL) {
+            *scope = func->common.scope;
+        }
         return attr;
     }
     zend_class_entry *ce = func->common.scope;
@@ -139,6 +178,9 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
                                                   withspan_fqn_lc,
                                                   strlen(withspan_fqn_lc));
                     if (attr) {
+                        if (scope != NULL) {
+                            *scope = iface_func->common.scope;
+                        }
                         return attr;
                     }
                 }
@@ -149,7 +191,7 @@ static zend_attribute *find_withspan_attribute(zend_function *func) {
 }
 
 static bool func_has_withspan_attribute(zend_execute_data *ex) {
-    zend_attribute *attr = find_withspan_attribute(ex->func);
+    zend_attribute *attr = find_withspan_attribute(ex->func, NULL);
 
     return attr != NULL;
 }
@@ -171,10 +213,52 @@ static bool is_valid_attribute_value(zval *val) {
     }
 }
 
+/**
+ * Take a pending exception left by attribute arg evaluation, so the remaining
+ * args still evaluate. Keeps the first (the one reported), releases later ones.
+ *
+ * Call after *every* evaluation, not only after FAILURE:
+ * zend_get_attribute_value() returns SUCCESS without clearing EG(exception),
+ * so a userland handler that throws on a diagnostic leaves one pending with no
+ * FAILURE to key off, poisoning every later evaluation.
+ *
+ * Sets state->stopped on an unwind exit, which is left pending for the
+ * isolation window. A no-op once stopped, so the first exit stands.
+ */
+static void attr_eval_capture_exception(otel_attr_eval *state) {
+    if (state == NULL || state->stopped) {
+        return;
+    }
+
+    zend_object *exception = EG(exception);
+    if (exception == NULL) {
+        return;
+    }
+    if (UNEXPECTED(zend_is_unwind_exit(exception))) {
+        state->stopped = true;
+        return;
+    }
+
+    EG(exception) = NULL;
+#if PHP_VERSION_ID < 80600
+    if (EG(prev_exception) != NULL) {
+        OBJ_RELEASE(EG(prev_exception));
+        EG(prev_exception) = NULL;
+    }
+#endif
+
+    if (state->captured == NULL) {
+        state->captured = exception; // now owned by the state
+    } else {
+        OBJ_RELEASE(exception);
+    }
+}
+
 // get function args. any args with the
 // SpanAttributes attribute are added to the attributes HashTable
 static void func_get_args(zval *zv, HashTable *attributes,
-                          zend_execute_data *ex, bool check_for_attributes) {
+                          zend_execute_data *ex, bool check_for_attributes,
+                          otel_attr_eval *eval_state) {
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
@@ -212,23 +296,57 @@ static void func_get_args(zval *zv, HashTable *attributes,
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
+                // Only an unwind exit stops further attempts. Keyed on the stop
+                // flag, not on EG(exception): a *successful* evaluation can
+                // leave one set, which would skip every later parameter.
                 if (check_for_attributes &&
-                    ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                    ex->func->type != ZEND_INTERNAL_FUNCTION &&
+                    EXPECTED(eval_state == NULL || !eval_state->stopped)) {
                     zend_string *arg_name = ex->func->op_array.vars[i];
+                    zend_class_entry *attr_scope = ex->func->common.scope;
                     zend_attribute *attribute =
-                        find_spanattribute_attribute(ex->func, i);
+                        find_spanattribute_attribute(ex->func, i, &attr_scope);
                     if (attribute != NULL && is_valid_attribute_value(p)) {
-                        zend_string *key = attribute->argc
-                                               ? Z_STR(attribute->args[0].value)
-                                               : arg_name;
-                        zend_hash_del(attributes, key);
-                        // p is borrowed from the caller's frame, so ref it to
-                        // balance the attributes HashTable's ZVAL_PTR_DTOR
-                        // teardown - same as func_get_attribute_args() does for
-                        // the values cached on the WithSpan attribute.
-                        if (zend_hash_add(attributes, key, p) != NULL) {
-                            Z_TRY_ADDREF_P(p);
+                        // The name arg may be an unevaluated IS_CONSTANT_AST,
+                        // so evaluate it rather than assuming IS_STRING. A bare
+                        // #[SpanAttribute] has no name arg and is *defined* to
+                        // key on the parameter name - not a fallback.
+                        zend_string *key = arg_name;
+                        bool have_key = true;
+                        zval name_val;
+                        ZVAL_UNDEF(&name_val);
+                        if (attribute->argc) {
+                            if (zend_get_attribute_value(&name_val, attribute,
+                                                         0, attr_scope) ==
+                                SUCCESS) {
+                                if (Z_TYPE(name_val) == IS_STRING) {
+                                    key = Z_STR(name_val);
+                                }
+                            } else {
+                                // on failure the zval has already been
+                                // released, so clear it before the dtor below
+                                ZVAL_UNDEF(&name_val);
+                                // Drop it rather than falling back to the
+                                // parameter name: that would publish a
+                                // plausible-looking wrong key nothing queries.
+                                // A gap is diagnosable; a rename is not.
+                                have_key = false;
+                            }
+                            // After either outcome - success does not clear a
+                            // diagnostic-turned-exception.
+                            attr_eval_capture_exception(eval_state);
                         }
+                        if (EXPECTED(have_key)) {
+                            zend_hash_del(attributes, key);
+                            // p is borrowed from the caller's frame, so ref it
+                            // to balance the attributes HashTable's
+                            // ZVAL_PTR_DTOR teardown - as
+                            // func_get_attribute_args() does.
+                            if (zend_hash_add(attributes, key, p) != NULL) {
+                                Z_TRY_ADDREF_P(p);
+                            }
+                        }
+                        zval_ptr_dtor(&name_val);
                     }
                 }
                 q = p;
@@ -335,12 +453,14 @@ static inline void func_get_lineno(zval *zv, zend_execute_data *ex) {
 }
 
 static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
-                                           zend_execute_data *ex) {
+                                           zend_execute_data *ex,
+                                           otel_attr_eval *eval_state) {
     if (!OTEL_G(attr_hooks_enabled)) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
     }
-    zend_attribute *attr = find_withspan_attribute(ex->func);
+    zend_class_entry *attr_scope = ex->func->common.scope;
+    zend_attribute *attr = find_withspan_attribute(ex->func, &attr_scope);
     if (attr == NULL || attr->argc == 0) {
         ZVAL_EMPTY_ARRAY(zv);
         return;
@@ -354,27 +474,54 @@ static inline void func_get_attribute_args(zval *zv, HashTable *attributes,
 
     for (uint32_t i = 0; i < attr->argc; i++) {
         arg = attr->args[i];
+        // Attribute args may be stored as an unevaluated IS_CONSTANT_AST (e.g.
+        // SpanKind::KIND_PRODUCER that could not be const-folded at compile
+        // time). zend_get_attribute_value() evaluates those and hands back an
+        // owned zval, so no extra addref is needed here.
+        zval value;
+        zend_result eval_result =
+            zend_get_attribute_value(&value, attr, i, attr_scope);
+        // Called after either outcome: failure leaves an exception pending
+        // (unresolvable constant, throwing autoloader, const-expr "new"), and
+        // so can success. Capture rather than clear, so observer_begin()'s
+        // isolation window reports it, then carry on - the args after this one
+        // are often literals that cannot fail.
+        attr_eval_capture_exception(eval_state);
+        if (UNEXPECTED(eval_state != NULL && eval_state->stopped)) {
+            if (eval_result == SUCCESS) {
+                zval_ptr_dtor(&value);
+            }
+            break; // unwind exit; nothing later can follow it
+        }
+        if (UNEXPECTED(eval_result != SUCCESS)) {
+            continue;
+        }
         if (i == 2 ||
             (arg.name && zend_string_equals_literal(arg.name, "attributes"))) {
             // attributes, append to a separate HashTable
-            if (Z_TYPE(arg.value) == IS_ARRAY) {
+            if (Z_TYPE(value) == IS_ARRAY) {
                 zend_hash_clean(attributes); // should already be empty
-                HashTable *array_ht = Z_ARRVAL_P(&arg.value);
+                HashTable *array_ht = Z_ARRVAL_P(&value);
                 zend_hash_copy(attributes, array_ht, zval_add_ref);
             }
+            zval_ptr_dtor(&value);
         } else {
-            // arg.value is borrowed from the op_array's cached zend_attribute,
-            // so ref it to balance ht's ZVAL_PTR_DTOR teardown - same as the
-            // zval_add_ref used for the attributes copy above.
-            Z_TRY_ADDREF(arg.value);
             if (arg.name != NULL) {
-                zend_hash_add(ht, arg.name, &arg.value);
-            } else {
+                if (zend_hash_add(ht, arg.name, &value) == NULL) {
+                    zval_ptr_dtor(&value); // duplicate key, we still own it
+                }
+            } else if (i < WITH_SPAN_ATTRIBUTE_ARGS_KEYS_COUNT) {
                 key = zend_string_init(with_span_attribute_args_keys[i],
                                        strlen(with_span_attribute_args_keys[i]),
                                        0);
-                zend_hash_add(ht, key, &arg.value);
+                if (zend_hash_add(ht, key, &value) == NULL) {
+                    zval_ptr_dtor(&value);
+                }
                 zend_string_release(key);
+            } else {
+                // positional arg beyond the keys we know how to name; WithSpan
+                // declares no such parameter, so there is no name to give it
+                zval_ptr_dtor(&value);
             }
         }
     }
@@ -496,6 +643,94 @@ static zend_object *exception_isolation_end(otel_exception_state *save_state) {
     return suppressed;
 }
 
+/**
+ * Like exception_isolation_end(), but suppresses an unwind exit as well.
+ *
+ * Leaving one pending (as that function does, so exit() in a hook still
+ * terminates) relies on the isolated code being a zend_call_function the
+ * unwind can escape through. In a begin handler it is not: the VM enters the
+ * observed function next without checking, and rejects a pending exception.
+ *
+ * Returns the suppressed exception, owned by the caller, and sets
+ * *was_unwind_exit so the two cases can be reported differently.
+ */
+static zend_object *
+exception_isolation_end_suppress_all(otel_exception_state *save_state,
+                                     bool *was_unwind_exit) {
+    zend_object *suppressed = EG(exception);
+    *was_unwind_exit = suppressed != NULL && zend_is_unwind_exit(suppressed);
+
+    // NULL this before the call to zend_clear_exception, as it would try to
+    // jump to the exception handler then.
+    EG(exception) = NULL;
+
+    // this clears prev_exception if it was set for any reason
+    zend_clear_exception();
+
+    EG(exception) = save_state->exception;
+#if PHP_VERSION_ID < 80600
+    EG(prev_exception) = save_state->prev_exception;
+#endif
+    EG(opline_before_exception) = save_state->opline_before_exception;
+
+    zend_execute_data *execute_data = EG(current_execute_data);
+    if (execute_data != NULL && save_state->has_opline) {
+        execute_data->opline = save_state->opline;
+    }
+
+    return suppressed;
+}
+
+/**
+ * Release a suppressed exception object without letting its destructor escape.
+ *
+ * Releasing one can run a userland __destruct that throws or exits. Both
+ * callers release after their window has closed and EG() is restored, so that
+ * would land on unisolated state - which a begin handler cannot carry into the
+ * observed function, and which misattributes the throw to an innocent frame.
+ *
+ * So give the release its own window, and discard whatever the destructor
+ * raises: it ran only because this code was cleaning up, so there is no frame
+ * to attribute it to and nothing left to report it against.
+ */
+static void exception_isolation_release(zend_object *obj) {
+    if (obj == NULL) {
+        return;
+    }
+
+    otel_exception_state state;
+    bool was_unwind_exit;
+    exception_isolation_start(&state);
+
+    OBJ_RELEASE(obj);
+
+    // Bounded drain: each exception discarded here can have a destructor that
+    // throws a fresh one, hence a loop. Objects are released as they are
+    // taken, so nothing leaks on the way.
+    for (int i = 0; i < DESTRUCTOR_UNWIND_LIMIT && EG(exception) != NULL; i++) {
+        zend_object *nested = EG(exception);
+        EG(exception) = NULL;
+#if PHP_VERSION_ID < 80600
+        if (EG(prev_exception) != NULL) {
+            OBJ_RELEASE(EG(prev_exception));
+            EG(prev_exception) = NULL;
+        }
+#endif
+        OBJ_RELEASE(nested); // may throw again; the next iteration takes it
+    }
+
+    // Closing the window hands back anything still pending - reachable only
+    // after DESTRUCTOR_UNWIND_LIMIT throwing destructors - and transfers
+    // ownership, so it must be released. That release is outside the window,
+    // the very thing this function avoids; at that depth there is no better
+    // option, and the state is restored, so it is no worse than before.
+    zend_object *leftover =
+        exception_isolation_end_suppress_all(&state, &was_unwind_exit);
+    if (UNEXPECTED(leftover != NULL)) {
+        OBJ_RELEASE(leftover);
+    }
+}
+
 static const char *zval_get_chars(zval *zv) {
     if (zv != NULL && Z_TYPE_P(zv) == IS_STRING) {
         return Z_STRVAL_P(zv);
@@ -527,7 +762,9 @@ static void exception_isolation_handle_exception(zend_object *suppressed,
         ZVAL_DEREF(message);
     }
 
-    OBJ_RELEASE(suppressed);
+    // Isolated: a throwing __destruct must not escape into the caller's
+    // restored engine state. See exception_isolation_release().
+    exception_isolation_release(suppressed);
 }
 
 static void arg_locator_initialize(otel_arg_locator *arg_locator,
@@ -634,7 +871,9 @@ static void arg_locator_store_extended(otel_arg_locator *arg_locator) {
     }
 }
 
-static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
+static void observer_begin(zend_execute_data *execute_data,
+                           otel_observer *observer) {
+    zend_llist *hooks = &observer->pre_hooks;
     if (!zend_llist_count(hooks)) {
         return;
     }
@@ -648,12 +887,75 @@ static void observer_begin(zend_execute_data *execute_data, zend_llist *hooks) {
         OTEL_G(attr_hooks_enabled) && func_has_withspan_attribute(execute_data);
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_attribute_args(&params[6], attributes, execute_data);
-    func_get_args(&params[1], attributes, execute_data, check_for_attributes);
+    // Before the attribute args below, which need these to report a failure.
     func_get_declaring_scope(&params[2], execute_data);
     func_get_function_name(&params[3], execute_data);
     func_get_filename(&params[4], execute_data);
     func_get_lineno(&params[5], execute_data);
+
+    // Evaluating an IS_CONSTANT_AST arg runs userland - SomeClass::CONST hits
+    // the autoloader, a const-expr "new" runs a constructor - either of which
+    // can throw or exit(). Isolate as a hook call is isolated, so the exception
+    // is reported rather than dropped, and never reaches the observed frame.
+    // Zero-initialised only to satisfy -Wmaybe-uninitialized: it is written and
+    // read under the same check_for_attributes, but on PHP >= 8.6 the version
+    // guards in otel_exception_state shrink exception_isolation_start() enough
+    // for gcc to inline it, track the fields separately, and fail to correlate
+    // the two conditions. The zeroed state is never a valid one to restore.
+    otel_exception_state attr_save_state = {0};
+    otel_attr_eval attr_eval = {.captured = NULL, .stopped = false};
+    if (UNEXPECTED(check_for_attributes)) {
+        exception_isolation_start(&attr_save_state);
+    }
+
+    func_get_attribute_args(&params[6], attributes, execute_data, &attr_eval);
+    func_get_args(&params[1], attributes, execute_data, check_for_attributes,
+                  &attr_eval);
+
+    if (UNEXPECTED(check_for_attributes)) {
+        // Only an unwind exit can still be pending; a plain one was captured
+        // above so evaluation could continue past it.
+        bool was_unwind_exit;
+        zend_object *suppressed = exception_isolation_end_suppress_all(
+            &attr_save_state, &was_unwind_exit);
+        // Read once, so a call hitting both failures reports both; only later
+        // calls are silenced.
+        bool failed = was_unwind_exit || attr_eval.captured != NULL;
+        bool report = failed && !observer->attr_eval_warned;
+        // Cleared on a clean call: silencing is only justified for a fault in
+        // the declaration, which recurs every call. One that stops recurring
+        // was transient, so re-arm or a later real fault goes unreported.
+        observer->attr_eval_warned = failed;
+        if (UNEXPECTED(was_unwind_exit)) {
+            if (report) {
+                // exit() during evaluation. Nothing here can honour it, so say
+                // so rather than resume silently.
+                php_error_docref(NULL, E_CORE_WARNING,
+                                 "OpenTelemetry: exit() during attribute arg"
+                                 " evaluation cannot be honoured, class=%s"
+                                 " function=%s",
+                                 zval_get_chars(&params[2]),
+                                 zval_get_chars(&params[3]));
+            }
+        }
+        // Isolated releases throughout: these objects come from userland, so a
+        // throwing __destruct is plausible and must not escape here.
+        exception_isolation_release(suppressed);
+        if (UNEXPECTED(attr_eval.captured != NULL)) {
+            if (report) {
+                // Reported after the window closes, as other hook paths do.
+                // The helper takes ownership either way.
+                exception_isolation_handle_exception(attr_eval.captured,
+                                                     &params[2], &params[3],
+                                                     "attribute arg"
+                                                     " evaluation");
+            } else {
+                exception_isolation_release(attr_eval.captured);
+            }
+        }
+    } else if (UNEXPECTED(attr_eval.captured != NULL)) {
+        exception_isolation_release(attr_eval.captured);
+    }
 
     ZVAL_ARR(&params[7], attributes);
 
@@ -825,7 +1127,7 @@ static void observer_end(zend_execute_data *execute_data, zval *retval,
     uint32_t param_count = 8;
 
     func_get_this_or_called_scope(&params[0], execute_data);
-    func_get_args(&params[1], NULL, execute_data, false);
+    func_get_args(&params[1], NULL, execute_data, false, NULL);
     func_get_retval(&params[2], retval);
     func_get_exception(&params[3]);
     func_get_declaring_scope(&params[4], execute_data);
@@ -903,7 +1205,7 @@ static void observer_begin_handler(zend_execute_data *execute_data) {
         return;
     }
 
-    observer_begin(execute_data, &observer->pre_hooks);
+    observer_begin(execute_data, observer);
 }
 
 static void observer_end_handler(zend_execute_data *execute_data,
@@ -928,6 +1230,7 @@ static void init_observer(otel_observer *observer) {
                     (llist_dtor_func_t)zval_ptr_dtor, 0);
     zend_llist_init(&observer->post_hooks, sizeof(zval),
                     (llist_dtor_func_t)zval_ptr_dtor, 0);
+    observer->attr_eval_warned = false;
 }
 
 static otel_observer *create_observer() {
@@ -939,6 +1242,7 @@ static otel_observer *create_observer() {
 static void copy_observer(otel_observer *source, otel_observer *destination) {
     destination->pre_hooks = source->pre_hooks;
     destination->post_hooks = source->post_hooks;
+    destination->attr_eval_warned = source->attr_eval_warned;
 }
 
 static bool find_observers(HashTable *ht, zend_string *n, zend_llist *pre_hooks,
