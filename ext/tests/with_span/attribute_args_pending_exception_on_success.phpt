@@ -17,8 +17,28 @@ arrive, and the converted exception must be reported rather than swallowed.
 
 Converting diagnostics to exceptions is standard in Symfony, Laravel and
 PHPUnit, so this is an ordinary configuration, not a corner case.
+
+Capped at < 8.6 because the vehicle no longer produces the shape being tested,
+not because the invariant stopped mattering. PHP 8.6 added an EG(exception)
+check to array_set_zval_key() (Zend/zend_API.c), so a lossy float key now
+returns FAILURE instead of SUCCESS-with-pending-exception, and the arg is
+dropped before the loop sees it - expected output would be array(1), not
+array(2). 8.6 is right to do this - the same check fixes an engine assertion
+that 8.3/8.4 abort on - and once FAILURE is returned the value is gone, because
+zend_get_attribute_value() frees it before returning. Keeping the arg would
+mean suppressing the application's error handler around attribute evaluation,
+which is possible but a semantic change, deliberately not made here.
+
+If a vehicle is found that still yields SUCCESS with a pending exception on
+8.6, prefer restoring the cap - the invariant applies to every version. Probed
+and rejected on 8.6: lossy float key, null key, non-numeric arithmetic. Do NOT
+"fix" this by keying the loop on EG(exception) again; that is the exact bug
+this test was written to catch, and it skipped every parameter silently.
 --SKIPIF--
-<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
+<?php
+if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1');
+if (PHP_VERSION_ID >= 80600) die('skip vehicle returns FAILURE on PHP >= 8.6, see DESCRIPTION');
+?>
 --EXTENSIONS--
 opentelemetry
 --INI--
