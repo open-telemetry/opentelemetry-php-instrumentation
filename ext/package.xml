@@ -115,9 +115,16 @@
         <dir name="with_span">
           <file name="attribute_args_class_constant.phpt" role="test"/>
           <file name="attribute_args_class_constant_in_attributes.phpt" role="test"/>
+          <file name="attribute_args_exit_in_autoload.phpt" role="test"/>
           <file name="attribute_args_extra_positional.phpt" role="test"/>
+          <file name="attribute_args_failure_keeps_later_args.phpt" role="test"/>
+          <file name="attribute_args_failure_warns_once.phpt" role="test"/>
           <file name="attribute_args_interface_self_const.phpt" role="test"/>
           <file name="attribute_args_not_over_freed.phpt" role="test"/>
+          <file name="attribute_args_pending_exception_on_success.phpt" role="test"/>
+          <file name="attribute_args_throwing_autoload.phpt" role="test"/>
+          <file name="attribute_args_throwing_exception_destructor.phpt" role="test"/>
+          <file name="attribute_args_transient_failure_rearms.phpt" role="test"/>
           <file name="attribute_args_undefined_constant.phpt" role="test"/>
           <file name="attribute_named_params_passed_to_pre_hook.phpt" role="test"/>
           <file name="attribute_on_function.phpt" role="test"/>
@@ -137,6 +144,7 @@
         <dir name="span_attribute">
           <file name="attribute_on_interface.phpt" role="test"/>
           <file name="class_constant_name.phpt" role="test"/>
+          <file name="exit_in_autoload.phpt" role="test"/>
           <file name="function_params.phpt" role="test"/>
           <file name="function_params_non_simple.phpt" role="test"/>
           <file name="interface_self_const_name.phpt" role="test"/>
@@ -144,6 +152,7 @@
           <file name="null_value_filtered.phpt" role="test"/>
           <file name="refcounted_values.phpt" role="test"/>
           <file name="span_attribute_attribute_priority.phpt" role="test"/>
+          <file name="unevaluable_name_is_not_renamed.phpt" role="test"/>
         </dir>
       </dir>
     </dir>
