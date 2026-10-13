@@ -8,13 +8,19 @@ $ PHP_VERSION=x.y.z docker compose build debian
 $ PHP_VERSION=x.y.z docker compose build alpine
 ```
 
+Each `PHP_VERSION` and distro combination is tagged separately
+(`opentelemetry-php-instrumentation:x.y.z-debian`), so switching between
+versions reuses an image already built rather than rebuilding it.
+
 You can add extra configure flags, but some may require extra dependencies to be installed.
 
-You can also change the PHP version:
-
 ```shell
-$ docker compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" --build-arg PHP_VERSION=8.0.23 [debian|alpine]
+$ PHP_VERSION=8.0.23 docker compose build --build-arg PHP_CONFIG_OPTS="--enable-debug --enable-zts" [debian|alpine]
 ```
+
+Set the version via the `PHP_VERSION` environment variable rather than
+`--build-arg PHP_VERSION=`: the variable also feeds the image tag, so passing it
+only as a build arg would build one version under another version's tag.
 
 The latest PHP version can be found on: https://www.php.net/releases/index.php
 
