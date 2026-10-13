@@ -20,7 +20,9 @@ A *bare* #[SpanAttribute] has no name arg at all and is defined to key on the
 parameter name - that is not a fallback and is unaffected. The third parameter
 below covers it.
 
-Methods, not plain functions: see KNOWN_ISSUES.md #8.
+Uses methods rather than plain functions deliberately: a #[WithSpan] on a
+top-level function is ignored once the file is served from the opcache, a
+pre-existing defect unrelated to this test.
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--

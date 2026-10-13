@@ -27,7 +27,8 @@ this test used an autoloader and no fourth call, and passed against that same
 mutant - it asserted nothing. Do not simplify it back.
 
 Companion to attribute_args_failure_warns_once.phpt, which covers the
-suppression half. Methods, not plain functions: see KNOWN_ISSUES.md #8.
+suppression half and explains why both use methods rather than plain
+functions.
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--

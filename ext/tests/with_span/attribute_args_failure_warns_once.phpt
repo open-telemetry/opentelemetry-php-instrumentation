@@ -16,7 +16,7 @@ is suppressed, not the behaviour.
 
 Uses methods rather than plain functions deliberately: a #[WithSpan] on a
 top-level function is dropped once the file is served from the opcache
-(KNOWN_ISSUES.md #8, pre-existing), which would make this test fail for an
+(a pre-existing defect), which would make this test fail for an
 unrelated reason under opcache or JIT. Methods are unaffected, so this test
 holds in every configuration.
 --SKIPIF--

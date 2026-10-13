@@ -12,11 +12,17 @@ therefore returns a flag and the caller sets eval_state->stopped, the same state
 an arg's own exit() produces.
 
 Without that signal the unwind exit stays pending while the loop continues, and
-the next arg is evaluated with EG(exception) set. That is the failure the
-drain exists to prevent, reached through exit() instead of throw: on PHP >= 8.6
-the arg is dropped, and on 8.3/8.4 debug builds it can reach
-ZEND_FETCH_CLASS_CONSTANT's ZEND_ASSERT(!EG(exception)) - see
-UPSTREAM-8.3-8.4-CONST-EXPR-ASSERT.md.
+the next arg is evaluated with EG(exception) set - evaluation carrying on past
+an exit() that cannot be honoured. This test is the version of that reached
+through exit() rather than throw.
+
+Note the harm here is the continued evaluation itself, not an engine abort.
+On 8.3/8.4 debug builds a constant expression that emits a diagnostic while
+succeeding can trip ZEND_FETCH_CLASS_CONSTANT's ZEND_ASSERT(!EG(exception)),
+but that was measured *not* to be reachable this way: given both its
+conditions on an attribute arg, 8.4.1 debug evaluates cleanly and reports a
+warning, while the same conditions in userland code abort. Attribute args
+evaluate via zend_ast_evaluate(), not the VM handler that holds the assertion.
 
 The assertion is the autoloader, which must NOT run: it stands for "an arg was
 evaluated after the exit". Arg 3 is an autoloaded class constant so that it is

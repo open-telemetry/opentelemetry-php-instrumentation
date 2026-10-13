@@ -16,8 +16,9 @@ remaining args are still being evaluated.
 Left pending, it is indistinguishable from an exception raised by the next arg's
 own evaluation. On PHP >= 8.6 it is worse than cosmetic: a pending exception
 makes the next zend_get_attribute_value() return FAILURE, and that arg is
-dropped (see KNOWN_ISSUES.md #11). So the release drains what the destructor
-raises instead of leaving it for the next arg to be blamed for.
+dropped - 8.6 fails that call outright when EG(exception) is set on entry,
+where 8.5 and earlier evaluated regardless. So the release drains what the
+destructor raises instead of leaving it for the next arg to be blamed for.
 
 Here args 1 and 2 both throw, so arg 2's exception is the discarded one, and its
 destructor throws in turn. Arg 3 - the attributes array - is evaluated after
@@ -30,8 +31,9 @@ test pass against a build with the drain removed:
 - **Arg 3 must still be unevaluated at call time.** A literal
   `['survivor' => 'yes']` is const-folded at compile time, so nothing is
   evaluated after the destructor throws and there is no arg left to poison.
-  `Survivor::V` is autoloaded to keep it an IS_CONSTANT_AST (see §4 of
-  .claude/CLAUDE.md).
+  `Survivor::V` is autoloaded to keep it an IS_CONSTANT_AST: PHP only
+  const-folds a class constant already present in the class table, so lazy
+  loading forces a real runtime evaluation.
 - **Two args must fail.** The first exception is kept for reporting, so only a
   second failure reaches the release path being tested.
 

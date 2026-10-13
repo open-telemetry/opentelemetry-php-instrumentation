@@ -228,18 +228,21 @@ static bool is_valid_attribute_value(zval *val) {
  * EG(exception) inside that window. Releasing one of these runs a userland
  * __destruct, which can throw: left pending, that exception is
  * indistinguishable from one raised by the next arg's own evaluation, and on
- * PHP >= 8.6 it makes that evaluation return FAILURE and drop the arg (see
- * KNOWN_ISSUES.md #11).
- *
- * Anything still pending past the bound is left for the window to suppress,
- * which its close already handles.
+ * PHP >= 8.6 it makes that evaluation return FAILURE and drop the arg: since
+ * 8.6, zend_get_attribute_value() fails outright when EG(exception) is set on
+ * entry, where 8.5 and earlier evaluated regardless.
  *
  * Returns true if an unwind exit (exit() from a destructor) is left pending.
  * That one is not swallowed - the window close reports it - but the caller must
- * then stop evaluating, so it has to be told. Evaluating another arg with an
- * exception pending is the whole failure this helper exists to prevent: on PHP
- * >= 8.6 the arg is dropped, and on 8.3/8.4 debug builds it can reach
- * ZEND_FETCH_CLASS_CONSTANT's ZEND_ASSERT(!EG(exception)).
+ * then stop evaluating, so it has to be told.
+ *
+ * A destructor chain longer than DESTRUCTOR_UNWIND_LIMIT also leaves one
+ * pending, and that case deliberately does *not* stop the caller. Measured on
+ * a 12-link chain: continuing, the next arg still evaluates and arrives on
+ * 8.3/8.4; stopping drops it. On 8.6 it is dropped either way, by the FAILURE
+ * path above. So stopping only loses an arg that would otherwise survive. The
+ * pending exception is left for the suppressing window close, which is why
+ * that close suppresses rather than asserts.
  */
 static bool attr_eval_release_discarded(zend_object *obj) {
     if (obj == NULL) {
@@ -819,9 +822,15 @@ static void exception_isolation_release_batch(zend_object *obj, int depth) {
         // further only moves the bound.
         //
         // Not one object: leaking the head leaks whatever its "previous"
-        // property still holds, plus each of their backtraces. Bounded and
-        // request-scoped - the object store frees it all at shutdown - but not
-        // a single zval's worth.
+        // property still holds, plus each of their backtraces.
+        //
+        // Measured, rather than assumed: one 152-byte block per affected call
+        // on 8.3.10 debug, growing linearly (50 calls -> 7,600 bytes,
+        // "definitely lost"). It is *not* reclaimed at request shutdown, so
+        // "request-scoped" would be too generous - it is a true leak, just one
+        // that needs a >32-link destructor chain per call to reach. Note
+        // run-tests.php -m reports zero here: the zend allocator hides it, and
+        // USE_ZEND_ALLOC=0 is needed to see it.
         //
         // The depth bound is not what protects the C stack, despite being the
         // obvious reading. Each OBJ_RELEASE here can recurse arbitrarily deep
@@ -1017,8 +1026,10 @@ static void observer_begin(zend_execute_data *execute_data,
                   &attr_eval);
 
     if (UNEXPECTED(check_for_attributes)) {
-        // Only an unwind exit can still be pending; a plain one was captured
-        // above so evaluation could continue past it.
+        // Usually only an unwind exit is still pending, a plain one having been
+        // captured above so evaluation could continue past it. A destructor
+        // chain longer than DESTRUCTOR_UNWIND_LIMIT also leaves a plain one,
+        // which is why the suppressing close is used rather than an assert.
         bool was_unwind_exit;
         zend_object *suppressed = exception_isolation_end_suppress_all(
             &attr_save_state, &was_unwind_exit);

@@ -21,7 +21,9 @@ as before. A self-throwing destructor (one that throws its own class forever)
 exhausts the stack inside a single release - that is inherent to PHP and
 happens with no extension loaded, so it is not what this guards.
 
-Methods, not plain functions: see KNOWN_ISSUES.md #8.
+Uses methods rather than plain functions deliberately: a #[WithSpan] on a
+top-level function is ignored once the file is served from the opcache, a
+pre-existing defect unrelated to this test.
 --SKIPIF--
 <?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
