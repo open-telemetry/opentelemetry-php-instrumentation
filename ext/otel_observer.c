@@ -55,6 +55,12 @@ typedef struct otel_attr_eval {
 // throw again. A longer chain is pathological; the bound matters, not its size.
 #define DESTRUCTOR_UNWIND_LIMIT 8
 
+// Nested isolation windows to open while draining. Closing a window can hand
+// back a still-pending exception whose own release can throw, so the drain
+// recurses; this bounds the C stack that a chain of throwing destructors can
+// consume. Total absorbed is this times DESTRUCTOR_UNWIND_LIMIT.
+#define DESTRUCTOR_UNWIND_DEPTH_LIMIT 4
+
 typedef struct otel_arg_locator {
     zend_execute_data *execute_data;
     // Number of argument slots reserved in execute_data, any arguments beyond
@@ -214,6 +220,63 @@ static bool is_valid_attribute_value(zval *val) {
 }
 
 /**
+ * Release an exception object being discarded during attribute arg evaluation,
+ * leaving EG(exception) as clean as it was found.
+ *
+ * Callers are already inside the attribute isolation window, so this does not
+ * open another one - it only has to stop the release from *repopulating*
+ * EG(exception) inside that window. Releasing one of these runs a userland
+ * __destruct, which can throw: left pending, that exception is
+ * indistinguishable from one raised by the next arg's own evaluation, and on
+ * PHP >= 8.6 it makes that evaluation return FAILURE and drop the arg (see
+ * KNOWN_ISSUES.md #11).
+ *
+ * Anything still pending past the bound is left for the window to suppress,
+ * which its close already handles.
+ *
+ * Returns true if an unwind exit (exit() from a destructor) is left pending.
+ * That one is not swallowed - the window close reports it - but the caller must
+ * then stop evaluating, so it has to be told. Evaluating another arg with an
+ * exception pending is the whole failure this helper exists to prevent: on PHP
+ * >= 8.6 the arg is dropped, and on 8.3/8.4 debug builds it can reach
+ * ZEND_FETCH_CLASS_CONSTANT's ZEND_ASSERT(!EG(exception)).
+ */
+static bool attr_eval_release_discarded(zend_object *obj) {
+    if (obj == NULL) {
+        return false;
+    }
+
+    OBJ_RELEASE(obj);
+
+    // Each exception discarded here can have a destructor that throws a fresh
+    // one, hence a loop. Released as they are taken, so nothing leaks.
+    for (int i = 0; i < DESTRUCTOR_UNWIND_LIMIT && EG(exception) != NULL; i++) {
+        zend_object *nested = EG(exception);
+        // Released before the unwind-exit check, so the early return cannot
+        // leave it behind. zend_throw_unwind_exit() does not touch
+        // prev_exception, so an exit() mid-drain would otherwise strand
+        // whatever a destructor had saved there.
+#if PHP_VERSION_ID < 80600
+        if (EG(prev_exception) != NULL) {
+            zend_object *prev = EG(prev_exception);
+            EG(prev_exception) = NULL;
+            OBJ_RELEASE(prev);
+        }
+#endif
+        if (UNEXPECTED(zend_is_unwind_exit(nested))) {
+            // exit() from a destructor. Not ours to swallow: leave it pending
+            // for the window close, which reports it, and tell the caller to
+            // stop. EG(exception) still holds it, so nothing is leaked here.
+            return true;
+        }
+        EG(exception) = NULL;
+        OBJ_RELEASE(nested); // may throw again; the next iteration takes it
+    }
+
+    return false;
+}
+
+/**
  * Take a pending exception left by attribute arg evaluation, so the remaining
  * args still evaluate. Keeps the first (the one reported), releases later ones.
  *
@@ -241,17 +304,32 @@ static void attr_eval_capture_exception(otel_attr_eval *state) {
 
     EG(exception) = NULL;
 #if PHP_VERSION_ID < 80600
-    if (EG(prev_exception) != NULL) {
-        OBJ_RELEASE(EG(prev_exception));
-        EG(prev_exception) = NULL;
-    }
+    zend_object *prev = EG(prev_exception);
+    EG(prev_exception) = NULL;
 #endif
 
     if (state->captured == NULL) {
         state->captured = exception; // now owned by the state
     } else {
-        OBJ_RELEASE(exception);
+        // Both these releases can run a throwing __destruct, so they go through
+        // the draining helper: a fresh exception left pending here would be
+        // charged to the next arg's evaluation. Cleared from EG() above first,
+        // so the drain cannot re-take what it is releasing.
+        //
+        // An exit() from one of those destructors stops evaluation, exactly as
+        // one raised by an arg itself does. Note this runs on the *kept* path
+        // too, via the prev release below: captured is already set there and
+        // must stay set, since it is the exception to report. Both can be true
+        // and observer_begin() reports them independently.
+        if (UNEXPECTED(attr_eval_release_discarded(exception))) {
+            state->stopped = true;
+        }
     }
+#if PHP_VERSION_ID < 80600
+    if (UNEXPECTED(attr_eval_release_discarded(prev))) {
+        state->stopped = true;
+    }
+#endif
 }
 
 // get function args. any args with the
@@ -692,8 +770,15 @@ exception_isolation_end_suppress_all(otel_exception_state *save_state,
  * So give the release its own window, and discard whatever the destructor
  * raises: it ran only because this code was cleaning up, so there is no frame
  * to attribute it to and nothing left to report it against.
+ *
+ * Closing the window hands back anything still pending and transfers ownership,
+ * so that too must be released - and releasing it can throw in exactly the same
+ * way, which is why the batch recurses rather than releasing it bare. Capacity
+ * is DESTRUCTOR_UNWIND_LIMIT * DESTRUCTOR_UNWIND_DEPTH_LIMIT consecutive
+ * throwing destructors; the recursion is bounded because each level costs C
+ * stack, which a chain of malicious destructors must not be able to exhaust.
  */
-static void exception_isolation_release(zend_object *obj) {
+static void exception_isolation_release_batch(zend_object *obj, int depth) {
     if (obj == NULL) {
         return;
     }
@@ -712,23 +797,42 @@ static void exception_isolation_release(zend_object *obj) {
         EG(exception) = NULL;
 #if PHP_VERSION_ID < 80600
         if (EG(prev_exception) != NULL) {
-            OBJ_RELEASE(EG(prev_exception));
+            zend_object *prev = EG(prev_exception);
             EG(prev_exception) = NULL;
+            OBJ_RELEASE(prev);
         }
 #endif
         OBJ_RELEASE(nested); // may throw again; the next iteration takes it
     }
 
-    // Closing the window hands back anything still pending - reachable only
-    // after DESTRUCTOR_UNWIND_LIMIT throwing destructors - and transfers
-    // ownership, so it must be released. That release is outside the window,
-    // the very thing this function avoids; at that depth there is no better
-    // option, and the state is restored, so it is no worse than before.
     zend_object *leftover =
         exception_isolation_end_suppress_all(&state, &was_unwind_exit);
     if (UNEXPECTED(leftover != NULL)) {
-        OBJ_RELEASE(leftover);
+        if (EXPECTED(depth < DESTRUCTOR_UNWIND_DEPTH_LIMIT)) {
+            // Isolated, like the release that produced it.
+            exception_isolation_release_batch(leftover, depth + 1);
+        }
+        // Past the bound the object is deliberately leaked. It is reachable
+        // only by a chain of throwing destructors long enough to look
+        // engineered, and the alternatives are worse: releasing it here is the
+        // unisolated throw this function exists to prevent, and recursing
+        // further only moves the bound.
+        //
+        // Not one object: leaking the head leaks whatever its "previous"
+        // property still holds, plus each of their backtraces. Bounded and
+        // request-scoped - the object store frees it all at shutdown - but not
+        // a single zval's worth.
+        //
+        // The depth bound is not what protects the C stack, despite being the
+        // obvious reading. Each OBJ_RELEASE here can recurse arbitrarily deep
+        // into userland, which dwarfs these frames and is unbounded whatever
+        // this limit is. The bound keeps *this* recursion finite; PHP's own
+        // stack limit is what stops the userland side.
     }
+}
+
+static void exception_isolation_release(zend_object *obj) {
+    exception_isolation_release_batch(obj, 0);
 }
 
 static const char *zval_get_chars(zval *zv) {
