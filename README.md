@@ -329,6 +329,46 @@ class MyClass
     }
 ```
 
+### Attribute key evaluation
+
+The key does not have to be a literal. `#[SpanAttribute(SomeClass::KEY)]` is valid, and the
+constant is resolved at runtime, on every call to the annotated function.
+
+If that key cannot be resolved — an unresolvable constant from an optional dependency that is
+not installed, or an autoloader that throws — **the attribute is dropped** rather than recorded
+under the parameter name, and a warning naming the class, function and underlying error is
+emitted. The warning is emitted once per function per request, and re-armed by a call that
+evaluates cleanly, so a repeatedly-failing declaration does not flood the log while a later,
+genuinely different failure is still reported.
+
+Dropping is deliberate. Falling back to the parameter name would record the correct value under
+a key nobody queries: `#[SpanAttribute('db.user.id')] int $id` would silently export `id`, which
+looks like deliberate configuration. A missing attribute is diagnosable; a renamed one is not.
+
+A *bare* `#[SpanAttribute]` is unaffected — it has no key argument and is defined to use the
+parameter name, which is not a fallback. Only parameters whose declared key fails to resolve are
+dropped; others on the same function are unaffected.
+
+Note that resolution happens per call because a constant expression is not necessarily constant:
+`new` in an attribute argument runs its constructor on every evaluation, so results are not
+cached.
+
+### Known limitation: throwing exception destructors
+
+Only the first exception from attribute evaluation is kept, to be reported; any further ones are
+released as they arrive. Releasing an exception runs its userland `__destruct`, and if that
+destructor throws, the new exception is absorbed and discarded — it ran only because the
+extension was cleaning up, so there is no frame it can fairly be attributed to.
+
+Absorption is bounded at 32 consecutive throwing destructors. Beyond that the last exception
+object is deliberately leaked rather than released outside its isolation window, which would
+surface a fatal error against a function that never threw. The leak is **152 bytes per affected
+call**, measured on a PHP 8.3.10 debug build, and is not reclaimed at request shutdown.
+
+Reaching it requires a chain of more than 32 exceptions whose destructors each throw, per call,
+which does not arise accidentally. It is documented as a known trade-off, not a recommended
+configuration.
+
 ## Contributing
 See [DEVELOPMENT.md](DEVELOPMENT.md) and https://github.com/open-telemetry/opentelemetry-php/blob/main/CONTRIBUTING.md
 
