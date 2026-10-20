@@ -130,8 +130,9 @@ static zend_attribute *find_spanattribute_attribute(zend_function *func,
     zend_class_entry *ce = func->common.scope;
     if (ce && ce->num_interfaces > 0) {
         zend_class_entry *interface_ce;
-        for (uint32_t i = 0; i < ce->num_interfaces; i++) {
-            interface_ce = ce->interfaces[i];
+        // Not `i`: that would shadow the parameter index.
+        for (uint32_t iface = 0; iface < ce->num_interfaces; iface++) {
+            interface_ce = ce->interfaces[iface];
             if (interface_ce != NULL) {
                 // does the interface have the function we are looking for?
                 zend_function *iface_func =
@@ -335,6 +336,72 @@ static void attr_eval_capture_exception(otel_attr_eval *state) {
 #endif
 }
 
+// Called from both arg loops in func_get_args(): with extra args, the declared
+// parameters are consumed by the first loop.
+static void arg_maybe_add_span_attribute(HashTable *attributes,
+                                         zend_execute_data *ex, uint32_t i,
+                                         zval *p, otel_attr_eval *eval_state) {
+    // Only an unwind exit stops further attempts. Keyed on the stop
+    // flag, not on EG(exception): a *successful* evaluation can
+    // leave one set, which would skip every later parameter.
+    if (UNEXPECTED(eval_state != NULL && eval_state->stopped)) {
+        return;
+    }
+    // Not bounded by num_args: the interface fallback can find an attribute at
+    // an index a variadic implementation never declared.
+    zend_class_entry *attr_scope = ex->func->common.scope;
+    zend_attribute *attribute =
+        find_spanattribute_attribute(ex->func, i, &attr_scope);
+    if (attribute == NULL || !is_valid_attribute_value(p)) {
+        return;
+    }
+    // vars[] is only valid for declared parameters. num_args excludes the
+    // variadic, whose name sits at vars[num_args].
+    uint32_t declared = ex->func->op_array.num_args;
+    if (ex->func->common.fn_flags & ZEND_ACC_VARIADIC) {
+        declared++;
+    }
+    zend_string *arg_name = i < declared ? ex->func->op_array.vars[i] : NULL;
+    // The name arg may be an unevaluated IS_CONSTANT_AST, so evaluate it
+    // rather than assuming IS_STRING. A bare #[SpanAttribute] has no name arg
+    // and is *defined* to key on the parameter name - not a fallback.
+    zend_string *key = arg_name;
+    bool have_key = true;
+    zval name_val;
+    ZVAL_UNDEF(&name_val);
+    if (attribute->argc) {
+        if (zend_get_attribute_value(&name_val, attribute, 0, attr_scope) ==
+            SUCCESS) {
+            if (Z_TYPE(name_val) == IS_STRING) {
+                key = Z_STR(name_val);
+            }
+        } else {
+            // on failure the zval has already been released, so clear it
+            // before the dtor below
+            ZVAL_UNDEF(&name_val);
+            // Drop it rather than falling back to the parameter name: that
+            // would publish a plausible-looking wrong key nothing queries.
+            // A gap is diagnosable; a rename is not.
+            have_key = false;
+        }
+        // After either outcome - success does not clear a
+        // diagnostic-turned-exception.
+        attr_eval_capture_exception(eval_state);
+    }
+    // A NULL key needed a parameter name this function doesn't declare. Drop
+    // the attribute rather than invent a key.
+    if (EXPECTED(have_key && key != NULL)) {
+        zend_hash_del(attributes, key);
+        // p is borrowed from the caller's frame, so ref it to balance the
+        // attributes HashTable's ZVAL_PTR_DTOR teardown - as
+        // func_get_attribute_args() does.
+        if (zend_hash_add(attributes, key, p) != NULL) {
+            Z_TRY_ADDREF_P(p);
+        }
+    }
+    zval_ptr_dtor(&name_val);
+}
+
 // get function args. any args with the
 // SpanAttributes attribute are added to the attributes HashTable
 static void func_get_args(zval *zv, HashTable *attributes,
@@ -359,6 +426,11 @@ static void func_get_args(zval *zv, HashTable *attributes,
             p = ZEND_CALL_ARG(ex, 1);
             if (arg_count > first_extra_arg) {
                 while (i < first_extra_arg) {
+                    if (check_for_attributes &&
+                        ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                        arg_maybe_add_span_attribute(attributes, ex, i, p,
+                                                     eval_state);
+                    }
                     q = p;
                     if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
                         ZVAL_DEREF(q);
@@ -377,58 +449,10 @@ static void func_get_args(zval *zv, HashTable *attributes,
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
-                // Only an unwind exit stops further attempts. Keyed on the stop
-                // flag, not on EG(exception): a *successful* evaluation can
-                // leave one set, which would skip every later parameter.
                 if (check_for_attributes &&
-                    ex->func->type != ZEND_INTERNAL_FUNCTION &&
-                    EXPECTED(eval_state == NULL || !eval_state->stopped)) {
-                    zend_string *arg_name = ex->func->op_array.vars[i];
-                    zend_class_entry *attr_scope = ex->func->common.scope;
-                    zend_attribute *attribute =
-                        find_spanattribute_attribute(ex->func, i, &attr_scope);
-                    if (attribute != NULL && is_valid_attribute_value(p)) {
-                        // The name arg may be an unevaluated IS_CONSTANT_AST,
-                        // so evaluate it rather than assuming IS_STRING. A bare
-                        // #[SpanAttribute] has no name arg and is *defined* to
-                        // key on the parameter name - not a fallback.
-                        zend_string *key = arg_name;
-                        bool have_key = true;
-                        zval name_val;
-                        ZVAL_UNDEF(&name_val);
-                        if (attribute->argc) {
-                            if (zend_get_attribute_value(&name_val, attribute,
-                                                         0, attr_scope) ==
-                                SUCCESS) {
-                                if (Z_TYPE(name_val) == IS_STRING) {
-                                    key = Z_STR(name_val);
-                                }
-                            } else {
-                                // on failure the zval has already been
-                                // released, so clear it before the dtor below
-                                ZVAL_UNDEF(&name_val);
-                                // Drop it rather than falling back to the
-                                // parameter name: that would publish a
-                                // plausible-looking wrong key nothing queries.
-                                // A gap is diagnosable; a rename is not.
-                                have_key = false;
-                            }
-                            // After either outcome - success does not clear a
-                            // diagnostic-turned-exception.
-                            attr_eval_capture_exception(eval_state);
-                        }
-                        if (EXPECTED(have_key)) {
-                            zend_hash_del(attributes, key);
-                            // p is borrowed from the caller's frame, so ref it
-                            // to balance the attributes HashTable's
-                            // ZVAL_PTR_DTOR teardown - as
-                            // func_get_attribute_args() does.
-                            if (zend_hash_add(attributes, key, p) != NULL) {
-                                Z_TRY_ADDREF_P(p);
-                            }
-                        }
-                        zval_ptr_dtor(&name_val);
-                    }
+                    ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                    arg_maybe_add_span_attribute(attributes, ex, i, p,
+                                                 eval_state);
                 }
                 q = p;
                 if (EXPECTED(Z_TYPE_INFO_P(q) != IS_UNDEF)) {
