@@ -1,5 +1,6 @@
 services:
   debian:
+    image: opentelemetry-php-instrumentation:${PHP_VERSION:-8.3.10}-debian
     build:
       context: docker
       dockerfile: Dockerfile.debian
@@ -10,6 +11,7 @@ services:
     environment:
       TEST_PHP_ARGS: "-q"
   alpine:
+    image: opentelemetry-php-instrumentation:${PHP_VERSION:-8.3.10}-alpine
     build:
       context: docker
       dockerfile: Dockerfile.alpine
@@ -20,6 +22,7 @@ services:
     environment:
       TEST_PHP_ARGS: "-q"
   32bit:
+    image: opentelemetry-php-instrumentation:${PHP_VERSION:-8.4.0beta4}-alpine-i386
     build:
       context: docker
       dockerfile: Dockerfile.alpine
