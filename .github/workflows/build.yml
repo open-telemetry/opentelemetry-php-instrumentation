@@ -110,6 +110,7 @@ jobs:
         id: ref
         run: |
           $ref = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          Write-Host "Artifact ref: $ref"
           "name=$ref" >> $env:GITHUB_OUTPUT
       # php-windows-builder 1.9.0 cannot build from a subdirectory of a
       # local checkout. It moves the subdirectory into its build directory,
