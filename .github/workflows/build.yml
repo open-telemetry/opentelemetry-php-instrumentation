@@ -111,8 +111,14 @@ jobs:
         run: |
           $ref = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
           "name=$ref" >> $env:GITHUB_OUTPUT
-      # Builds from a copy of the checkout and deletes ext/ from the
-      # original, so no later step can use it.
+      # php-windows-builder 1.9.0 cannot build from a subdirectory of a
+      # local checkout. It moves the subdirectory into its build directory,
+      # then reads config.w32 from the checkout root.
+      - name: Move extension to repository root
+        working-directory: .
+        run: |
+          Copy-Item -Path ext\* -Destination . -Recurse -Force
+          Remove-Item -Path ext -Recurse -Force
       - name: Build, test and upload
         uses: php/php-windows-builder/extension@29352c0ef9e8ce65264ea9e287881a6f7758a953 # 1.9.0
         with:
