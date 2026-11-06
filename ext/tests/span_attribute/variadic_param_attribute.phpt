@@ -26,7 +26,7 @@ class Subject
     #[WithSpan]
     public function m(
         #[SpanAttribute('key_a')] string $a,
-        #[SpanAttribute('key_rest')] string ...$rest,
+        #[SpanAttribute] string ...$key_rest,
     ): void {
         var_dump('body');
     }
