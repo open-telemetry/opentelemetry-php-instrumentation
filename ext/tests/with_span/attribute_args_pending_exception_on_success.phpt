@@ -29,6 +29,8 @@ If this vehicle stops working too, find another rather than capping the test.
 Do NOT "fix" a failure by keying the loop on EG(exception) again; that is the
 exact bug this test was written to catch, and it skipped every parameter
 silently.
+--SKIPIF--
+<?php if (PHP_VERSION_ID < 80100) die('skip requires PHP >= 8.1'); ?>
 --EXTENSIONS--
 opentelemetry
 --INI--
