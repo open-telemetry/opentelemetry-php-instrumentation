@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [ '8.1', '8.2', '8.3', '8.4' ]
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6']
 
     steps:
       - name: Checkout
@@ -91,70 +91,43 @@ jobs:
           if-no-files-found: error
 
   windows:
+    # Needs the 14.29, 14.44 and 14.5x MSVC toolsets for vs16, vs17 and vs18.
     runs-on: windows-2025
     continue-on-error: false
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1', '8.2', '8.3', '8.4']
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5', '8.6']
         ts: ['ts', 'nts']
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install PHP ${{ matrix.php }}-${{ matrix.ts }}
-        id: setup-php-sdk
-        uses: php/setup-php-sdk@e2ce1c294f272ed93e8083f14649f5adadf93788 # v0.12
+      # The builder names artifacts after the ref without sanitizing it,
+      # and interpolates it into a PowerShell string.
+      - name: Artifact ref
+        id: ref
+        run: |
+          $ref = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          Write-Host "Artifact ref: $ref"
+          "name=$ref" >> $env:GITHUB_OUTPUT
+      # php-windows-builder 1.9.0 cannot build from a subdirectory of a
+      # local checkout. It moves the subdirectory into its build directory,
+      # then reads config.w32 from the checkout root.
+      - name: Move extension to repository root
+        working-directory: .
+        run: |
+          Copy-Item -Path ext\* -Destination . -Recurse -Force
+          Remove-Item -Path ext -Recurse -Force
+      - name: Build, test and upload
+        uses: php/php-windows-builder/extension@29352c0ef9e8ce65264ea9e287881a6f7758a953 # 1.9.0
         with:
-          version: ${{ matrix.php }}
+          php-version: ${{ matrix.php }}
           arch: x64
           ts: ${{ matrix.ts }}
-      - name: Install dependencies
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-        with:
-          arch: x64
-          toolset: ${{ steps.setup-php-sdk.outputs.toolset }}
-      - name: Build
-        env:
-          PHP_SDK_PREFIX: ${{ steps.setup-php-sdk.outputs.prefix }}
-        run: |
-          phpize
-          ./configure --enable-opentelemetry --with-prefix=$env:PHP_SDK_PREFIX
-          nmake
-      - name: Test
-        env:
-          TEST_PHP_ARGS: "-q"
-        run: nmake test TESTS=--show-diff
-      - name: Get Compiler Version + Build Name
-        shell: bash
-        run: |
-          case "$VisualStudioVersion" in
-            16.*) COMPILER="vs16";;
-            17.*) COMPILER="vs17";;
-            18.*) COMPILER="vs18";;
-            *) echo "Unknown MSVC version: $VisualStudioVersion"; exit 1;;
-          esac
-          echo "Detected Compiler: $COMPILER"
-          SAFE_REF_NAME="${GITHUB_REF_NAME//\//-}"
-          BUILD_NAME="php_opentelemetry-${SAFE_REF_NAME}-${{matrix.php}}-${{matrix.ts}}-$COMPILER-x86_64"
-          echo "Build Name: $BUILD_NAME"
-          echo "BUILD_NAME=$BUILD_NAME" >> $GITHUB_ENV
-
-      - name: Rename and copy binaries
-        run: |
-          md "binaries\$($env:BUILD_NAME)"
-          $file = Get-ChildItem -Path x64 -Recurse -Filter php_opentelemetry.dll
-          Copy-Item -Path $file.FullName -Destination "binaries\$($env:BUILD_NAME)\$($env:BUILD_NAME).dll"
-      - name: Find
-        run: |
-          Get-ChildItem -Path binaries -Recurse -Force | ForEach-Object { $_.FullName }
-      - name: Upload artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: ${{env.BUILD_NAME}}
-          path: ext\binaries\${{env.BUILD_NAME}}\${{env.BUILD_NAME}}.dll
-          if-no-files-found: error
+          args: --enable-opentelemetry
+          extension-ref: ${{ steps.ref.outputs.name }}
 
   release-if-tag:
     runs-on: ubuntu-latest
@@ -168,14 +141,23 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: download-artifacts
+      - name: Download PECL package
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
+          name: opentelemetry-pecl
+          path: ext/artifacts/opentelemetry-pecl
+      # Each Windows artifact holds a ready-made zip, plus logs/ which the
+      # release glob does not reach.
+      - name: Download Windows binaries
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: php_opentelemetry-*
+          merge-multiple: true
           path: ext/artifacts
       - name: zip
         run: |
           cd artifacts
-          find . -maxdepth 1 -type d -exec zip -jr {}.zip {} \;
+          zip -jr opentelemetry-pecl.zip opentelemetry-pecl
       - name: Release
         # `gh release` cannot replicate this action's create-or-update behaviour
         # on re-run, and rewriting release automation is out of scope here.
