@@ -145,16 +145,21 @@
         </dir>
         <dir name="span_attribute">
           <file name="attribute_on_interface.phpt" role="test"/>
+          <file name="bare_attribute_survives_extra_args.phpt" role="test"/>
           <file name="class_constant_name.phpt" role="test"/>
           <file name="exit_in_autoload.phpt" role="test"/>
           <file name="function_params.phpt" role="test"/>
           <file name="function_params_non_simple.phpt" role="test"/>
+          <file name="interface_attribute_variadic_impl.phpt" role="test"/>
+          <file name="interface_param_index_not_shadowed.phpt" role="test"/>
           <file name="interface_self_const_name.phpt" role="test"/>
           <file name="method_params.phpt" role="test"/>
           <file name="null_value_filtered.phpt" role="test"/>
           <file name="refcounted_values.phpt" role="test"/>
           <file name="span_attribute_attribute_priority.phpt" role="test"/>
+          <file name="survives_extra_args.phpt" role="test"/>
           <file name="unevaluable_name_is_not_renamed.phpt" role="test"/>
+          <file name="variadic_param_attribute.phpt" role="test"/>
         </dir>
       </dir>
     </dir>
