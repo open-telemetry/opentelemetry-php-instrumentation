@@ -4,6 +4,12 @@ on:
   push:
   pull_request:
     branches: [ main ]
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to name the Windows binaries after, instead of the ref'
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -108,8 +114,11 @@ jobs:
       # and interpolates it into a PowerShell string.
       - name: Artifact ref
         id: ref
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          $ref = $env:GITHUB_REF_NAME -replace '[^A-Za-z0-9._-]', '-'
+          $ref = if ($env:VERSION) { $env:VERSION } else { $env:GITHUB_REF_NAME }
+          $ref = $ref -replace '[^A-Za-z0-9._-]', '-'
           Write-Host "Artifact ref: $ref"
           "name=$ref" >> $env:GITHUB_OUTPUT
       # php-windows-builder 1.9.0 cannot build from a subdirectory of a
