@@ -352,6 +352,8 @@ static void arg_maybe_add_span_attribute(HashTable *attributes,
     zend_class_entry *attr_scope = ex->func->common.scope;
     zend_attribute *attribute =
         find_spanattribute_attribute(ex->func, i, &attr_scope);
+    // A by-reference parameter's slot holds the reference, not the value.
+    ZVAL_DEREF(p);
     if (attribute == NULL || !is_valid_attribute_value(p)) {
         return;
     }
@@ -364,24 +366,36 @@ static void arg_maybe_add_span_attribute(HashTable *attributes,
     zend_string *arg_name = i < declared ? ex->func->op_array.vars[i] : NULL;
     // The name arg may be an unevaluated IS_CONSTANT_AST, so evaluate it
     // rather than assuming IS_STRING. A bare #[SpanAttribute] has no name arg
-    // and is *defined* to key on the parameter name - not a fallback.
+    // and is *defined* to key on the parameter name - not a fallback. So is a
+    // null name, the constructor default.
+    //
+    // Any other name that can't be used is dropped rather than falling back to
+    // the parameter name: that would publish a plausible-looking wrong key
+    // nothing queries. A gap is diagnosable; a rename is not.
     zend_string *key = arg_name;
     bool have_key = true;
     zval name_val;
     ZVAL_UNDEF(&name_val);
-    if (attribute->argc) {
+    zend_string *first_arg_name =
+        attribute->argc ? attribute->args[0].name : NULL;
+    if (first_arg_name != NULL &&
+        !zend_string_equals_literal(first_arg_name, "name")) {
+        // Some other named arg, which newInstance() would reject.
+        have_key = false;
+    } else if (attribute->argc) {
         if (zend_get_attribute_value(&name_val, attribute, 0, attr_scope) ==
             SUCCESS) {
-            if (Z_TYPE(name_val) == IS_STRING) {
+            if (Z_TYPE(name_val) == IS_STRING && Z_STRLEN(name_val) > 0) {
                 key = Z_STR(name_val);
+            } else if (Z_TYPE(name_val) != IS_NULL) {
+                // Not coerced: whether userland would coerce a scalar depends
+                // on strict_types in the declaring file.
+                have_key = false;
             }
         } else {
             // on failure the zval has already been released, so clear it
             // before the dtor below
             ZVAL_UNDEF(&name_val);
-            // Drop it rather than falling back to the parameter name: that
-            // would publish a plausible-looking wrong key nothing queries.
-            // A gap is diagnosable; a rename is not.
             have_key = false;
         }
         // After either outcome - success does not clear a
@@ -410,6 +424,8 @@ static void func_get_args(zval *zv, HashTable *attributes,
     zval *p, *q;
     uint32_t i, first_extra_arg;
     uint32_t arg_count = ZEND_CALL_NUM_ARGS(ex);
+    bool add_span_attributes =
+        check_for_attributes && ex->func->type != ZEND_INTERNAL_FUNCTION;
 
     // @see
     // https://github.com/php/php-src/blob/php-8.1.0/Zend/zend_builtin_functions.c#L235
@@ -426,8 +442,7 @@ static void func_get_args(zval *zv, HashTable *attributes,
             p = ZEND_CALL_ARG(ex, 1);
             if (arg_count > first_extra_arg) {
                 while (i < first_extra_arg) {
-                    if (check_for_attributes &&
-                        ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                    if (add_span_attributes) {
                         arg_maybe_add_span_attribute(attributes, ex, i, p,
                                                      eval_state);
                     }
@@ -449,8 +464,7 @@ static void func_get_args(zval *zv, HashTable *attributes,
                                               ex->func->op_array.T);
             }
             while (i < arg_count) {
-                if (check_for_attributes &&
-                    ex->func->type != ZEND_INTERNAL_FUNCTION) {
+                if (add_span_attributes) {
                     arg_maybe_add_span_attribute(attributes, ex, i, p,
                                                  eval_state);
                 }
