@@ -92,12 +92,16 @@ func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
             // before running the end observer so the VM can release it later.
             if (execute_data->func->type == ZEND_INTERNAL_FUNCTION &&
                 Z_TYPE_P(receiver) == IS_OBJECT &&
-                Z_OBJCE_P(receiver) == zend_ce_closure &&
-                zend_get_closure_method_def(Z_OBJ_P(receiver)) ==
-                    execute_data->func) {
-                zval *bound_this = zend_get_closure_this_ptr(receiver);
-                if (Z_TYPE_P(bound_this) == IS_OBJECT) {
-                    this = Z_OBJ_P(bound_this);
+                Z_OBJCE_P(receiver) == zend_ce_closure) {
+                zend_object *closure = Z_OBJ_P(receiver);
+                zend_class_entry *called_scope;
+                zend_function *closure_func;
+                zend_object *bound_this;
+                if (closure->handlers->get_closure(closure, &called_scope,
+                                                   &closure_func, &bound_this,
+                                                   true) == SUCCESS &&
+                    closure_func == execute_data->func && bound_this != NULL) {
+                    this = bound_this;
                 }
             }
             ZVAL_OBJ_COPY(zv, this);
