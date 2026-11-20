@@ -1476,6 +1476,16 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
                          "attribute hooks disabled");
     }
 
+    // No hook is registered under this method name for any class, and no
+    // WithSpan hook will be added: nothing to observe.
+    if (fbc->op_array.scope &&
+        !(OTEL_G(attr_hooks_enabled) && has_withspan_attribute) &&
+        !zend_hash_str_find_ptr_lc(OTEL_G(observer_class_lookup),
+                                   ZSTR_VAL(fbc->common.function_name),
+                                   ZSTR_LEN(fbc->common.function_name))) {
+        return NULL;
+    }
+
     otel_observer observer_instance;
     init_observer(&observer_instance);
 
