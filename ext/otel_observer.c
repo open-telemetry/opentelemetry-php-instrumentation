@@ -1465,7 +1465,9 @@ static otel_observer *resolve_observer(zend_execute_data *execute_data) {
     if (!fbc->common.function_name) {
         return NULL;
     }
-    bool has_withspan_attribute = func_has_withspan_attribute(execute_data);
+    bool has_withspan_attribute =
+        (OTEL_G(attr_hooks_enabled) || OTEL_G(display_warnings)) &&
+        func_has_withspan_attribute(execute_data);
 
     if (OTEL_G(attr_hooks_enabled) == false && has_withspan_attribute &&
         OTEL_G(display_warnings)) {
