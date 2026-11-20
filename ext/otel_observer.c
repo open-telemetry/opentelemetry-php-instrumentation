@@ -6,6 +6,7 @@
 #include "zend_extensions.h"
 #include "zend_exceptions.h"
 #include "zend_attributes.h"
+#include "zend_closures.h"
 #include "php_opentelemetry.h"
 
 static int op_array_extension = -1;
@@ -86,6 +87,23 @@ func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
             ZVAL_STR_COPY(zv, called_scope->name);
         } else {
             zend_object *this = zend_get_this_object(execute_data);
+            zval *receiver = &execute_data->This;
+            // Zend replaces the receiver with the internal method's closure
+            // before running the end observer so the VM can release it later.
+            if (execute_data->func->type == ZEND_INTERNAL_FUNCTION &&
+                Z_TYPE_P(receiver) == IS_OBJECT &&
+                Z_OBJCE_P(receiver) == zend_ce_closure) {
+                zend_object *closure = Z_OBJ_P(receiver);
+                zend_class_entry *called_scope;
+                zend_function *closure_func;
+                zend_object *bound_this;
+                if (closure->handlers->get_closure(closure, &called_scope,
+                                                   &closure_func, &bound_this,
+                                                   true) == SUCCESS &&
+                    closure_func == execute_data->func && bound_this != NULL) {
+                    this = bound_this;
+                }
+            }
             ZVAL_OBJ_COPY(zv, this);
         }
     } else {
