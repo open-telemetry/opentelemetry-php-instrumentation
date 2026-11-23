@@ -112,6 +112,8 @@ This enables extending the stack frame by up to another 16 arguments.
 ## Usage
 
 The `pre` method starts and activates a span. The `post` method ends the span after the observed method has finished.
+Both hooks receive the receiver object for instance methods or the called class
+name for static methods, including calls made through a closure.
 
 ```php
 <?php
