@@ -80,34 +80,41 @@ typedef struct otel_arg_locator {
 
 static inline void
 func_get_this_or_called_scope(zval *zv, zend_execute_data *execute_data) {
-    if (execute_data->func->op_array.scope) {
-        if (execute_data->func->op_array.fn_flags & ZEND_ACC_STATIC) {
-            zend_class_entry *called_scope =
-                zend_get_called_scope(execute_data);
-            ZVAL_STR_COPY(zv, called_scope->name);
-        } else {
-            zend_object *this = zend_get_this_object(execute_data);
-            zval *receiver = &execute_data->This;
-            // Zend replaces the receiver with the internal method's closure
-            // before running the end observer so the VM can release it later.
-            if (execute_data->func->type == ZEND_INTERNAL_FUNCTION &&
-                Z_TYPE_P(receiver) == IS_OBJECT &&
-                Z_OBJCE_P(receiver) == zend_ce_closure) {
-                zend_object *closure = Z_OBJ_P(receiver);
-                zend_class_entry *called_scope;
-                zend_function *closure_func;
-                zend_object *bound_this;
-                if (closure->handlers->get_closure(closure, &called_scope,
-                                                   &closure_func, &bound_this,
-                                                   true) == SUCCESS &&
-                    closure_func == execute_data->func && bound_this != NULL) {
-                    this = bound_this;
-                }
-            }
-            ZVAL_OBJ_COPY(zv, this);
-        }
-    } else {
+    zend_function *func = execute_data->func;
+    if (!func->common.scope) {
         ZVAL_NULL(zv);
+        return;
+    }
+
+    bool is_static = (func->common.fn_flags & ZEND_ACC_STATIC) != 0;
+    zend_object *closure = Z_OBJ(execute_data->This);
+    // Zend replaces the receiver or called scope with the closure object
+    // before the end observer, leaving the zval type unchanged.
+    if (func->type == ZEND_INTERNAL_FUNCTION &&
+        (ZEND_CALL_INFO(execute_data) & ZEND_CALL_CLOSURE) &&
+        closure == ZEND_CLOSURE_OBJECT(func)) {
+        zend_class_entry *called_scope;
+        zend_function *closure_func;
+        zend_object *bound_this;
+        if (closure->handlers->get_closure(closure, &called_scope,
+                                           &closure_func, &bound_this,
+                                           true) == SUCCESS) {
+            if (is_static) {
+                ZVAL_STR_COPY(zv, called_scope->name);
+                return;
+            }
+            if (bound_this != NULL) {
+                ZVAL_OBJ_COPY(zv, bound_this);
+                return;
+            }
+        }
+    }
+
+    if (is_static) {
+        zend_class_entry *called_scope = zend_get_called_scope(execute_data);
+        ZVAL_STR_COPY(zv, called_scope->name);
+    } else {
+        ZVAL_OBJ_COPY(zv, zend_get_this_object(execute_data));
     }
 }
 
