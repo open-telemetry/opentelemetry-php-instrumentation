@@ -39,6 +39,10 @@ static void check_conflicts() {
     int conflict_found = 0;
     char *input = OTEL_G(conflicts);
 
+    /* Reset first: the flag is a process-wide static, so a stale value from a
+     * previous module startup in the same process must not survive. */
+    module_disabled = false;
+
     if (!input || !*input) {
         return;
     }

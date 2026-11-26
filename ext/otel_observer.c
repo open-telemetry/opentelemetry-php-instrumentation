@@ -9,8 +9,9 @@
 #include "zend_closures.h"
 #include "php_opentelemetry.h"
 
-/* Process-wide, written exactly once in MINIT (before any request thread
- * exists) and only read afterwards, so no synchronisation is needed in ZTS. */
+/* Process-wide. Written only in MINIT, before any request thread starts, and
+ * only read afterwards, so no synchronisation is needed in ZTS. Do not add
+ * writes outside MINIT. */
 static int op_array_extension = -1;
 
 static const char *const withspan_fqn_lc =
