@@ -55,6 +55,7 @@ static void check_conflicts() {
                 if (check_conflict(registry, result)) {
                     conflict_found = 1;
                 }
+                free(result);
                 s = NULL;
             }
             break;
