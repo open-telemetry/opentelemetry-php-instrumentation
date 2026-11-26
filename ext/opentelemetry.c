@@ -31,9 +31,17 @@ static int check_conflict(HashTable *registry, const char *extension_name) {
     return 0;
 }
 
+/* Process-wide (not a module global, which would be per-thread in ZTS): set
+ * once in MINIT, read-only afterwards. */
+static bool module_disabled = false;
+
 static void check_conflicts() {
     int conflict_found = 0;
     char *input = OTEL_G(conflicts);
+
+    /* Reset first: the flag is a process-wide static, so a stale value from a
+     * previous module startup in the same process must not survive. */
+    module_disabled = false;
 
     if (!input || !*input) {
         return;
@@ -70,7 +78,7 @@ static void check_conflicts() {
         conflict_found = 1;
     }
 
-    OTEL_G(disabled) = conflict_found;
+    module_disabled = conflict_found;
 }
 
 ZEND_DECLARE_MODULE_GLOBALS(opentelemetry)
@@ -146,7 +154,7 @@ PHP_MINIT_FUNCTION(opentelemetry) {
 
     check_conflicts();
 
-    if (!OTEL_G(disabled)) {
+    if (!module_disabled) {
         opentelemetry_observer_init(INIT_FUNC_ARGS_PASSTHRU);
     }
 
@@ -162,8 +170,8 @@ PHP_MSHUTDOWN_FUNCTION(opentelemetry) {
 PHP_MINFO_FUNCTION(opentelemetry) {
     php_info_print_table_start();
     php_info_print_table_row(2, "opentelemetry hooks",
-                             OTEL_G(disabled) ? "disabled (conflict)"
-                                              : "enabled");
+                             module_disabled ? "disabled (conflict)"
+                                             : "enabled");
     php_info_print_table_row(2, "extension version", PHP_OPENTELEMETRY_VERSION);
     php_info_print_table_end();
     DISPLAY_INI_ENTRIES();

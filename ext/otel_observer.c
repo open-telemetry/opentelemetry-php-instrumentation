@@ -9,12 +9,17 @@
 #include "zend_closures.h"
 #include "php_opentelemetry.h"
 
+/* Process-wide. Written only in MINIT, before any request thread starts, and
+ * only read afterwards, so no synchronisation is needed in ZTS. Do not add
+ * writes outside MINIT. */
 static int op_array_extension = -1;
 
-const char *withspan_fqn_lc = "opentelemetry\\api\\instrumentation\\withspan";
-const char *spanattribute_fqn_lc =
+static const char *const withspan_fqn_lc =
+    "opentelemetry\\api\\instrumentation\\withspan";
+static const char *const spanattribute_fqn_lc =
     "opentelemetry\\api\\instrumentation\\spanattribute";
-static char *with_span_attribute_args_keys[] = {"name", "span_kind"};
+static const char *const with_span_attribute_args_keys[] = {"name",
+                                                            "span_kind"};
 #define WITH_SPAN_ATTRIBUTE_ARGS_KEYS_COUNT                                    \
     (sizeof(with_span_attribute_args_keys) /                                   \
      sizeof(with_span_attribute_args_keys[0]))
