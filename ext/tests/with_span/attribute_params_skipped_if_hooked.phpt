@@ -10,7 +10,7 @@ opentelemetry
 opentelemetry.attr_hooks_enabled = On
 --FILE--
 <?php
-namespace OpenTelemetryAPI\Instrumentation;
+namespace OpenTelemetry\API\Instrumentation;
 
 include dirname(__DIR__) . '/mocks/WithSpan.php';
 use OpenTelemetry\API\Instrumentation\WithSpan;
